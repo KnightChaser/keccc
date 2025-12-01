@@ -18,6 +18,8 @@ static struct ASTnode *primary(void) {
     // for any other token type.
     switch (Token.token) {
     case T_INTLIT:
+        // If it's an integer literal, create a leaf node.
+        // Then scan the next token. It will be used by the caller.
         n = mkastleaf(A_INTLIT, Token.intvalue);
         scan(&Token);
         return n;
@@ -49,9 +51,6 @@ int arithmeticOperator(int token) {
         exit(1);
     }
 }
-
-// Predefinition
-struct ASTnode *additive_expr(void);
 
 // Operator precedence for each token
 static int OpPrecedence[] = {
