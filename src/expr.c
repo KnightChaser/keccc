@@ -78,6 +78,12 @@ static int op_precedence(int tokentype) {
     return precedence;
 }
 
+/**
+ * Parse a binary expression based on operator precedence.
+ *
+ * @param ptp The previous token precedence level.
+ * @return ASTnode* The AST node representing the binary expression.
+ */
 struct ASTnode *binexpr(int ptp) {
     struct ASTnode *left, *right;
     int tokentype;
@@ -104,7 +110,7 @@ struct ASTnode *binexpr(int ptp) {
         // Update the token type for the next iteration
         tokentype = Token.token;
         if (tokentype == T_EOF) {
-            break;
+            return left;
         }
     }
 
