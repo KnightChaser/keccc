@@ -82,6 +82,12 @@ static int scanint(int c) {
     return value;
 }
 
+/**
+ * scan - scan the next token from input
+ *
+ * @param t Pointer to the token structure to store the scanned token
+ * @return 1 if a token was successfully scanned, 0 if end of file
+ */
 int scan(struct token *t) {
     int c;
 
