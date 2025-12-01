@@ -6,13 +6,13 @@
 
 // Token types
 enum {
+    T_EOF,    // end of file
     T_PLUS,   // +
     T_MINUS,  // -
     T_STAR,   // *
     T_SLASH,  // /
     T_INTLIT, // integer literal (decimal whole number which have 1 or more
               // digits of 0-9)
-    T_EOF     // end of file
 };
 
 // Token structure
@@ -32,8 +32,8 @@ enum {
 
 // AST node structure
 struct ASTnode {
-    int op; // operation to be performed on this tree
-    struct ASTnode *left;
-    struct ASTnode *right;
-    int intvalue; // used if op == A_INTLIT
+    int op;                // operation to be performed on this tree
+    struct ASTnode *left;  // left subtree
+    struct ASTnode *right; // right subtree
+    int intvalue;          // used if op == A_INTLIT
 };

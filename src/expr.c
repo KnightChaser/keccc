@@ -28,7 +28,7 @@ static struct ASTnode *primary(void) {
 }
 
 /**
- * Map a token to its corresponding arithmetic operator.
+ * Convert a binary operator token to its corresponding AST arithmetic operator.
  *
  * @param token The token to map.
  * @return int The corresponding arithmetic operator.
@@ -50,35 +50,64 @@ int arithmeticOperator(int token) {
     }
 }
 
-/**
- * Parse a binary expression.
- *
- * @return ASTnode* The AST node representing the binary expression.
- */
-struct ASTnode *binexpr(void) {
-    struct ASTnode *node, *left, *right;
-    int nodetype;
+// Predefinition
+struct ASTnode *additive_expr(void);
 
-    // Get the integer literal on the left.
-    // Fetch the next token at the same time.
+// Operator precedence for each token
+static int OpPrecedence[] = {
+    [T_EOF] = 0,    // End of file (receives lowest precedence)
+    [T_PLUS] = 10,  // Composes additive expressions (medium precedence)
+    [T_MINUS] = 10, // Composes additive expressions (medium precedence)
+    [T_STAR] = 20,  // Composes multiplicative expressions (high precedence)
+    [T_SLASH] = 20, // Composes multiplicative expressions (high precedence)
+    [T_INTLIT] = 0, // Integer literals (not an operator)
+};
+
+/**
+ * Get the precedence of a given operator token.
+ *
+ * @param tokentype The token type to check.
+ * @return int The precedence of the operator.
+ */
+static int op_precedence(int tokentype) {
+    int precedence = OpPrecedence[tokentype];
+    if (precedence == 0) {
+        fprintf(stderr, "Unknown operator: %d, line: %d\n", tokentype, Line);
+        exit(1);
+    }
+    return precedence;
+}
+
+struct ASTnode *binexpr(int ptp) {
+    struct ASTnode *left, *right;
+    int tokentype;
+
+    // Get the integer literal on the leftest side
     left = primary();
 
-    // If no tokens left, return the left node to avoid further processing.
-    if (Token.token == T_EOF) {
+    // After processing the left side, check for binary operators
+    tokentype = Token.token;
+    if (tokentype == T_EOF) {
+        // If no more tokens, return the left node
         return left;
     }
 
-    // Convert the token to an arithmetic operator.
-    nodetype = arithmeticOperator(Token.token);
+    while (op_precedence(tokentype) > ptp) {
+        scan(&Token);
 
-    // Fetch the next token.
-    scan(&Token);
+        // Recurse to get the right-hand side expression
+        right = binexpr(op_precedence(tokentype));
 
-    // Get the integer literal on the right, recursively.
-    right = binexpr();
+        // Combine left and right nodes into a binary AST node
+        left = mkastnode(arithmeticOperator(tokentype), left, right, 0);
 
-    // Create a new AST node for the binary expression.
-    node = mkastnode(nodetype, left, right, 0);
+        // Update the token type for the next iteration
+        tokentype = Token.token;
+        if (tokentype == T_EOF) {
+            break;
+        }
+    }
 
-    return node;
+    // Return the constructed AST node
+    return left;
 }

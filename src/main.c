@@ -32,8 +32,9 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    scan(&Token); // Get the first token from the input
-    n = binexpr();
+    scan(&Token);   // Get the first token from the input
+    n = binexpr(0); // Parse the expression,
+                    // starting at precedence level 0 (lowest)
     printf("%d", interpretAST(n));
 
     fclose(Infile);

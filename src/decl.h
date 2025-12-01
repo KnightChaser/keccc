@@ -13,4 +13,4 @@ int interpretAST(struct ASTnode *n);
 
 // Expression parsing
 int arithmeticOperator(int token);
-struct ASTnode *binexpr(void);
+struct ASTnode *binexpr(int rbp);
