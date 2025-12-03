@@ -58,7 +58,10 @@ int addGlobalSymbol(char *name) {
     }
 
     symbolIndex = getNewGlobalSymbolIndex();
-    GlobalSymbolTable[symbolIndex].name = name;
+    GlobalSymbolTable[symbolIndex].name = strdup(name);
+    if (GlobalSymbolTable[symbolIndex].name == NULL) {
+        logFatal("Memory allocation failed for symbol name");
+    }
 
     return symbolIndex;
 }
