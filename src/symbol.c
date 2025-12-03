@@ -8,11 +8,11 @@
 static int NextGlobalSymbolIndex = 0;
 
 /**
- * addGlobalSymbol - Add a global symbol to the symbol table.
+ * findGlobalSymbol - Find a global symbol in the symbol table.
  *
  * @param s The name of the symbol to add
  *
- * @return The index of the added symbol in the symbol table
+ * @return The index of the symbol in the symbol table.
  */
 int findGlobalSymbol(char *s) {
     for (int i = 0; i < NextGlobalSymbolIndex; i++) {
