@@ -106,17 +106,33 @@ void cgpostamble() {
 }
 
 /**
- * cgload - Loads an integer value into a register.
+ * cgloadint - Generates code to load an integer constant into a register.
  *
- * @value: The integer value to load.
+ * @value: The integer constant to load.
+ *
+ * Returns: Index of the register containing the loaded integer.
+ */
+int cgloadint(int value) {
+    int registerIndex = allocateRegister();
+
+    fprintf(Outfile, "\tmov\t%s, %d\n", registerList[registerIndex], value);
+    return registerIndex;
+}
+
+/**
+ * cgloadglobsym - Generates code to load a global symbol's value into a
+ * register.
+ *
+ * @identifier: The name of the global symbol.
  *
  * Returns: Index of the register containing the loaded value.
  */
-int cgload(int value) {
-    int r = allocateRegister();
-    fprintf(Outfile, "\tmov\t%s, %d\n", registerList[r], value);
+int cgloadglobsym(char *identifier) {
+    int registerIndex = allocateRegister();
 
-    return r;
+    fprintf(Outfile, "\tmov\t%s, [%s]\n", registerList[registerIndex],
+            identifier);
+    return registerIndex;
 }
 
 /**
@@ -192,3 +208,25 @@ void cgprintint(int r) {
     fprintf(Outfile, "\tcall\tprintint\n");
     freeRegister(r);
 }
+
+/**
+ * cgstoreglobsym - Generates code to store a register's value into a global
+ * symbol.
+ *
+ * @registerIndex: Index of the register containing the value to store.
+ * @identifier: The name of the global symbol.
+ *
+ * Returns: Index of the register that was stored.
+ */
+int cgstoreglobsym(int registerIndex, char *identifier) {
+    fprintf(Outfile, "\tmov\t[%s], %s\n", identifier,
+            registerList[registerIndex]);
+    return registerIndex;
+}
+
+/**
+ * cgglobsym - Generates code to declare a global symbol.
+ *
+ * @symbol: The name of the global symbol.
+ */
+void cgglobsym(char *symbol) { fprintf(Outfile, "\tcommon\t%s 8:8\n", symbol); }

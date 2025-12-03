@@ -128,6 +128,11 @@ static int scanIdentifier(int c, char *buf, int lengthLimit) {
  */
 static int keyword(char *s) {
     switch (*s) {
+    case 'i':
+        if (!strcmp(s, "int")) {
+            return T_INT;
+        }
+        break;
     case 'p':
         if (!strcmp(s, "print")) {
             return T_PRINT;
@@ -170,6 +175,9 @@ int scan(struct token *t) {
     case ';':
         t->token = T_SEMICOLON;
         break;
+    case '=':
+        t->token = T_EQUALS;
+        break;
     default:
         if (isdigit(c)) {
             // If it's a digit, scan the literal integer value in
@@ -185,9 +193,10 @@ int scan(struct token *t) {
                 break;
             }
 
-            // Not a recognized keyword, so an error for now
-            printf("Unrecognized symbol %s on line %d\n", Text, Line);
-            exit(1);
+            // Not a recognized keyword, thus it's an identifier
+            // (e.g. variable name)
+            t->token = T_IDENTIFIER;
+            break;
         }
 
         // The character isn't part of any recognized token, raise an error

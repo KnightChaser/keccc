@@ -17,5 +17,8 @@ extern_ FILE *Infile;
 extern_ FILE *Outfile;
 // Latest token scanned
 extern_ struct token Token;
+
 // Last identifier scanned (e.g. "print")
 extern_ char Text[TEXTLEN + 1];
+// Global symbol table
+extern_ struct symbolTable GlobalSymbolTable[NSYMBOLS];

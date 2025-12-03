@@ -2,6 +2,7 @@
 
 executable('kncc', [
     'cgn.c',
+    'decl.c',
     'expr.c',
     'gen.c',
     'interpret.c',
@@ -9,6 +10,7 @@ executable('kncc', [
     'misc.c',
     'scan.c',
     'stmt.c',
+    'symbol.c',
     'tree.c'
   ],
   install: true

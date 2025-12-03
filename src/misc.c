@@ -26,3 +26,53 @@ void match(int t, char *what) {
  * semicolon - Matches a semicolon token.
  */
 void semicolon(void) { match(T_SEMICOLON, ";"); }
+
+/**
+ * identifier - Matches an identifier token.
+ */
+void identifier(void) { match(T_IDENTIFIER, "identifier"); }
+
+/**
+ * logFatal - Logs a fatal error message and exits.
+ *
+ * @s: The error message to log.
+ */
+void logFatal(char *s) {
+    fprintf(stderr, "Fatal error: %s, line %d\n", s, Line);
+    exit(1);
+}
+
+/**
+ * logFatals - Logs a fatal error message with two strings and exits.
+ *
+ * @s1: The first part of the error message.
+ * @s2: The second part of the error message.
+ */
+void logFatals(char *s1, char *s2) {
+    fprintf(stderr, "Fatal error: %s%s, line %d\n", s1, s2, Line);
+    exit(1);
+}
+
+/**
+ * logFatald - Logs a fatal error message with a string and an integer, then
+ * exits.
+ *
+ * @s: The string part of the error message.
+ * @d: The integer part of the error message.
+ */
+void logFatald(char *s, int d) {
+    fprintf(stderr, "Fatal error: %s%d, line %d\n", s, d, Line);
+    exit(1);
+}
+
+/**
+ * logFatalc - Logs a fatal error message with a string and a character, then
+ * exits.
+ *
+ * @s: The string part of the error message.
+ * @c: The character part of the error message.
+ */
+void logFatalc(char *s, int c) {
+    fprintf(stderr, "Fatal error: %s:%c, line %d\n", s, c, Line);
+    exit(1);
+}

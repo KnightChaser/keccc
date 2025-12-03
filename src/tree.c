@@ -5,7 +5,7 @@
 #include "defs.h"
 
 /**
- * makeASTNode - create an AST node
+ * makeASTNode - Build and return a generic ASt node
  *
  * @param op       the operator
  * @param left     pointer to left subtree
@@ -27,7 +27,7 @@ struct ASTnode *makeASTNode(int op, struct ASTnode *left, struct ASTnode *right,
     n->op = op;
     n->left = left;
     n->right = right;
-    n->intvalue = intvalue;
+    n->v.intvalue = intvalue;
 
     return n;
 }

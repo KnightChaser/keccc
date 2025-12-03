@@ -12,6 +12,7 @@
  */
 static struct ASTnode *primary(void) {
     struct ASTnode *n;
+    int id;
 
     // For an INTLIT token, make a leaf AST node for it
     // and scan in the next token. Otherwise, a syntax error
@@ -21,13 +22,25 @@ static struct ASTnode *primary(void) {
         // If it's an integer literal, create a leaf node.
         // Then scan the next token. It will be used by the caller.
         n = makeASTLeaf(A_INTLIT, Token.intvalue);
-        scan(&Token);
-        return n;
+        break;
+
+    case T_IDENTIFIER:
+        // Check that if this identifier exists
+        id = findGlobalSymbol(Text);
+        if (id == -1) {
+            logFatals("Undeclared identifier: ", Text);
+        }
+
+        n = makeASTLeaf(A_IDENTIFIER, id);
+        break;
+
     default:
-        fprintf(stderr, "Syntax error, line: %d, token %d\n", Line,
-                Token.token);
-        exit(1);
+        logFatald("Syntax error: unexpected token ", Token.token);
     }
+
+    // Scan the next token and return the leaf node
+    scan(&Token);
+    return n;
 }
 
 /**
