@@ -47,8 +47,8 @@ void printStatement(void) {
  * assignmentStatement - Parse and handle a variable declaration statement.
  */
 void assignmentStatement(void) {
-    struct ASTnode *leftASTnode = NULL;
-    struct ASTnode *rightASTnode = NULL;
+    struct ASTnode *exprNode = NULL;
+    struct ASTnode *lvalueNode = NULL;
     struct ASTnode *tree = NULL;
     int identifierIndex;
 
@@ -59,16 +59,16 @@ void assignmentStatement(void) {
     if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
         logFatals("Undeclared identifier: ", Text);
     }
-    rightASTnode = makeASTLeaf(A_LVALUEIDENTIFIER, identifierIndex);
+    lvalueNode = makeASTLeaf(A_LVALUEIDENTIFIER, identifierIndex);
 
     // Match the '=' token
     match(T_EQUALS, "=");
 
     // Parse the expression on the right-hand side of the '='
-    rightASTnode = binexpr(0);
+    exprNode = binexpr(0);
 
     // Create an assignment AST node
-    tree = makeASTNode(A_ASSIGN, leftASTnode, rightASTnode, 0);
+    tree = makeASTNode(A_ASSIGN, exprNode, lvalueNode, 0);
 
     // Generate code for the assignment
     genAST(tree, -1);
