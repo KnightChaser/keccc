@@ -53,6 +53,6 @@ struct ASTnode *makeASTLeaf(int op, int intvalue) {
  *
  * @return pointer to the newly created unary AST node
  */
-struct ASTnode *mkastunary(int op, struct ASTnode *left, int intvalue) {
+struct ASTnode *makeASTUnary(int op, struct ASTnode *left, int intvalue) {
     return makeASTNode(op, left, NULL, intvalue);
 }
