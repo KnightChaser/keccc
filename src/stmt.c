@@ -62,7 +62,7 @@ void assignmentStatement(void) {
     lvalueNode = makeASTLeaf(A_LVALUEIDENTIFIER, identifierIndex);
 
     // Match the '=' token
-    match(T_EQUALS, "=");
+    match(T_ASSIGN, "=");
 
     // Parse the expression on the right-hand side of the '='
     exprNode = binexpr(0);

@@ -52,6 +52,7 @@ static struct ASTnode *primary(void) {
  */
 int arithmeticOperator(int token) {
     switch (token) {
+    // Arithmetic operators
     case T_PLUS:
         return A_ADD;
     case T_MINUS:
@@ -60,6 +61,20 @@ int arithmeticOperator(int token) {
         return A_MULTIPLY;
     case T_SLASH:
         return A_DIVIDE;
+
+    // Comparison operators
+    case T_EQ:
+        return A_EQ;
+    case T_NE:
+        return A_NE;
+    case T_LT:
+        return A_LT;
+    case T_GT:
+        return A_GT;
+    case T_LE:
+        return A_LE;
+    case T_GE:
+        return A_GE;
     default:
         fprintf(stderr, "Unknown arithmetic operator: %d, line: %d\n", token,
                 Line);
@@ -68,13 +83,26 @@ int arithmeticOperator(int token) {
 }
 
 // Operator precedence for each token
+//
+// NOTE:
+// Match up with the order of tokens declared in src/defs.h
+//
+// NOTE:
+// Based on the C language operator precedence:
+// https://en.cppreference.com/w/c/language/operator_precedence.html
 static int OpPrecedence[] = {
-    [T_EOF] = 0,    // End of file (receives lowest precedence)
-    [T_PLUS] = 10,  // Composes additive expressions (medium precedence)
-    [T_MINUS] = 10, // Composes additive expressions (medium precedence)
-    [T_STAR] = 20,  // Composes multiplicative expressions (high precedence)
-    [T_SLASH] = 20, // Composes multiplicative expressions (high precedence)
-    [T_INTLIT] = 0, // Integer literals (not an operator)
+    [T_EOF] = 0,    // End of file
+    [T_PLUS] = 10,  // Composes additive expressions
+    [T_MINUS] = 10, // Composes additive expressions
+    [T_STAR] = 20,  // Composes multiplicative expressions
+    [T_SLASH] = 20, // Composes multiplicative expressions
+    [T_EQ] = 30,    // Equality operator
+    [T_NE] = 30,    // Inequality operator
+    [T_LT] = 40,    // Relational operators
+    [T_GT] = 40,    // Relational operators
+    [T_LE] = 40,    // Relational operators
+    [T_GE] = 40,    // Relational operators
+    [T_INTLIT] = 0, // Integer literals
 };
 
 /**

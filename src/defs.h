@@ -22,10 +22,16 @@ enum {
     T_MINUS,      // -
     T_STAR,       // *
     T_SLASH,      // /
-    T_INTLIT,     // integer literal (decimal whole number which have 1 or more
-                  // digits of 0-9)
+    T_EQ,         // ==
+    T_NE,         // !=
+    T_LT,         // <
+    T_GT,         // >
+    T_LE,         // <=
+    T_GE,         // >=
+    T_INTLIT,     // integer literal
+                  // (decimal whole number which have 1 or more digits of 0-9)
     T_SEMICOLON,  // ;
-    T_EQUALS,     // =
+    T_ASSIGN,     // =
     T_IDENTIFIER, // variable names
 
     // Keywords
@@ -41,10 +47,16 @@ struct token {
 
 // AST node types
 enum {
-    A_ADD,              // Addition
+    A_ADD = 1,          // Addition
     A_SUBTRACT,         // Subtraction
     A_MULTIPLY,         // Multiplication
     A_DIVIDE,           // Division
+    A_EQ,               // Equality comparison (==)
+    A_NE,               // Inequality comparison (!=)
+    A_LT,               // Less than comparison (<)
+    A_GT,               // Greater than comparison (>)
+    A_LE,               // Less than or equal comparison (<=)
+    A_GE,               // Greater than or equal comparison (>=)
     A_INTLIT,           // Integer literal
     A_IDENTIFIER,       // Identifier (variable)
     A_LVALUEIDENTIFIER, // L-value Identifier

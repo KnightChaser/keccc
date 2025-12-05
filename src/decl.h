@@ -36,6 +36,12 @@ int nasmSubRegs(int dstReg, int srcReg);
 int nasmMulRegs(int dstReg, int srcReg);
 int nasmDivRegsSigned(int dividendReg, int divisorReg);
 void nasmPrintIntFromReg(int reg);
+int nasmCompareEqual(int r1, int r2);
+int nasmCompareNotEqual(int r1, int r2);
+int nasmCompareLessThan(int r1, int r2);
+int nasmCompareLessThanOrEqual(int r1, int r2);
+int nasmCompareGreaterThan(int r1, int r2);
+int nasmCompareGreaterThanOrEqual(int r1, int r2);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);

@@ -30,6 +30,7 @@ int codegenAST(struct ASTnode *n, int reg) {
     }
 
     switch (n->op) {
+    // Arithmetic operations
     case A_ADD:
         return nasmAddRegs(leftRegister, rightRegister);
     case A_SUBTRACT:
@@ -38,6 +39,22 @@ int codegenAST(struct ASTnode *n, int reg) {
         return nasmMulRegs(leftRegister, rightRegister);
     case A_DIVIDE:
         return nasmDivRegsSigned(leftRegister, rightRegister);
+
+    // Comparison operations
+    case A_EQ:
+        return nasmCompareEqual(leftRegister, rightRegister);
+    case A_NE:
+        return nasmCompareNotEqual(leftRegister, rightRegister);
+    case A_LT:
+        return nasmCompareLessThan(leftRegister, rightRegister);
+    case A_GT:
+        return nasmCompareGreaterThan(leftRegister, rightRegister);
+    case A_LE:
+        return nasmCompareLessThanOrEqual(leftRegister, rightRegister);
+    case A_GE:
+        return nasmCompareGreaterThanOrEqual(leftRegister, rightRegister);
+
+    // Leaf nodes
     case A_INTLIT:
         return nasmLoadImmediateInt(n->v.intvalue);
     case A_IDENTIFIER:
@@ -49,6 +66,7 @@ int codegenAST(struct ASTnode *n, int reg) {
     case A_ASSIGN:
         // The work has already been done, return the result
         return rightRegister;
+
     default:
         // Should not reach here; unsupported operation
         logFatald("Unknown AST operator: ", n->op);

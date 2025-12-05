@@ -176,7 +176,44 @@ int scan(struct token *t) {
         t->token = T_SEMICOLON;
         break;
     case '=':
-        t->token = T_EQUALS;
+        if ((c = next()) == '=') {
+            // "=="
+            t->token = T_EQ;
+        } else {
+            // "="
+            putback(c);
+            t->token = T_ASSIGN;
+        }
+        break;
+    case '!':
+        if ((c = next()) == '=') {
+            // "!="
+            t->token = T_NE;
+        } else {
+            // Unrecognized token starting with '!'
+            printf("Unrecognized character '!%c' on line %d\n", c, Line);
+            exit(1);
+        }
+        break;
+    case '<':
+        if ((c = next()) == '=') {
+            // "<="
+            t->token = T_LE;
+        } else {
+            // "<"
+            putback(c);
+            t->token = T_LT;
+        }
+        break;
+    case '>':
+        if ((c = next()) == '=') {
+            // ">="
+            t->token = T_GE;
+        } else {
+            // ">"
+            putback(c);
+            t->token = T_GT;
+        }
         break;
     default:
         if (isdigit(c)) {
