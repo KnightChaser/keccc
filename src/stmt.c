@@ -178,9 +178,32 @@ struct ASTnode *compoundStatement(void) {
             logFatal("Unexpected token in compound statement");
         }
 
-        // For each new tree, either save it in left
-        // or leave the left node empty, or glued the left and
-        // the new tree together! }
+        /**
+         * For each new tree, either save it in left
+         * or leave the left node empty, or glued the left and
+         * the new tree together.
+         *
+         * example)
+         * ```
+         * {
+         *     int x;
+         *     x = 1;
+         *     print x;
+         *     x = x + 1;
+         *     print x;
+         * }
+         * }
+         * ```
+         * will produce something like
+         * ```
+         *     A_GLUE
+         *    /     \
+         *  A_GLUE  (print x)
+         *  /    \
+         * (x=1) (print x)
+         * ```
+         */
+
         if (treeNode) {
         }
         if (leftASTNode == NULL) {
