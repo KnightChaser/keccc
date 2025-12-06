@@ -106,6 +106,10 @@ static int codegenIFStatementAST(struct ASTnode *n) {
 int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     int leftRegister, rightRegister;
 
+    if (n == NULL) {
+        return NOREG;
+    }
+
     switch (n->op) {
     case A_IF:
         // If statement
@@ -116,8 +120,10 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Then free registers used in each sub-tree
         codegenAST(n->left, NOREG, n->op);
         nasmResetRegisterPool();
-        codegenAST(n->right, NOREG, n->op);
-        nasmResetRegisterPool();
+        if (n->right) {
+            codegenAST(n->right, NOREG, n->op);
+            nasmResetRegisterPool();
+        }
 
         return NOREG;
     }
