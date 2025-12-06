@@ -135,9 +135,11 @@ struct ASTnode *binexpr(int ptp) {
     // and fetch the next token at the same time.
     left = primary();
 
-    // If we hit a semicolon(";"), return just the left node
+    // If we hit a semicolon(";") or right parenthesis(")"),
+    // it means it's end of the expression,
+    // so we return just the left node. OvO
     tokentype = Token.token;
-    if (tokentype == T_SEMICOLON) {
+    if (tokentype == T_SEMICOLON || tokentype == T_RPAREN) {
         return left;
     }
 
