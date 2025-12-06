@@ -303,7 +303,7 @@ int nasmCompareAndSet(int ASTop, int r1, int r2) {
     }
 
     // Zero-extend the result to the full register
-    fprintf(Outfile, "\tmovzb\t%s, %s\n", qwordRegisterList[r2], byteRegister);
+    fprintf(Outfile, "\tmovzx\t%s, %s\n", qwordRegisterList[r2], byteRegister);
 
     freeRegister(r1);
 
