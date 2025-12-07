@@ -21,7 +21,7 @@ static int getLabelNumber(void) {
 }
 
 /**
- * codegenIFStatementAST - Generates code for an IF statement AST node.
+ * codegenIfStatementAST - Generates code for an IF statement AST node.
  *
  * NOTE:
  * The If statement is represented in the AST as follows:
@@ -48,7 +48,7 @@ static int getLabelNumber(void) {
  *
  * @return int The register index where the result is stored (NOREG).
  */
-static int codegenIFStatementAST(struct ASTnode *n) {
+static int codegenIfStatementAST(struct ASTnode *n) {
     int labelFalseStatement;
     int labelEndStatement;
 
@@ -165,7 +165,7 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     switch (n->op) {
     case A_IF:
         // If statement
-        return codegenIFStatementAST(n);
+        return codegenIfStatementAST(n);
     case A_WHILE:
         // While statement
         return codegenWhileStatementAST(n);
