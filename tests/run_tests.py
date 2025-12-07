@@ -16,6 +16,7 @@ It:
 
 from __future__ import annotations
 
+import difflib
 import shutil
 import subprocess
 import sys
@@ -108,6 +109,38 @@ def find_required_executable(name: str) -> str:
     return path
 
 
+def print_output_diff(expected_text: str, actual_text: str, test_name: str) -> None:
+    """Print expected vs actual output and a unified diff.
+
+    Args:
+        expected_text: The expected full output text.
+        actual_text: The actual full output text.
+        test_name: Name of the test case, used for labelling.
+    """
+    print(f"[FAIL] {test_name}: output mismatch")
+
+    print("\n=== Expected output ===")
+    print(expected_text if expected_text else "<empty>")
+
+    print("\n=== Actual output ===")
+    print(actual_text if actual_text else "<empty>")
+
+    expected_lines = expected_text.splitlines(keepends=False)
+    actual_lines = actual_text.splitlines(keepends=False)
+
+    print("\n=== Unified diff (expected vs actual) ===")
+    diff = difflib.unified_diff(
+        expected_lines,
+        actual_lines,
+        fromfile="expected",
+        tofile="actual",
+        lineterm="",
+    )
+    for line in diff:
+        print(line)
+    print()  # trailing newline for cleanliness
+
+
 def run_single_test(
     test_case: TestCase,
     build_root: Path,
@@ -150,6 +183,7 @@ def run_single_test(
         description=f"{test_case.name}: keccc",
     )
     if not ok:
+        # Compilation failure: no diff to show, compiler error already printed
         return False
 
     # 2) Assemble out.s -> out.o
@@ -179,15 +213,16 @@ def run_single_test(
     if not ok:
         return False
 
-    actual = stdout.strip()
-    expected = test_case.expected.read_text().strip()
+    # Keep full originals for printing/diff
+    actual_text = stdout
+    expected_text = test_case.expected.read_text()
 
-    if actual != expected:
-        print(f"[FAIL] {test_case.name}: output mismatch")
-        print("  Expected:")
-        print(repr(expected))
-        print("  Actual:")
-        print(repr(actual))
+    # Normalized versions for equality check (ignore leading/trailing whitespace)
+    actual_norm = actual_text.strip()
+    expected_norm = expected_text.strip()
+
+    if actual_norm != expected_norm:
+        print_output_diff(expected_text, actual_text, test_case.name)
         return False
 
     print(f"[PASS] {test_case.name}")
