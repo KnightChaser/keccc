@@ -217,7 +217,7 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // generate a compare followed by a jjump.
         // Otherwise, compare registers and set one to 1 or 0 based on the
         // comparison.
-        if (parentASTop == A_IF) {
+        if (parentASTop == A_IF || parentASTop == A_WHILE) {
             return nasmCompareAndJump(n->op, leftRegister, rightRegister, reg);
         } else {
             return nasmCompareAndSet(n->op, leftRegister, rightRegister);

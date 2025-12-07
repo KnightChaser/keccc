@@ -77,6 +77,7 @@ enum {
 // AST node structure
 struct ASTnode {
     int op;                  // operation to be performed on this tree
+                             // (e.g., A_ADD, A_INTLIT)
     struct ASTnode *left;    // left subtree
     struct ASTnode *middle;  // middle subtree (for if-else statements)
     struct ASTnode *right;   // right subtree
