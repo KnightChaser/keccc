@@ -2,29 +2,17 @@
 
 Knight's Experimental Compact C Compiler (supposedly).
 
+NOTE: It uses Meson as the build system.
+
 ## Build & run
 
-```bash
-meson setup builddir --native-file=clang.ini
-meson compile -C builddir
-./builddir/keccc
-```
+```sh
+# Set up the build directory
+meson setup builddir-asan --buildtype=debug -Db_sanitize=address,undefined
 
-Install:
+# Compile the project
+meson compile -C builddir-asan
 
-```bash
-meson install -C builddir
-```
-
-Run input: Suppose `input` is located in the build directory as well as compiled `keccc`.
-
-```bash
-./src/keccc input
-bat ./out.s
-
-nasm -f elf64 out.s -o out.o
-gcc -no-pie out.o -o out
-echo "Assembly and linking finished."
-
-./out
+# Run the tests (/tests)
+meson test -C builddir-asan --print-errorlogs
 ```
