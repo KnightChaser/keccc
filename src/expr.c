@@ -83,42 +83,36 @@ int tokenToASTOperator(int token) {
     }
 }
 
-// Operator precedence for each token
-//
-// NOTE:
-// Match up with the order of tokens declared in src/defs.h
-//
-// NOTE:
-// Based on the C language operator precedence:
-// https://en.cppreference.com/w/c/language/operator_precedence.html
-static int OpPrecedence[] = {
-    [T_EOF] = 0,    // End of file
-    [T_PLUS] = 10,  // Composes additive expressions
-    [T_MINUS] = 10, // Composes additive expressions
-    [T_STAR] = 20,  // Composes multiplicative expressions
-    [T_SLASH] = 20, // Composes multiplicative expressions
-    [T_EQ] = 30,    // Equality operator
-    [T_NE] = 30,    // Inequality operator
-    [T_LT] = 40,    // Relational operators
-    [T_GT] = 40,    // Relational operators
-    [T_LE] = 40,    // Relational operators
-    [T_GE] = 40,    // Relational operators
-    [T_INTLIT] = 0, // Integer literals
-};
-
 /**
  * operatorPrecedence - Get the precedence of a given operator token.
+ *
+ *  NOTE:
+ *  Based on the C language operator precedence:
+ *  https://en.cppreference.com/w/c/language/operator_precedence.html
  *
  * @param tokentype The token type to check.
  * @return int The precedence of the operator.
  */
 static int operatorPrecedence(int tokentype) {
-    int precedence = OpPrecedence[tokentype];
-    if (precedence == 0) {
-        fprintf(stderr, "Unknown operator: %d, line: %d\n", tokentype, Line);
-        exit(1);
+    switch (tokentype) {
+    case T_PLUS:  // Addition (+)
+    case T_MINUS: // Subtraction (-)
+        return 10;
+    case T_STAR:  // Multiplication (*)
+    case T_SLASH: // Division (/)
+        return 20;
+    case T_EQ: // Equal (==)
+    case T_NE: // Not Equal (!=)
+        return 30;
+    case T_LT: // Less Than (<)
+    case T_GT: // Greater Than (>)
+    case T_LE: // Less Than or Equal (<=)
+    case T_GE: // Greater Than or Equal (>=)
+        return 40;
+    default:
+        // e.g. T_SEMICOLON, T_RPAREN, etc.
+        return 0;
     }
-    return precedence;
 }
 
 /**
