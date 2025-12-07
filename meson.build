@@ -5,3 +5,4 @@ project('keccc', 'c',
 
 # Add the source subdirectory containing the executable
 subdir('src')
+subdir('tests')
