@@ -18,6 +18,7 @@
  *      |     declaration
  *      |     assignment_statement
  *      |     if_statement
+ *      |     while_statement
  *      ;
  *
  * print_statement: 'print' expression ';' ;
@@ -31,6 +32,8 @@
  *      ;
  *
  * if_head: 'if' '(' true_false_expression ')' compound_statements ;
+ *
+ * while_statement: 'while' '(' true_false_expression ')' compound_statements ;
  *
  * identifier = T_IDENTIFIER;
  *      ;
@@ -140,6 +143,44 @@ struct ASTnode *ifStatement(void) {
 }
 
 /**
+ * whileStatement - Parse and handle a while statement.
+ *
+ * NOTE:
+ * While statement is composed of:
+ * -----------------------------------
+ * while (condition) {
+ *     body-statements
+ *     ...
+ * }
+ * -----------------------------------
+ *
+ * @return AST node representing the while statement.
+ */
+struct ASTnode *whileStatement(void) {
+    struct ASTnode *conditionAST;
+    struct ASTnode *bodyAST;
+
+    // Ensure we have 'while' then '('
+    match(T_WHILE, "while");
+    leftParenthesis();
+
+    // Parse the following expression and the following ')'
+    conditionAST = binexpr(0);
+
+    if (!(conditionAST->op == A_EQ) && !(conditionAST->op == A_NE) &&
+        !(conditionAST->op == A_LT) && !(conditionAST->op == A_LE) &&
+        !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
+        logFatal("While statement condition is not a comparison");
+    }
+    rightParenthesis();
+
+    // Get the AST for the compount statement; this is the body of the loop
+    bodyAST = compoundStatement();
+
+    return makeASTNode(A_WHILE, conditionAST, bodyAST, NULL, 0);
+}
+
+/**
  * compoundStatement - Parse and handle a compound statement.
  *
  * @return AST node representing the compound statement.
@@ -167,6 +208,9 @@ struct ASTnode *compoundStatement(void) {
             break;
         case T_IF:
             treeNode = ifStatement();
+            break;
+        case T_WHILE:
+            treeNode = whileStatement();
             break;
         case T_RBRACE:
             // When we hit the right curly bracket,

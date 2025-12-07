@@ -88,6 +88,58 @@ static int codegenIFStatementAST(struct ASTnode *n) {
 }
 
 /**
+ * codegenWhileStatementAST - Generates code for a WHILE statement AST node.
+ *
+ * NOTE:
+ * The While statement is represented in the AST as follows:
+ * ----------------------------------------
+ *       [  A_WHILE  ]
+ *        /     \
+ *      cond     body
+ *     (left)   (middle)
+ * ----------------------------------------
+ * Conventional while statement will be
+ * converted into the following assembly
+ * structure
+ * ----------------------------------------
+ * L1:    perform the comparison
+ *        jump to L2 if false
+ *        perform the loop body
+ *        jump to L1
+ * L2:
+ * ----------------------------------------
+ *
+ * @n: The AST node representing the WHILE statement.
+ *
+ * @return int The register index where the result is stored (NOREG).
+ */
+static int codegenWhileStatementAST(struct ASTnode *n) {
+    int labelStartLoop;
+    int labelEndLoop;
+
+    // Generate two labels:
+    // - one for the start of the loop
+    // - one for the end of the loop
+    labelStartLoop = getLabelNumber();
+    labelEndLoop = getLabelNumber();
+    nasmLabel(labelStartLoop);
+
+    // Generate the loop condition
+    codegenAST(n->left, labelEndLoop, n->op);
+    codegenResetRegisters();
+
+    // Generate the loop body
+    codegenAST(n->middle, NOREG, n->op);
+    codegenResetRegisters();
+
+    // Jump back to the start of the loop
+    nasmJump(labelStartLoop);
+    nasmLabel(labelEndLoop);
+
+    return NOREG;
+}
+
+/**
  * codegenAST - Generates code for the given AST node and its subtrees.
  *
  * @n: The AST node to generate code for.
@@ -114,6 +166,9 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     case A_IF:
         // If statement
         return codegenIFStatementAST(n);
+    case A_WHILE:
+        // While statement
+        return codegenWhileStatementAST(n);
     case A_GLUE:
         // Do each sub-tree separately,
         // and return NOREG since GLUE does not produce a value

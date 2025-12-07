@@ -43,6 +43,7 @@ enum {
     T_INT,   // "int"
     T_IF,    // "if"
     T_ELSE,  // "else"
+    T_WHILE, // "while"
 };
 
 // Token structure
@@ -70,6 +71,7 @@ enum {
     A_PRINT,            // Print statement
     A_GLUE,             // Statement glue (for sequencing statements)
     A_IF,               // If statement
+    A_WHILE,            // While loop
 };
 
 // AST node structure
