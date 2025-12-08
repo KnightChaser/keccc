@@ -41,12 +41,6 @@ int nasmCompareAndSet(int ASTop, int r1, int r2);
 int nasmCompareAndJump(int ASTop, int r1, int r2, int label);
 void nasmLabel(int label);
 void nasmJump(int label);
-// int nasmCompareEqual(int r1, int r2);
-// int nasmCompareNotEqual(int r1, int r2);
-// int nasmCompareLessThan(int r1, int r2);
-// int nasmCompareLessThanOrEqual(int r1, int r2);
-// int nasmCompareGreaterThan(int r1, int r2);
-// int nasmCompareGreaterThanOrEqual(int r1, int r2);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
