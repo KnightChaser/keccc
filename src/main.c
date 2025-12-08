@@ -7,6 +7,7 @@
 #undef extern_
 
 #include <errno.h>
+#include <stdbool.h>
 
 static void init() {
     Line = 1;
@@ -43,9 +44,13 @@ int main(int argc, char **argv) {
 
     scan(&Token);      // First token
     codegenPreamble(); // Emit preamble(global, printint, main prologue)
-    tree = compoundStatement(); // Parse the whole input into an AST
-    codegenAST(tree, NOREG, 0); // Generate code for the AST
-    codegenPostamble();         // Output the postamble
+    while (true) {     // Loop to process all input
+        tree = functionDeclaration(); // Parse a function declaration and...
+        codegenAST(tree, NOREG, 0);   // Generate code for the AST
+        if (Token.token == T_EOF) {   // Stop when we reach the end of file
+            break;
+        }
+    }
 
     fclose(Outfile);
 

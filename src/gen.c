@@ -179,7 +179,11 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
             codegenAST(n->right, NOREG, n->op);
             nasmResetRegisterPool();
         }
-
+        return NOREG;
+    case A_FUNCTION:
+        nasmFunctionPreamble(GlobalSymbolTable[n->v.identifierIndex].name);
+        codegenAST(n->left, NOREG, n->op);
+        nasmFunctionPostamble();
         return NOREG;
     }
 

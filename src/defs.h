@@ -44,8 +44,8 @@ enum {
     T_IF,    // "if"
     T_ELSE,  // "else"
     T_WHILE, // "while"
-    T_FOR,   // "for"
-             // NOTE: for() statement will be converted into while() statement
+    T_FOR,   // "for" (will be converted into while statement)
+    T_VOID,  // "void"
 };
 
 // Token structure
@@ -74,6 +74,7 @@ enum {
     A_GLUE,             // Statement glue (for sequencing statements)
     A_IF,               // If statement
     A_WHILE,            // While loop
+    A_FUNCTION,         // Function definition
 };
 
 // AST node structure

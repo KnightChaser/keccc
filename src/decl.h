@@ -28,6 +28,8 @@ void codegenDeclareGlobalSymbol(char *s);
 void nasmResetRegisterPool(void);
 void nasmPreamble();
 void nasmPostamble();
+void nasmFunctionPreamble(char *functionName);
+void nasmFunctionPostamble();
 int nasmLoadImmediateInt(int value);
 int nasmLoadGlobalSymbol(char *identifier);
 int nasmStoreGlobalSymbol(int registerIndex, char *identifier);

@@ -149,10 +149,11 @@ struct ASTnode *binexpr(int ptp) {
         left = makeASTNode(tokenToASTOperator(tokentype), left, NULL, right, 0);
 
         // Update the details of the current token.
-        // If we hit a semicolon, it means it's end of the sentence,
+        // If we hit a semicolon, or right parenthesis,
+        // it means it's end of the sentence,
         // so we return just the left node. OvO
         tokentype = Token.token;
-        if (tokentype == T_SEMICOLON) {
+        if (tokentype == T_SEMICOLON || tokentype == T_RPAREN) {
             return left;
         }
     }

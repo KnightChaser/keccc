@@ -99,11 +99,30 @@ void nasmPreamble() {
           "\tnop\n"
           "\tleave\n"
           "\tret\n"
-          "\n"
+          "\n",
+          Outfile);
+}
 
-          "main:\n"
-          "\tpush\trbp\n"
-          "\tmov	rbp, rsp\n",
+/**
+ * nasmFunctionPreamble - Outputs the assembly code function preamble.
+ *
+ * @functionName: The name of the function.
+ */
+void nasmFunctionPreamble(char *functionName) {
+    fprintf(Outfile, "\tsection\t.text\n");
+    fprintf(Outfile, "\tglobal\t%s\n", functionName);
+    fprintf(Outfile, "%s:\n", functionName);
+    fprintf(Outfile, "\tmov\trbp, rsp\n");
+}
+
+/**
+ * nasmFunctionPostamble - Outputs the assembly code function postamble.
+ */
+void nasmFunctionPostamble() {
+    // TODO: Return value from main
+    fputs("\tmov eax, 0\n"
+          "\tpop rbp\n"
+          "\tret\n",
           Outfile);
 }
 
