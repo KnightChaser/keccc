@@ -111,7 +111,7 @@ static struct ASTnode *assignmentStatement(void) {
  * }
  * -----------------------------------
  */
-struct ASTnode *ifStatement(void) {
+static struct ASTnode *ifStatement(void) {
     struct ASTnode *conditionAST;   // condition
     struct ASTnode *thenAST;        // true branch
     struct ASTnode *elseAST = NULL; // false branch
@@ -156,7 +156,7 @@ struct ASTnode *ifStatement(void) {
  *
  * @return AST node representing the while statement.
  */
-struct ASTnode *whileStatement(void) {
+static struct ASTnode *whileStatement(void) {
     struct ASTnode *conditionAST;
     struct ASTnode *bodyAST;
 
