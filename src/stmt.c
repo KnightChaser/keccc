@@ -182,8 +182,8 @@ static struct ASTnode *whileStatement(void) {
     // Get the AST for the compount statement; this is the body of the loop
     bodyAST = compoundStatement();
 
-    // Store body in the middle child to match codegen expectations
-    return makeASTNode(A_WHILE, conditionAST, bodyAST, NULL, 0);
+    // Store body in the right child for structural consistency
+    return makeASTNode(A_WHILE, conditionAST, NULL, bodyAST, 0);
 }
 
 /**
@@ -251,9 +251,8 @@ static struct ASTnode *forStatement(void) {
     // Glue the compount statement and the postOperationAST
     treeNode = makeASTNode(A_GLUE, bodyAST, NULL, postOperationAST, 0);
 
-    // Make the WHILE node with the condition and the glued body+postOp
-    // Store loop body in the middle child to match codegen expectations
-    treeNode = makeASTNode(A_WHILE, conditionAST, treeNode, NULL, 0);
+    // Glue the conditionAST and the WHILE node
+    treeNode = makeASTNode(A_WHILE, conditionAST, NULL, treeNode, 0);
 
     // Finally, glue the preOperationAST and the WHILE node
     treeNode = makeASTNode(A_GLUE, preOperationAST, NULL, treeNode, 0);

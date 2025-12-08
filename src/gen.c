@@ -128,8 +128,8 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     codegenAST(n->left, labelEndLoop, n->op);
     codegenResetRegisters();
 
-    // Generate the loop body
-    codegenAST(n->middle, NOREG, n->op);
+    // Generate the loop body (stored in right child for WHILE)
+    codegenAST(n->right, NOREG, n->op);
     codegenResetRegisters();
 
     // Jump back to the start of the loop
