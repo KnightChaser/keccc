@@ -133,6 +133,11 @@ static int keyword(char *s) {
             return T_ELSE;
         }
         break;
+    case 'f':
+        if (!strcmp(s, "for")) {
+            return T_FOR;
+        }
+        break;
     case 'i':
         if (!strcmp(s, "if")) {
             return T_IF;

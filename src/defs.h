@@ -44,6 +44,8 @@ enum {
     T_IF,    // "if"
     T_ELSE,  // "else"
     T_WHILE, // "while"
+    T_FOR,   // "for"
+             // NOTE: for() statement will be converted into while() statement
 };
 
 // Token structure

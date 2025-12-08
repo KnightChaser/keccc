@@ -19,6 +19,7 @@
  *      |     assignment_statement
  *      |     if_statement
  *      |     while_statement
+ *      |     for_statement
  *      ;
  *
  * print_statement: 'print' expression ';' ;
@@ -35,10 +36,20 @@
  *
  * while_statement: 'while' '(' true_false_expression ')' compound_statements ;
  *
+ * for_statement: 'for' '(' preop_statement ';'
+ *                        true_false_expression ';'
+ *                        postop_statement ')' compound_statement  ;
+ *
+ * preop_statement: staetment ;   // (for now)
+ * postop_statement: statement ;  // (for now)
+ *
  * identifier = T_IDENTIFIER;
  *      ;
  *
  */
+
+// Forward declarations
+static struct ASTnode *singleStatement(void);
 
 /**
  * printStatement - Parse and generate code for a print statement.
@@ -56,9 +67,6 @@ static struct ASTnode *printStatement(void) {
 
     // Make an print AST tree
     tree = makeASTUnary(A_PRINT, tree, 0);
-
-    // Match the following semicolon(;)
-    semicolon();
 
     return tree;
 }
@@ -91,9 +99,6 @@ static struct ASTnode *assignmentStatement(void) {
 
     // Create an assignment AST node
     treeNode = makeASTNode(A_ASSIGN, leftNode, NULL, rightNode, 0);
-
-    // Match the following semicolon(;)
-    semicolon();
 
     return treeNode;
 }
@@ -177,7 +182,110 @@ static struct ASTnode *whileStatement(void) {
     // Get the AST for the compount statement; this is the body of the loop
     bodyAST = compoundStatement();
 
+    // Store body in the middle child to match codegen expectations
     return makeASTNode(A_WHILE, conditionAST, bodyAST, NULL, 0);
+}
+
+/**
+ * forStatement - Parse and handle a for statement.
+ *
+ * NOTE:
+ * For statement is composed of:
+ * ----------------------------------------------
+ * for (pre-operation; condition; post-operation) {
+ *     body-statements
+ *     ...
+ * }
+ * ----------------------------------------------
+ * This will be converted into the following AST:
+ * ----------------------------------------------
+ *               A_GLUE
+ *             /       \
+ *       preOperation  A_WHILE
+ *                     /      \
+ *               condition   A_GLUE
+ *                          /      \
+ *                     bodyAST   postOperation
+ *                   (compound)
+ * ----------------------------------------------
+ * It means that the for loop is
+ * transformed into a while loop
+ *
+ * @return AST node representing the for statement.
+ */
+static struct ASTnode *forStatement(void) {
+    struct ASTnode *conditionAST;
+    struct ASTnode *bodyAST;
+    struct ASTnode *preOperationAST;
+    struct ASTnode *postOperationAST;
+    struct ASTnode *treeNode;
+
+    // Ensure we have 'for' '('
+    match(T_FOR, "for");
+    leftParenthesis();
+
+    // Get the preOperation statement and the semicolon(';')
+    preOperationAST = singleStatement();
+    semicolon();
+
+    // Get the condition and the ';'
+    conditionAST = binexpr(0);
+    if (!(conditionAST->op == A_EQ) && !(conditionAST->op == A_NE) &&
+        !(conditionAST->op == A_LT) && !(conditionAST->op == A_LE) &&
+        !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
+        logFatal("For statement condition is not a comparison");
+    }
+    semicolon();
+
+    // Get the postOperation statement and the ')'
+    postOperationAST = singleStatement();
+    rightParenthesis();
+
+    // Get the compound statement in the body part
+    bodyAST = compoundStatement();
+
+    // TODO:
+    // For now, all four sub-trees have to be non-NULL.
+    // Later on, we'll change the semantics for when some are missing
+
+    // Glue the compount statement and the postOperationAST
+    treeNode = makeASTNode(A_GLUE, bodyAST, NULL, postOperationAST, 0);
+
+    // Make the WHILE node with the condition and the glued body+postOp
+    // Store loop body in the middle child to match codegen expectations
+    treeNode = makeASTNode(A_WHILE, conditionAST, treeNode, NULL, 0);
+
+    // Finally, glue the preOperationAST and the WHILE node
+    treeNode = makeASTNode(A_GLUE, preOperationAST, NULL, treeNode, 0);
+
+    return treeNode;
+}
+
+/**
+ * singleStatement - Parse and handle a single statement.
+ *
+ * @return AST node representing the single statement.
+ */
+static struct ASTnode *singleStatement(void) {
+    switch (Token.token) {
+    case T_PRINT:
+        return printStatement();
+    case T_INT:
+        variableDeclaration();
+        return NULL; // No AST node for declarations
+    case T_IDENTIFIER:
+        return assignmentStatement();
+    case T_IF:
+        return ifStatement();
+    case T_WHILE:
+        return whileStatement();
+    case T_FOR:
+        return forStatement();
+    }
+
+    // default
+    logFatald("Unexpected token in single statement: %d", Token.token);
+    return NULL; // Unreachable, just to suppress compiler warning
 }
 
 /**
@@ -195,31 +303,13 @@ struct ASTnode *compoundStatement(void) {
     leftBrace();
 
     while (true) {
-        switch (Token.token) {
-        case T_PRINT:
-            treeNode = printStatement();
-            break;
-        case T_INT:
-            variableDeclaration();
-            treeNode = NULL; // No AST node for declarations
-            break;
-        case T_IDENTIFIER:
-            treeNode = assignmentStatement();
-            break;
-        case T_IF:
-            treeNode = ifStatement();
-            break;
-        case T_WHILE:
-            treeNode = whileStatement();
-            break;
-        case T_RBRACE:
-            // When we hit the right curly bracket,
-            // we are done with this compound statement.
-            // Return the left AST node.
-            rightBrace();
-            return leftASTNode;
-        default:
-            logFatal("Unexpected token in compound statement");
+
+        treeNode = singleStatement();
+
+        // Some statement must be followed by a semicolon
+        if (treeNode != NULL &&
+            (treeNode->op == A_PRINT || treeNode->op == A_ASSIGN)) {
+            semicolon();
         }
 
         /**
@@ -259,11 +349,21 @@ struct ASTnode *compoundStatement(void) {
          * ``
          */
 
-        if (leftASTNode == NULL) {
-            // First AST node in the compound statement
-            leftASTNode = treeNode;
-        } else {
-            leftASTNode = makeASTNode(A_GLUE, leftASTNode, NULL, treeNode, 0);
+        if (treeNode != NULL) {
+            if (leftASTNode == NULL) {
+                // First AST node in the compound statement
+                leftASTNode = treeNode;
+            } else {
+                leftASTNode =
+                    makeASTNode(A_GLUE, leftASTNode, NULL, treeNode, 0);
+            }
+        }
+
+        // When we hit a right curly bracket('}'), end of compound statement.
+        // Skip past it and return the AST.
+        if (Token.token == T_RBRACE) {
+            rightBrace();
+            return leftASTNode;
         }
     }
 }
