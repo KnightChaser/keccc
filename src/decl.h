@@ -72,8 +72,6 @@ void logFatalc(char *s, int c);
 int findGlobalSymbol(char *s);
 int addGlobalSymbol(char *name);
 
-// NOTE: interpret.c
-int interpretAST(struct ASTnode *n);
-
 // NOTE: decl.c
 void variableDeclaration(void);
+struct ASTnode *functionDeclaration(void);
