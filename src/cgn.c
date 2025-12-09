@@ -14,7 +14,11 @@
 #include "data.h"
 #include "decl.h"
 
-static int freeRegisters[4];
+// TODO:
+// Better name for this variable is required,
+// such as "Xth register is currently not used"
+static bool freeRegisters[4];
+
 static char *qwordRegisterList[4] = {
     "r8",  // x64 general-purpose register #1
     "r9",  // x64 general-purpose register #2
@@ -35,7 +39,7 @@ void nasmResetRegisterPool(void) {
     int registerCount = sizeof(freeRegisters) / sizeof(freeRegisters[0]);
     for (int i = 0; i < registerCount; i++) {
         // Mark all registers as free
-        freeRegisters[i] = 1;
+        freeRegisters[i] = true;
     }
 }
 
@@ -49,7 +53,7 @@ static int allocateRegister(void) {
     int registerCount = sizeof(freeRegisters) / sizeof(freeRegisters[0]);
     for (int i = 0; i < registerCount; i++) {
         if (freeRegisters[i]) {
-            freeRegisters[i] = 0; // Mark as used
+            freeRegisters[i] = false; // Mark as used
             return i;
         }
     }
