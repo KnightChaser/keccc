@@ -39,14 +39,14 @@ void variableDeclaration(void) {
     // Get the type of the variable, then the identifier
     type = parsePrimitiveType(Token.token);
     scan(&Token);
-    identifier();
+    matchIdentifierToken();
 
     // Text now has the identifier's name
     id = addGlobalSymbol(Text, type, S_VARIABLE);
     codegenDeclareGlobalSymbol(id);
 
     // Finally, match the semicolon(";")
-    semicolon();
+    matchSemicolonToken();
 }
 
 /**
@@ -68,10 +68,10 @@ struct ASTnode *functionDeclaration(void) {
     // Find the 'void', the identifier, and the '(' ')'.
     // For now, do nothing with them
     match(T_VOID, "void");
-    identifier(); // Text now has the function name
+    matchIdentifierToken(); // Text now has the function name
     functionNameIndex = addGlobalSymbol(Text, P_VOID, S_FUNCTION);
-    leftParenthesis();
-    rightParenthesis();
+    matchLeftParenthesisToken();
+    matchRightParenthesisToken();
 
     // Get the AST for the compound statement
     treeNode = compoundStatement();

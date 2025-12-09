@@ -68,12 +68,12 @@ struct ASTnode *compoundStatement(void);
 
 // NOTE: misc.c
 void match(int t, char *what);
-void semicolon(void);
-void leftBrace(void);        // {
-void rightBrace(void);       // }
-void leftParenthesis(void);  // (
-void rightParenthesis(void); // )
-void identifier(void);
+void matchSemicolonToken(void);
+void matchIdentifierToken(void);
+void matchLeftBraceToken(void);        // {
+void matchRightBraceToken(void);       // }
+void matchLeftParenthesisToken(void);  // (
+void matchRightParenthesisToken(void); // )
 void logFatal(char *s);
 void logFatals(char *s1, char *s2);
 void logFatald(char *s, int d);

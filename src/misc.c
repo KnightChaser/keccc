@@ -23,34 +23,34 @@ void match(int t, char *what) {
 }
 
 /**
- * semicolon - Matches a semicolon token.
+ * matchSemicolonToken - Matches a semicolon token.
  */
-void semicolon(void) { match(T_SEMICOLON, ";"); }
+void matchSemicolonToken(void) { match(T_SEMICOLON, ";"); }
 
 /**
- * identifier - Matches an identifier token.
+ * matchIdentifierToken - Matches an identifier token.
  */
-void identifier(void) { match(T_IDENTIFIER, "identifier"); }
+void matchIdentifierToken(void) { match(T_IDENTIFIER, "identifier"); }
 
 /**
- * leftBrace - Matches a left brace token.
+ * matchLeftBraceToken - Matches a left brace token.
  */
-void leftBrace(void) { match(T_LBRACE, "{"); }
+void matchLeftBraceToken(void) { match(T_LBRACE, "{"); }
 
 /**
- * rightBrace - Matches a right brace token.
+ * matchRightBraceToken - Matches a right brace token.
  */
-void rightBrace(void) { match(T_RBRACE, "}"); }
+void matchRightBraceToken(void) { match(T_RBRACE, "}"); }
 
 /**
- * leftParenthesis - Matches a left parenthesis token.
+ * matchLeftParenthesisToken - Matches a left parenthesis token.
  */
-void leftParenthesis(void) { match(T_LPAREN, "("); }
+void matchLeftParenthesisToken(void) { match(T_LPAREN, "("); }
 
 /**
- * rightParenthesis - Matches a right parenthesis token.
+ * matchRightParenthesisToken - Matches a right parenthesis token.
  */
-void rightParenthesis(void) { match(T_RPAREN, ")"); }
+void matchRightParenthesisToken(void) { match(T_RPAREN, ")"); }
 
 /**
  * logFatal - Logs a fatal error message and exits.

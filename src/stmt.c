@@ -101,7 +101,7 @@ static struct ASTnode *assignmentStatement(void) {
     int identifierIndex;
 
     // Ensure we have an identifier
-    identifier();
+    matchIdentifierToken();
 
     // Check it's been defined then make a leaf node for it
     if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
@@ -157,7 +157,7 @@ static struct ASTnode *ifStatement(void) {
 
     // Ensure we have 'if' then '('
     match(T_IF, "if");
-    leftParenthesis();
+    matchLeftParenthesisToken();
 
     // Parse the following expression and the following ')'
     // Ensure the tree's operation is a comparison.
@@ -168,7 +168,7 @@ static struct ASTnode *ifStatement(void) {
         !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
         logFatal("If statement condition is not a comparison");
     }
-    rightParenthesis();
+    matchRightParenthesisToken();
 
     // Get the AST for the compount statement; this is the 'then' branch
     thenAST = compoundStatement();
@@ -201,7 +201,7 @@ static struct ASTnode *whileStatement(void) {
 
     // Ensure we have 'while' then '('
     match(T_WHILE, "while");
-    leftParenthesis();
+    matchLeftParenthesisToken();
 
     // Parse the following expression and the following ')'
     conditionAST = binexpr(0);
@@ -211,7 +211,7 @@ static struct ASTnode *whileStatement(void) {
         !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
         logFatal("While statement condition is not a comparison");
     }
-    rightParenthesis();
+    matchRightParenthesisToken();
 
     // Get the AST for the compount statement; this is the body of the loop
     bodyAST = compoundStatement();
@@ -256,11 +256,11 @@ static struct ASTnode *forStatement(void) {
 
     // Ensure we have 'for' '('
     match(T_FOR, "for");
-    leftParenthesis();
+    matchLeftParenthesisToken();
 
     // Get the preOperation statement and the semicolon(';')
     preOperationAST = singleStatement();
-    semicolon();
+    matchSemicolonToken();
 
     // Get the condition and the ';'
     conditionAST = binexpr(0);
@@ -269,11 +269,11 @@ static struct ASTnode *forStatement(void) {
         !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
         logFatal("For statement condition is not a comparison");
     }
-    semicolon();
+    matchSemicolonToken();
 
     // Get the postOperation statement and the ')'
     postOperationAST = singleStatement();
-    rightParenthesis();
+    matchRightParenthesisToken();
 
     // Get the compound statement in the body part
     bodyAST = compoundStatement();
@@ -334,7 +334,7 @@ struct ASTnode *compoundStatement(void) {
     // Accorind to the rule of compound statements,
     // It requires, at least, a left curly bracket '{'
     // when code starts
-    leftBrace();
+    matchLeftBraceToken();
 
     while (true) {
 
@@ -343,7 +343,7 @@ struct ASTnode *compoundStatement(void) {
         // Some statement must be followed by a semicolon
         if (treeNode != NULL &&
             (treeNode->op == A_PRINT || treeNode->op == A_ASSIGN)) {
-            semicolon();
+            matchSemicolonToken();
         }
 
         /**
@@ -396,7 +396,7 @@ struct ASTnode *compoundStatement(void) {
         // When we hit a right curly bracket('}'), end of compound
         // statement. Skip past it and return the AST.
         if (Token.token == T_RBRACE) {
-            rightBrace();
+            matchRightBraceToken();
             return leftASTNode;
         }
     }
