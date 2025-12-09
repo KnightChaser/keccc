@@ -112,6 +112,7 @@ void nasmFunctionPreamble(char *functionName) {
     fprintf(Outfile, "\tsection\t.text\n");
     fprintf(Outfile, "\tglobal\t%s\n", functionName);
     fprintf(Outfile, "%s:\n", functionName);
+    fprintf(Outfile, "\tpush\trbp\n");
     fprintf(Outfile, "\tmov\trbp, rsp\n");
 }
 
