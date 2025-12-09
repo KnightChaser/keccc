@@ -176,7 +176,7 @@ int nasmLoadGlobalSymbol(int id) {
                 GlobalSymbolTable[id].name        // source global symbol
         );
     } else if (primitiveType == P_CHAR) {
-        fprintf(Outfile, "\tmovzx\t%s, byte [%s]\n",
+        fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n",
                 qwordRegisterList[registerIndex], // destination register
                 GlobalSymbolTable[id].name        // source global symbol
         );
