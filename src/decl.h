@@ -8,7 +8,7 @@
 struct token;
 
 // NOTE: scan.c
-int scan(struct token *t);
+bool scan(struct token *t);
 
 // NOTE: tree.c
 struct ASTnode *

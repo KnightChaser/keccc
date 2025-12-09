@@ -174,9 +174,10 @@ static int keyword(char *s) {
  * scan - Scan and return the next token found in the input.
  *
  * @param t Pointer to the token structure to store the scanned token
- * @return 1 if a token was successfully scanned, 0 if end of file
+ *
+ * @return true if a token was successfully scanned, false if end of file (EOF)
  */
-int scan(struct token *t) {
+bool scan(struct token *t) {
     int c;
     int tokenType;
 
@@ -187,7 +188,7 @@ int scan(struct token *t) {
     switch (c) {
     case EOF:
         t->token = T_EOF;
-        return 0; // End of file
+        return false; // End of file
     case '+':
         t->token = T_PLUS;
         break;
@@ -282,5 +283,5 @@ int scan(struct token *t) {
     }
 
     // Successfully scanned a token
-    return 1;
+    return true;
 }
