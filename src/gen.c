@@ -229,13 +229,11 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
 
     // Leaf nodes
     case A_INTLIT:
-        return nasmLoadImmediateInt(n->v.intvalue);
+        return nasmLoadImmediateInt(n->v.intvalue, n->primitiveType);
     case A_IDENTIFIER:
-        return nasmLoadGlobalSymbol(
-            GlobalSymbolTable[n->v.identifierIndex].name);
+        return nasmLoadGlobalSymbol(n->v.identifierIndex);
     case A_LVALUEIDENTIFIER:
-        return nasmStoreGlobalSymbol(
-            reg, GlobalSymbolTable[n->v.identifierIndex].name);
+        return nasmStoreGlobalSymbol(reg, n->v.identifierIndex);
     case A_ASSIGN:
         // The work has already been done, return the result
         return rightRegister;
@@ -243,6 +241,10 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         codegenPrintInt(leftRegister);
         codegenResetRegisters();
         return NOREG;
+    case A_WIDENTYPE:
+        // Widen the child node's primitive type to the parent node's type
+        return nasmWidenPrimitiveType(leftRegister, n->left->primitiveType,
+                                      n->primitiveType);
 
     default:
         // Should not reach here; unsupported operation
@@ -276,6 +278,6 @@ void codegenPrintInt(int reg) { nasmPrintIntFromReg(reg); }
 /**
  * codegenDeclareGlobalSymbol - Wraps CPU-specific global symbol generation.
  *
- * @name: The name of the global symbol.
+ * @id: The index of the global symbol to declare.
  */
-void codegenDeclareGlobalSymbol(char *name) { nasmDeclareGlobalSymbol(name); }
+void codegenDeclareGlobalSymbol(int id) { nasmDeclareGlobalSymbol(id); }

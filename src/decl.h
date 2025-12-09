@@ -3,17 +3,31 @@
 // Declarations for scanner, parser, AST, interpreter, and code generator
 // Used in various source files
 
+#include <stdbool.h>
+
 struct token;
 
 // NOTE: scan.c
 int scan(struct token *t);
 
 // NOTE: tree.c
-struct ASTnode *makeASTNode(int op, struct ASTnode *left,
-                            struct ASTnode *middle, struct ASTnode *right,
-                            int intvalue);
-struct ASTnode *makeASTLeaf(int op, int intvalue);
-struct ASTnode *makeASTUnary(int op, struct ASTnode *left, int intvalue);
+struct ASTnode *
+makeASTNode(int op,                 // AST operation code
+            int primitiveType,      // Primitive data type
+            struct ASTnode *left,   // Left child
+            struct ASTnode *middle, // middle child (for ternary ops)
+            struct ASTnode *right,  // Right child
+            int intvalue            // Integer value (for leaf nodes)
+);
+struct ASTnode *makeASTLeaf(int op,            // AST operation code
+                            int primitiveType, // Primitive data type
+                            int intvalue       // Integer value (for leaf nodes)
+);
+struct ASTnode *makeASTUnary(int op,               // AST operation code
+                             int primitiveType,    // Primitive data type
+                             struct ASTnode *left, // Left child
+                             int intvalue // Integer value (for leaf nodes)
+);
 
 // NOTE: gen.c (target-agnostic code generation)
 int codegenAST(struct ASTnode *n, int reg, int parentASTop);
@@ -21,7 +35,7 @@ void codegenPreamble();
 void codegenPostamble();
 void codegenResetRegisters();
 void codegenPrintInt(int reg);
-void codegenDeclareGlobalSymbol(char *s);
+void codegenDeclareGlobalSymbol(int id);
 
 // NOTE: cgn.c
 // Code generation utilities (NASM x86-64)
@@ -30,10 +44,10 @@ void nasmPreamble();
 void nasmPostamble();
 void nasmFunctionPreamble(char *functionName);
 void nasmFunctionPostamble();
-int nasmLoadImmediateInt(int value);
-int nasmLoadGlobalSymbol(char *identifier);
-int nasmStoreGlobalSymbol(int registerIndex, char *identifier);
-void nasmDeclareGlobalSymbol(char *symbol);
+int nasmLoadImmediateInt(int value, int primitiveType);
+int nasmLoadGlobalSymbol(int id);
+int nasmStoreGlobalSymbol(int registerIndex, int id);
+void nasmDeclareGlobalSymbol(int id);
 int nasmAddRegs(int dstReg, int srcReg);
 int nasmSubRegs(int dstReg, int srcReg);
 int nasmMulRegs(int dstReg, int srcReg);
@@ -43,6 +57,7 @@ int nasmCompareAndSet(int ASTop, int r1, int r2);
 int nasmCompareAndJump(int ASTop, int r1, int r2, int label);
 void nasmLabel(int label);
 void nasmJump(int label);
+int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
@@ -66,8 +81,12 @@ void logFatalc(char *s, int c);
 
 // NOTE: symbol.c
 int findGlobalSymbol(char *s);
-int addGlobalSymbol(char *name);
+int addGlobalSymbol(char *name, int primitiveType, int structuralType);
 
 // NOTE: decl.c
 void variableDeclaration(void);
 struct ASTnode *functionDeclaration(void);
+
+// NOTE: types.c
+bool checkPrimitiveTypeCompatibility(int *primitiveType1, int *primitiveType2,
+                                     bool onlyRight);

@@ -40,12 +40,15 @@ enum {
 
     // Keywords
     T_PRINT, // "print"
-    T_INT,   // "int"
     T_IF,    // "if"
     T_ELSE,  // "else"
     T_WHILE, // "while"
     T_FOR,   // "for" (will be converted into while statement)
-    T_VOID,  // "void"
+
+    // Types
+    T_VOID, // "void"
+    T_INT,  // "int"
+    T_CHAR, // "char"
 };
 
 // Token structure
@@ -75,12 +78,22 @@ enum {
     A_IF,               // If statement
     A_WHILE,            // While loop
     A_FUNCTION,         // Function definition
+    A_WIDENTYPE,        // Widen data type (usually integer)
+};
+
+// Primitive types
+enum {
+    P_NONE, // no type
+    P_VOID, // void type
+    P_CHAR, // character type (1 byte)
+    P_INT   // integer type (4 bytes)
 };
 
 // AST node structure
 struct ASTnode {
     int op;                  // operation to be performed on this tree
                              // (e.g., A_ADD, A_INTLIT)
+    int primitiveType;       // primitive type (e.g., P_INT, P_CHAR)
     struct ASTnode *left;    // left subtree
     struct ASTnode *middle;  // middle subtree (for if-else statements)
     struct ASTnode *right;   // right subtree
@@ -95,9 +108,17 @@ struct ASTnode {
 // functions have no register to return
 #define NOREG -1
 
+// Structural types
+enum {
+    S_VARIABLE,
+    S_FUNCTION,
+};
+
 // Symbol table structure
 struct symbolTable {
-    char *name; // Name of a symbol
+    char *name;         // Name of a symbol
+    int primitiveType;  // Primitive type for the symbol (e.g., P_INT)
+    int structuralType; // Structural type (e.g., S_VARIABLE)
 };
 
 #endif

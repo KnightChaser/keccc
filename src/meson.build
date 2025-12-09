@@ -10,7 +10,8 @@ executable('keccc', [
     'scan.c',
     'stmt.c',
     'symbol.c',
-    'tree.c'
+    'tree.c',
+    'types.c'
   ],
   install: true
 )

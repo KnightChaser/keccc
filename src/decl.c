@@ -5,6 +5,26 @@
 #include "defs.h"
 
 /**
+ * parsePrimitiveType - Parses a (primitive-type) token and returns its internal
+ * representation.
+ *
+ * @param t: Token representing the primitive type.
+ * @return: Internal representation of the primitive type.
+ */
+int parsePrimitiveType(int t) {
+    if (t == T_CHAR) {
+        return P_CHAR;
+    } else if (t == T_INT) {
+        return P_INT;
+    } else if (t == T_VOID) {
+        return P_VOID;
+    } else {
+        fprintf(stderr, "Error: Unknown primitive type token %d\n", t);
+        exit(1);
+    }
+}
+
+/**
  * variableDeclaration - Parses a variable declaration.
  *
  * NOTE:
@@ -13,10 +33,19 @@
  * and a semicolon(;).
  */
 void variableDeclaration(void) {
-    match(T_INT, "int");
-    identifier(); // Text now has the identifier's name
-    addGlobalSymbol(Text);
-    codegenDeclareGlobalSymbol(Text);
+    int id;
+    int type;
+
+    // Get the type of the variable, then the identifier
+    type = parsePrimitiveType(Token.token);
+    scan(&Token);
+    identifier();
+
+    // Text now has the identifier's name
+    id = addGlobalSymbol(Text, type, S_VARIABLE);
+    codegenDeclareGlobalSymbol(id);
+
+    // Finally, match the semicolon(";")
     semicolon();
 }
 
@@ -40,7 +69,7 @@ struct ASTnode *functionDeclaration(void) {
     // For now, do nothing with them
     match(T_VOID, "void");
     identifier(); // Text now has the function name
-    functionNameIndex = addGlobalSymbol(Text);
+    functionNameIndex = addGlobalSymbol(Text, P_VOID, S_FUNCTION);
     leftParenthesis();
     rightParenthesis();
 
@@ -49,5 +78,5 @@ struct ASTnode *functionDeclaration(void) {
 
     // Return an A_FUNCTION node which has the function's nameslot,
     // and the compount statement as its child
-    return makeASTUnary(A_FUNCTION, treeNode, functionNameIndex);
+    return makeASTUnary(A_FUNCTION, P_VOID, treeNode, functionNameIndex);
 }

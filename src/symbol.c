@@ -43,12 +43,14 @@ static int getNewGlobalSymbolIndex(void) {
 /**
  * addGlobalSymbol - Add a global symbol to the symbol table.
  *
- * @param name The name of the symbol to add
+ * @param name           The name of the symbol to add.
+ * @param primitiveType  The primitive data type of the symbol.
+ * @param structuralType The structural data type of the symbol.
  *
  * @return The index of the added symbol in the symbol table.
  *         If the symbol already exists, returns its existing index.
  */
-int addGlobalSymbol(char *name) {
+int addGlobalSymbol(char *name, int primitiveType, int structuralType) {
     int symbolIndex;
 
     // If this is already in the symbol table,
@@ -62,6 +64,8 @@ int addGlobalSymbol(char *name) {
     if (GlobalSymbolTable[symbolIndex].name == NULL) {
         logFatal("Memory allocation failed for symbol name");
     }
+    GlobalSymbolTable[symbolIndex].primitiveType = primitiveType;
+    GlobalSymbolTable[symbolIndex].structuralType = structuralType;
 
     return symbolIndex;
 }

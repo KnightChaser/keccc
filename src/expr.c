@@ -21,7 +21,17 @@ static struct ASTnode *primary(void) {
     case T_INTLIT:
         // If it's an integer literal, create a leaf node.
         // Then scan the next token. It will be used by the caller.
-        n = makeASTLeaf(A_INTLIT, Token.intvalue);
+
+        // NOTE:
+        // Make the primitive integer leaf node as P_CHAR if
+        // the value is within char range. because we can optimize
+        // memory usage later.
+        if (Token.intvalue >= 0 && Token.intvalue <= 255) {
+            n = makeASTLeaf(A_INTLIT, P_CHAR, Token.intvalue);
+        } else {
+            n = makeASTLeaf(A_INTLIT, P_INT, Token.intvalue);
+        }
+
         break;
 
     case T_IDENTIFIER:
@@ -31,7 +41,7 @@ static struct ASTnode *primary(void) {
             logFatals("Undeclared identifier: ", Text);
         }
 
-        n = makeASTLeaf(A_IDENTIFIER, id);
+        n = makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
         break;
 
     default:
@@ -122,7 +132,10 @@ static int operatorPrecedence(int tokentype) {
  * @return ASTnode* The AST node representing the binary expression.
  */
 struct ASTnode *binexpr(int ptp) {
-    struct ASTnode *left, *right;
+    struct ASTnode *left;
+    struct ASTnode *right;
+    int leftPrimitiveType;
+    int rightPrimitiveType;
     int tokentype;
 
     // Get the integer literal on the leftest side,
@@ -145,8 +158,28 @@ struct ASTnode *binexpr(int ptp) {
         // Recurse to get the right-hand side expression
         right = binexpr(operatorPrecedence(tokentype));
 
+        // Ensure type compatibility between left and right nodes
+        leftPrimitiveType = left->primitiveType;
+        rightPrimitiveType = right->primitiveType;
+        if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
+                                             &rightPrimitiveType, false)) {
+            logFatal("Type error: incompatible types in binary expression");
+        }
+
+        // Widen the primitive type if necessary
+        if (leftPrimitiveType) {
+            left = makeASTNode(A_WIDENTYPE, leftPrimitiveType, left, NULL, NULL,
+                               0);
+        }
+        if (rightPrimitiveType) {
+            right = makeASTNode(A_WIDENTYPE, rightPrimitiveType, right, NULL,
+                                NULL, 0);
+        }
+
         // Combine left and right nodes into a binary AST node
-        left = makeASTNode(tokenToASTOperator(tokentype), left, NULL, right, 0);
+        // Convert the token into an AST operation at the same time.
+        left = makeASTNode(tokenToASTOperator(tokentype), leftPrimitiveType,
+                           left, NULL, right, 0);
 
         // Update the details of the current token.
         // If we hit a semicolon, or right parenthesis,

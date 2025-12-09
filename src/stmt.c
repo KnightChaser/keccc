@@ -58,6 +58,8 @@ static struct ASTnode *singleStatement(void);
  */
 static struct ASTnode *printStatement(void) {
     struct ASTnode *tree;
+    int leftPrimitiveType;
+    int rightPrimitiveType;
 
     // Match "print" string at the first token
     match(T_PRINT, "print");
@@ -66,7 +68,21 @@ static struct ASTnode *printStatement(void) {
     tree = binexpr(0);
 
     // Make an print AST tree
-    tree = makeASTUnary(A_PRINT, tree, 0);
+    leftPrimitiveType = P_INT;
+    rightPrimitiveType = tree->primitiveType;
+    if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
+                                         &rightPrimitiveType, false)) {
+        logFatal("Incompatible type for print statement");
+    }
+
+    // Widen the tree if required.
+    if (rightPrimitiveType) {
+        tree = makeASTUnary(A_WIDENTYPE, leftPrimitiveType, tree, 0);
+    }
+
+    // Wrap the expression in a print node so statement handling
+    // can correctly require a trailing semicolon.
+    tree = makeASTUnary(A_PRINT, P_NONE, tree, 0);
 
     return tree;
 }
@@ -80,6 +96,8 @@ static struct ASTnode *assignmentStatement(void) {
     struct ASTnode *leftNode = NULL;
     struct ASTnode *rightNode = NULL;
     struct ASTnode *treeNode = NULL;
+    int leftPrimitiveType;
+    int rightPrimitiveType;
     int identifierIndex;
 
     // Ensure we have an identifier
@@ -89,7 +107,9 @@ static struct ASTnode *assignmentStatement(void) {
     if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
         logFatals("Undeclared identifier: ", Text);
     }
-    rightNode = makeASTLeaf(A_LVALUEIDENTIFIER, identifierIndex);
+    rightNode = makeASTLeaf(A_LVALUEIDENTIFIER,
+                            GlobalSymbolTable[identifierIndex].primitiveType,
+                            identifierIndex);
 
     // Match the '=' token
     match(T_ASSIGN, "=");
@@ -97,8 +117,22 @@ static struct ASTnode *assignmentStatement(void) {
     // Parse the expression on the right-hand side of the '='
     leftNode = binexpr(0);
 
+    // Ensure type compatibility between left and right nodes
+    leftPrimitiveType = leftNode->primitiveType;
+    rightPrimitiveType = rightNode->primitiveType;
+    if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
+                                         &rightPrimitiveType, false)) {
+        logFatal("Type error: incompatible types in assignment statement");
+    }
+
+    // Widen the primitive type if necessary
+    if (leftPrimitiveType) {
+        leftNode = makeASTNode(A_WIDENTYPE, leftPrimitiveType, leftNode, NULL,
+                               NULL, 0);
+    }
+
     // Create an assignment AST node
-    treeNode = makeASTNode(A_ASSIGN, leftNode, NULL, rightNode, 0);
+    treeNode = makeASTNode(A_ASSIGN, P_INT, leftNode, NULL, rightNode, 0);
 
     return treeNode;
 }
@@ -144,7 +178,7 @@ static struct ASTnode *ifStatement(void) {
         elseAST = compoundStatement();
     }
 
-    return makeASTNode(A_IF, conditionAST, thenAST, elseAST, 0);
+    return makeASTNode(A_IF, P_NONE, conditionAST, thenAST, elseAST, 0);
 }
 
 /**
@@ -183,7 +217,7 @@ static struct ASTnode *whileStatement(void) {
     bodyAST = compoundStatement();
 
     // Store body in the right child for structural consistency
-    return makeASTNode(A_WHILE, conditionAST, NULL, bodyAST, 0);
+    return makeASTNode(A_WHILE, P_NONE, conditionAST, NULL, bodyAST, 0);
 }
 
 /**
@@ -249,13 +283,13 @@ static struct ASTnode *forStatement(void) {
     // Later on, we'll change the semantics for when some are missing
 
     // Glue the compount statement and the postOperationAST
-    treeNode = makeASTNode(A_GLUE, bodyAST, NULL, postOperationAST, 0);
+    treeNode = makeASTNode(A_GLUE, P_NONE, bodyAST, NULL, postOperationAST, 0);
 
     // Glue the conditionAST and the WHILE node
-    treeNode = makeASTNode(A_WHILE, conditionAST, NULL, treeNode, 0);
+    treeNode = makeASTNode(A_WHILE, P_NONE, conditionAST, NULL, treeNode, 0);
 
     // Finally, glue the preOperationAST and the WHILE node
-    treeNode = makeASTNode(A_GLUE, preOperationAST, NULL, treeNode, 0);
+    treeNode = makeASTNode(A_GLUE, P_NONE, preOperationAST, NULL, treeNode, 0);
 
     return treeNode;
 }
@@ -269,7 +303,8 @@ static struct ASTnode *singleStatement(void) {
     switch (Token.token) {
     case T_PRINT:
         return printStatement();
-    case T_INT:
+    case T_CHAR: // primitive data type (char, 1 byte)
+    case T_INT:  // primitive data type (int, 4 bytes)
         variableDeclaration();
         return NULL; // No AST node for declarations
     case T_IDENTIFIER:
@@ -354,12 +389,12 @@ struct ASTnode *compoundStatement(void) {
                 leftASTNode = treeNode;
             } else {
                 leftASTNode =
-                    makeASTNode(A_GLUE, leftASTNode, NULL, treeNode, 0);
+                    makeASTNode(A_GLUE, P_NONE, leftASTNode, NULL, treeNode, 0);
             }
         }
 
-        // When we hit a right curly bracket('}'), end of compound statement.
-        // Skip past it and return the AST.
+        // When we hit a right curly bracket('}'), end of compound
+        // statement. Skip past it and return the AST.
         if (Token.token == T_RBRACE) {
             rightBrace();
             return leftASTNode;
