@@ -37,7 +37,8 @@ void codegenResetRegisters();
 void codegenPrintInt(int reg);
 void codegenDeclareGlobalSymbol(int id);
 
-// NOTE: cgn.c
+// NOTE: cgn_*.c
+// (cgn_expr.c, cgn_stmt.c, cgn_regs.c)
 // Code generation utilities (NASM x86-64)
 void nasmResetRegisterPool(void);
 void nasmPreamble();
