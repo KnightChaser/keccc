@@ -39,16 +39,18 @@ enum {
     T_RPAREN,     // )
 
     // Keywords
-    T_PRINT, // "print"
-    T_IF,    // "if"
-    T_ELSE,  // "else"
-    T_WHILE, // "while"
-    T_FOR,   // "for" (will be converted into while statement)
+    T_PRINT,  // "print"
+    T_IF,     // "if"
+    T_ELSE,   // "else"
+    T_WHILE,  // "while"
+    T_FOR,    // "for" (will be converted into while statement)
+    T_RETURN, // "return"
 
     // Types
     T_VOID, // "void"
-    T_INT,  // "int"
     T_CHAR, // "char"
+    T_INT,  // "int"
+    T_LONG, // "long"
 };
 
 // Token structure
@@ -79,6 +81,8 @@ enum {
     A_WHILE,            // While loop
     A_FUNCTION,         // Function definition
     A_WIDENTYPE,        // Widen data type (usually integer)
+    A_RETURN,           // Return statement
+    A_FUNCTIONCALL,     // Function call
 };
 
 // Primitive types
@@ -86,20 +90,34 @@ enum {
     P_NONE, // no type
     P_VOID, // void type
     P_CHAR, // character type (1 byte)
-    P_INT   // integer type (4 bytes)
+    P_INT,  // integer type (4 bytes)
+    P_LONG, // long type (8 bytes)
+            // TODO: Generally, long is used for 4 or 8 bytes,
+            // depending on the system architecture.
+            // Here, we assume long is 8 bytes.
+            // Later, we may need to modify this to handle different
+            // architectures.
 };
 
 // AST node structure
 struct ASTnode {
-    int op;                  // operation to be performed on this tree
-                             // (e.g., A_ADD, A_INTLIT)
-    int primitiveType;       // primitive type (e.g., P_INT, P_CHAR)
-    struct ASTnode *left;    // left subtree
-    struct ASTnode *middle;  // middle subtree (for if-else statements)
-    struct ASTnode *right;   // right subtree
-    union {                  //
-        int intvalue;        // integer value if op == A_INTLIT
-        int identifierIndex; // symbol name if op == A_IDENTIFIER
+    int op;                 // operation to be performed on this tree
+                            // (e.g., A_ADD, A_INTLIT)
+    int primitiveType;      // primitive type (e.g., P_INT, P_CHAR)
+    struct ASTnode *left;   // left subtree
+    struct ASTnode *middle; // middle subtree (for if-else statements)
+    struct ASTnode *right;  // right subtree
+
+    /**
+     * NOTE:
+     * For A_INTLIT,       use v.intvalue to store the integer value.
+     * For A_IDENTIFIER,   use v.identifierIndex to store the index
+     * For A_FUNCTION,     use v.identifierIndex to store the index
+     * For A_FUNCTIONCALL, use v.identifierIndex to store the index
+     */
+    union {
+        int intvalue;
+        int identifierIndex;
     } v;
 };
 
@@ -119,6 +137,7 @@ struct symbolTable {
     char *name;         // Name of a symbol
     int primitiveType;  // Primitive type for the symbol (e.g., P_INT)
     int structuralType; // Structural type (e.g., S_VARIABLE)
+    int endLabel;       // NOTE: For S_FUNCTION, the end label
 };
 
 #endif

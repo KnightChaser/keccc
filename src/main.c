@@ -42,6 +42,9 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // FIX: For now, ensure that void printint() is defined
+    addGlobalSymbol("printint", P_CHAR, S_FUNCTION, 0);
+
     scan(&Token);      // First token
     codegenPreamble(); // Emit preamble(global, printint, main prologue)
     while (true) {     // Loop to process all input

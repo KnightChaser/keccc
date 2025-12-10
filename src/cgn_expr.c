@@ -1,9 +1,9 @@
 // src/cgn_expr.c
 
+#include "cgn_regs.h"
 #include "data.h"
 #include "decl.h"
 #include "defs.h"
-#include "cgn_regs.h"
 
 /**
  * NOTE:
@@ -16,6 +16,34 @@
  * $ gcc -no-pie out.o -o out
  * $ ./out
  */
+
+static int primitiveSizeInBytes[] = {
+    0, // P_NONE
+    0, // P_VOID
+    1, // P_CHAR
+    4, // P_INT
+    8  // P_LONG
+       // NOTE: Long is 8 bytes (64 bits) in x86_64
+       // Later, we can add support 32 bits long(x86) if needed
+};
+
+/**
+ * nasmGetPrimitiveTypeSize - Returns the size in bytes of a primitive type.
+ *
+ * @type: The primitive type (e.g., P_INT).
+ *
+ * Returns: Size in bytes of the primitive type.
+ */
+int nasmGetPrimitiveTypeSize(int type) {
+    if ((type < P_NONE) || (type > P_LONG)) {
+        fprintf(
+            stderr,
+            "Error: Invalid primitive type %d in nasmGetPrimitiveTypeSize\n",
+            type);
+        exit(1);
+    }
+    return primitiveSizeInBytes[type];
+}
 
 /**
  * nasmLoadImmediateInt - Generates code to load an integer constant into a
@@ -39,7 +67,7 @@ int nasmLoadImmediateInt(int value, int primitiveType) {
 
 /**
  * nasmLoadGlobalSymbol - Generates code to load a global symbol's value into a
- * register.
+ *                        register.
  *
  * @id: The ID of the global symbol in the symbol table.
  *
@@ -49,17 +77,28 @@ int nasmLoadGlobalSymbol(int id) {
     int registerIndex = allocateRegister();
     int primitiveType = GlobalSymbolTable[id].primitiveType;
 
-    if (primitiveType == P_INT) {
+    switch (primitiveType) {
+    case P_CHAR:
+        fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n", // Zero-extend for char
+                qwordRegisterList[registerIndex],    // destination register
+                GlobalSymbolTable[id].name           // source global symbol
+        );
+        break;
+    case P_INT:
+        fprintf(Outfile, "\txor %s, %s\n", qwordRegisterList[registerIndex],
+                qwordRegisterList[registerIndex]);  // Clear the register first)
+        fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n", // Load 4 bytes only
+                dwordRegisterList[registerIndex],   // destination register
+                GlobalSymbolTable[id].name          // source global symbol
+        );
+        break;
+    case P_LONG:
         fprintf(Outfile, "\tmov\t%s, [%s]\n",
                 qwordRegisterList[registerIndex], // destination register
                 GlobalSymbolTable[id].name        // source global symbol
         );
-    } else if (primitiveType == P_CHAR) {
-        fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n",
-                qwordRegisterList[registerIndex], // destination register
-                GlobalSymbolTable[id].name        // source global symbol
-        );
-    } else {
+        break;
+    default:
         fprintf(
             stderr,
             "Error: Unsupported primitive type %d in nasmLoadGlobalSymbol\n",
@@ -82,18 +121,28 @@ int nasmLoadGlobalSymbol(int id) {
 int nasmStoreGlobalSymbol(int registerIndex, int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
 
-    if (primitiveType == P_INT) {
-        fprintf(Outfile, "\tmov\t[%s], %s\n",
-                GlobalSymbolTable[id].name,      // destination global symbol
-                qwordRegisterList[registerIndex] // source register
-        );
-    } else if (primitiveType == P_CHAR) {
+    switch (primitiveType) {
+    case P_CHAR:
         fprintf(
             Outfile, "\tmov\tBYTE [%s], %s\n",
             GlobalSymbolTable[id].name,     // destination global symbol
             byteRegisterList[registerIndex] // source register (lower 8 bits)
         );
-    } else {
+        break;
+    case P_INT:
+        fprintf(
+            Outfile, "\tmov\tDWORD [%s], %s\n",
+            GlobalSymbolTable[id].name,      // destination global symbol
+            dwordRegisterList[registerIndex] // source register (lower 32 bits)
+        );
+        break;
+    case P_LONG:
+        fprintf(Outfile, "\tmov\t[%s], %s\n",
+                GlobalSymbolTable[id].name,      // destination global symbol
+                qwordRegisterList[registerIndex] // source register
+        );
+        break;
+    default:
         fprintf(
             stderr,
             "Error: Unsupported primitive type %d in nasmStoreGlobalSymbol\n",
@@ -105,7 +154,9 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
 }
 
 /**
- * nasmDeclareCommonGlobal - Generates code to declare a global symbol.
+ * nasmDeclareGlobalSymbol - Generates code to declare a global symbol.
+ * It automatically calculates size and alignment
+ * based on the given primitive type.
  *
  * @symbol: The name of the global symbol.
  */
@@ -113,24 +164,13 @@ void nasmDeclareGlobalSymbol(int id) {
     // TODO: Use .bss section later
 
     int primitiveType = GlobalSymbolTable[id].primitiveType;
+    int typeSize = nasmGetPrimitiveTypeSize(primitiveType);
 
-    if (primitiveType == P_INT) {
-        fprintf(Outfile,
-                "\tcommon\t%s 8:8\n",      // 8 bytes alignment
-                GlobalSymbolTable[id].name // 8 bytes for 64-bit integer
-        );
-    } else if (primitiveType == P_CHAR) {
-        fprintf(Outfile,
-                "\tcommon\t%s 1:1\n",      //  1 byte alignment
-                GlobalSymbolTable[id].name // 1 byte for char
-        );
-    } else {
-        fprintf(stderr,
-                "Error: Unsupported primitive type %d in "
-                "nasmDeclareGlobalSymbol\n",
-                primitiveType);
-        exit(1);
-    }
+    fprintf(Outfile, "\tcommon\t%s %d:%d",
+            GlobalSymbolTable[id].name, // symbol name
+            typeSize,                   // size in bytes
+            typeSize                    // alignment
+    );
 }
 
 /**

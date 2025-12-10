@@ -1,5 +1,6 @@
 // src/cgn_regs.c
 
+#include "cgn_regs.h"
 #include "data.h"
 #include "decl.h"
 
@@ -20,17 +21,23 @@
 // such as "Xth register is currently not used"
 static bool freeRegisters[4];
 
-static char *qwordRegisterList[4] = {
+char *qwordRegisterList[4] = {
     "r8",  // x64 general-purpose register #1
     "r9",  // x64 general-purpose register #2
     "r10", // x64 general-purpose register #3
     "r11"  // x64 general-purpose register #4
 };
-static char *byteRegisterList[4] = {
+char *dwordRegisterList[4] = {
+    "r8d",  // lower 32 bits of r8
+    "r9d",  // lower 32 bits of r9
+    "r10d", // lower 32 bits of r10
+    "r11d"  // lower 32 bits of r11
+};
+char *byteRegisterList[4] = {
     "r8b",  // lower 8 bits of r8
     "r9b",  // lower 8 bits of r9
     "r10b", // lower 8 bits of r10
-    "r11b"  //  lower 8 bits of r11
+    "r11b"  // lower 8 bits of r11
 };
 
 /**

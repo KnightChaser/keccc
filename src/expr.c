@@ -5,6 +5,39 @@
 #include "defs.h"
 
 /**
+ * functionCall - Parse a function call expression.
+ * e.g., foo(42);
+ *
+ * @return ASTnode* The AST node representing the function call.
+ */
+struct ASTnode *functionCall(void) {
+    struct ASTnode *treeNode = NULL;
+    int id;
+
+    // Identifier
+    if ((id = findGlobalSymbol(Text)) == -1) {
+        logFatals("Undeclared function: ", Text);
+    }
+
+    // Left parenthesis ("(")
+    matchLeftParenthesisToken();
+
+    // Parse the following expression
+    treeNode = binexpr(0);
+
+    // Build the function call AST node.
+    // - Store the function's return type as this node's type.
+    // - Record the function's symbol ID
+    treeNode = makeASTUnary(A_FUNCTIONCALL, GlobalSymbolTable[id].primitiveType,
+                            treeNode, id);
+
+    // Right parenthesis (")")
+    matchRightParenthesisToken();
+
+    return treeNode;
+}
+
+/**
  * primary - Parse a primary expression.
  * e.g., integer literals.
  *
@@ -35,12 +68,24 @@ static struct ASTnode *primary(void) {
         break;
 
     case T_IDENTIFIER:
-        // Check that if this identifier exists
-        id = findGlobalSymbol(Text);
-        if (id == -1) {
-            logFatals("Undeclared identifier: ", Text);
+        // This could be a variable name or a function name (to call function).
+        // Scan in the next token to find out. (LL(1))
+        scan(&Token);
+
+        if (Token.token == T_LPAREN) {
+            return functionCall();
         }
 
+        // Not a function call, so reject the new token
+        rejectToken(&Token);
+
+        // Check if the variable exists
+        id = findGlobalSymbol(Text);
+        if (id == -1) {
+            logFatals("Undeclared variable: ", Text);
+        }
+
+        // Create a leaf AST node for the variable
         n = makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
         break;
 

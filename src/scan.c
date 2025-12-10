@@ -151,9 +151,19 @@ static int keyword(char *s) {
             return T_INT;
         }
         break;
+    case 'l':
+        if (!strcmp(s, "long")) {
+            return T_LONG;
+        }
+        break;
     case 'p':
         if (!strcmp(s, "print")) {
             return T_PRINT;
+        }
+        break;
+    case 'r':
+        if (!strcmp(s, "return")) {
+            return T_RETURN;
         }
         break;
     case 'w':
@@ -170,6 +180,24 @@ static int keyword(char *s) {
     return 0;
 }
 
+// A pointer to a rejected token
+static struct token *RejectToken = NULL;
+
+/**
+ * rejectToken - Reject the given token so that it will be returned
+ *               on the next scan() call.
+ *
+ * @param t Pointer to the token structure to reject
+ */
+void rejectToken(struct token *t) {
+    if (RejectToken != NULL) {
+        printf(
+            "Error: Multiple token rejections without scanning a new token\n");
+        exit(1);
+    }
+    RejectToken = t;
+}
+
 /**
  * scan - Scan and return the next token found in the input.
  *
@@ -180,6 +208,14 @@ static int keyword(char *s) {
 bool scan(struct token *t) {
     int c;
     int tokenType;
+
+    // If we have any rejected token, return true,
+    // assuming the token structure is already filled
+    if (RejectToken != NULL) {
+        *t = *RejectToken;
+        RejectToken = NULL;
+        return true;
+    }
 
     // Skip whitespace characters
     c = skip();

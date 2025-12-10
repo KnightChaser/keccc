@@ -6,6 +6,7 @@
 
 // Exposed register name tables for NASM x86-64
 extern char *qwordRegisterList[4];
+extern char *dwordRegisterList[4];
 extern char *byteRegisterList[4];
 
 // Register pool management

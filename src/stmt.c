@@ -17,9 +17,11 @@
  * statement: print_statement
  *      |     declaration
  *      |     assignment_statement
+ *      |     function_call
  *      |     if_statement
  *      |     while_statement
  *      |     for_statement
+ *      |     return_statement
  *      ;
  *
  * print_statement: 'print' expression ';' ;
@@ -28,17 +30,23 @@
  *
  * assignment_statement: identifier '=' expression ';' ;
  *
+ * function_call: identifier '(' ')' ';' ; // NOTE: no-arg function call for now
+ *
  * if_statement: if_head
  *      |        if_head 'else' compound_statements
  *      ;
  *
  * if_head: 'if' '(' true_false_expression ')' compound_statements ;
  *
+ *
  * while_statement: 'while' '(' true_false_expression ')' compound_statements ;
+ *
  *
  * for_statement: 'for' '(' preop_statement ';'
  *                        true_false_expression ';'
  *                        postop_statement ')' compound_statement  ;
+ *
+ * return_statement: 'return' expression ';' ;
  *
  * preop_statement: staetment ;   // (for now)
  * postop_statement: statement ;  // (for now)
@@ -88,7 +96,8 @@ static struct ASTnode *printStatement(void) {
 }
 
 /**
- * assignmentStatement - Parse and handle a variable declaration statement.
+ * assignmentStatement - Parse and handle an identifier assignment statement.
+ * "Identifier" can be either a variable or a function call.
  *
  * @return AST node representing the assignment statement.
  */
@@ -102,6 +111,12 @@ static struct ASTnode *assignmentStatement(void) {
 
     // Ensure we have an identifier
     matchIdentifierToken();
+
+    // This could be a variable or a function call (identifier).
+    // If the next token is '(', it's a function call.
+    if (Token.token == T_LPAREN) {
+        return functionCall();
+    }
 
     // Check it's been defined then make a leaf node for it
     if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
@@ -121,7 +136,7 @@ static struct ASTnode *assignmentStatement(void) {
     leftPrimitiveType = leftNode->primitiveType;
     rightPrimitiveType = rightNode->primitiveType;
     if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
-                                         &rightPrimitiveType, false)) {
+                                         &rightPrimitiveType, true)) {
         logFatal("Type error: incompatible types in assignment statement");
     }
 
@@ -294,6 +309,51 @@ static struct ASTnode *forStatement(void) {
     return treeNode;
 }
 
+static struct ASTnode *returnStatement(void) {
+    struct ASTnode *treeNode;
+    int returnType;
+    int functionType;
+
+    // Can't return a value if function returns P_VOID
+    if (GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType == P_VOID) {
+        logFatal("Cannot return a value from a void function");
+    }
+
+    // Ensure 'return' and '(' token
+    match(T_RETURN, "return");
+    matchLeftParenthesisToken();
+
+    // Parse the following expression
+    treeNode = binexpr(0);
+
+    // Ensure this is compatible with the function's type
+    returnType = treeNode->primitiveType;
+    functionType = GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType;
+    if (!checkPrimitiveTypeCompatibility(&functionType, &returnType, true)) {
+        // NOTE:
+        // Return type must be compatible with function type.
+        // It's a unidirectional compatibility check.
+        // e.g.)
+        // - P_CHAR (1 bytes) can be returned from P_INT (4 bytes) function
+        // - P_INT(4 bytes) CANNOT be returned from P_CHAR (1 bytes) function
+        logFatal("Incompatible return type in return statement");
+    }
+
+    // Widen the tree to the function's return type if necessary.
+    if (returnType) {
+        treeNode = makeASTUnary(returnType, functionType, treeNode, 0);
+    }
+
+    // Wrap the expression in a return node so statement handling
+    // can correctly require a trailing semicolon.
+    treeNode = makeASTUnary(A_RETURN, P_NONE, treeNode, 0);
+
+    // Match the closing ')'
+    matchRightParenthesisToken();
+
+    return treeNode;
+}
+
 /**
  * singleStatement - Parse and handle a single statement.
  *
@@ -305,6 +365,7 @@ static struct ASTnode *singleStatement(void) {
         return printStatement();
     case T_CHAR: // primitive data type (char, 1 byte)
     case T_INT:  // primitive data type (int, 4 bytes)
+    case T_LONG: // primitive data type (long, 8 bytes)
         variableDeclaration();
         return NULL; // No AST node for declarations
     case T_IDENTIFIER:
@@ -313,6 +374,8 @@ static struct ASTnode *singleStatement(void) {
         return ifStatement();
     case T_WHILE:
         return whileStatement();
+    case T_RETURN:
+        return returnStatement();
     case T_FOR:
         return forStatement();
     }
@@ -342,7 +405,11 @@ struct ASTnode *compoundStatement(void) {
 
         // Some statement must be followed by a semicolon
         if (treeNode != NULL &&
-            (treeNode->op == A_PRINT || treeNode->op == A_ASSIGN)) {
+            (treeNode->op == A_PRINT ||      // e.g. "print expr;"
+             treeNode->op == A_ASSIGN ||     // e.g. "identifier = expr;"
+             treeNode->op == A_RETURN ||     // e.g. "return expr;"
+             treeNode->op == A_FUNCTIONCALL) // e.g. "functionCall(
+        ) {
             matchSemicolonToken();
         }
 

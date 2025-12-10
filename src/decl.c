@@ -12,25 +12,28 @@
  * @return: Internal representation of the primitive type.
  */
 int parsePrimitiveType(int t) {
-    if (t == T_CHAR) {
-        return P_CHAR;
-    } else if (t == T_INT) {
-        return P_INT;
-    } else if (t == T_VOID) {
+    switch (t) {
+    case T_VOID:
         return P_VOID;
-    } else {
-        fprintf(stderr, "Error: Unknown primitive type token %d\n", t);
-        exit(1);
+    case T_CHAR:
+        return P_CHAR;
+    case T_INT:
+        return P_INT;
+    case T_LONG:
+        return P_LONG;
     }
+
+    logFatald("Error: Unknown primitive type token in parsePrimitiveType", t);
+
+    return P_NONE; // Unreachable, but avoids compiler warning
 }
 
 /**
  * variableDeclaration - Parses a variable declaration.
  *
  * NOTE:
- * Currently, we only support integer variable declarations.
- * Thus, we ensure that the type is 'int', followed by an identifier
- * and a semicolon(;).
+ * variable_declaration: type identifier ";" ;
+ *
  */
 void variableDeclaration(void) {
     int id;
@@ -42,7 +45,7 @@ void variableDeclaration(void) {
     matchIdentifierToken();
 
     // Text now has the identifier's name
-    id = addGlobalSymbol(Text, type, S_VARIABLE);
+    id = addGlobalSymbol(Text, type, S_VARIABLE, 0);
     codegenDeclareGlobalSymbol(id);
 
     // Finally, match the semicolon(";")
@@ -53,30 +56,47 @@ void variableDeclaration(void) {
  * functionDeclaration - Parses a function declaration and returns its AST.
  *
  * NOTE:
- * TODO:
- * Currently, we only support 'void' functions with no parameters.
- * Thus, we ensure that the type is 'void', followed by an identifier,
- * an opening parenthesis, a closing parenthesis, and a compound statement.
+ * function_declaration: type identifier "(" ")" compound_statement ;
  *
  * @return: AST node representing the function declaration.
  */
 struct ASTnode *functionDeclaration(void) {
     struct ASTnode *treeNode;
+    struct ASTnode *finalStatementNode;
     int functionNameIndex;
+    int type;
+    int endLabel;
 
-    // NOTE:
-    // Find the 'void', the identifier, and the '(' ')'.
-    // For now, do nothing with them
-    match(T_VOID, "void");
-    matchIdentifierToken(); // Text now has the function name
-    functionNameIndex = addGlobalSymbol(Text, P_VOID, S_FUNCTION);
+    // Get the type of the variable, then the identifier...
+    type = parsePrimitiveType(Token.token);
+    scan(&Token);
+    matchIdentifierToken();
+
+    // Get a label-id for the end label,
+    // add the function to the symbol table as declared,
+    // and set the CurrentFunctionSymbolID to the function's symbol ID
+    endLabel = codegenLabel();
+    functionNameIndex = addGlobalSymbol(Text, type, S_FUNCTION, endLabel);
+    CurrentFunctionSymbolID = functionNameIndex;
+
+    // Scan the parenthesis
     matchLeftParenthesisToken();
     matchRightParenthesisToken();
 
-    // Get the AST for the compound statement
+    // Get the AST tree for the compound statement
     treeNode = compoundStatement();
 
-    // Return an A_FUNCTION node which has the function's nameslot,
-    // and the compount statement as its child
-    return makeASTUnary(A_FUNCTION, P_VOID, treeNode, functionNameIndex);
+    // If the function type isn't P_VOID,
+    // check that the last AST operation in the compound statement
+    // was a return statement (returning somthing)
+    if (type != P_VOID) {
+        finalStatementNode =
+            (treeNode->op == A_GLUE) ? treeNode->right : treeNode;
+        if (finalStatementNode == NULL || finalStatementNode->op != A_RETURN) {
+            logFatals("Error: Non-void function '", Text);
+            logFatal("' missing return statement");
+        }
+    }
+
+    return makeASTUnary(A_FUNCTION, type, treeNode, functionNameIndex);
 }

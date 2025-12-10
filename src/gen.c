@@ -11,11 +11,11 @@
 #include "defs.h"
 
 /**
- * getLabelNumber - Generates a unique label number for code generation.
+ * codegenlabel - Generates a unique label number for code generation.
  *
  * @return int A unique label number.
  */
-static int getLabelNumber(void) {
+int codegenLabel(void) {
     static int id = 1;
     return (id++);
 }
@@ -56,9 +56,9 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     // - one for the false branch
     // - one for the end of the if statement
     // (When there is no ELSE clause, labelFalseStatement is the ending label.
-    labelFalseStatement = getLabelNumber();
+    labelFalseStatement = codegenLabel();
     if (n->right) {
-        labelEndStatement = getLabelNumber();
+        labelEndStatement = codegenLabel();
     }
 
     // WARNING:
@@ -120,8 +120,8 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     // Generate two labels:
     // - one for the start of the loop
     // - one for the end of the loop
-    labelStartLoop = getLabelNumber();
-    labelEndLoop = getLabelNumber();
+    labelStartLoop = codegenLabel();
+    labelEndLoop = codegenLabel();
     nasmLabel(labelStartLoop);
 
     // Generate the loop condition
@@ -181,9 +181,9 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         }
         return NOREG;
     case A_FUNCTION:
-        nasmFunctionPreamble(GlobalSymbolTable[n->v.identifierIndex].name);
+        nasmFunctionPreamble(n->v.identifierIndex);
         codegenAST(n->left, NOREG, n->op);
-        nasmFunctionPostamble();
+        nasmFunctionPostamble(n->v.identifierIndex);
         return NOREG;
     }
 
@@ -245,6 +245,11 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Widen the child node's primitive type to the parent node's type
         return nasmWidenPrimitiveType(leftRegister, n->left->primitiveType,
                                       n->primitiveType);
+    case A_RETURN:
+        nasmReturnFromFunction(leftRegister, CurrentFunctionSymbolID);
+        return NOREG;
+    case A_FUNCTIONCALL:
+        return nasmFunctionCall(leftRegister, n->v.identifierIndex);
 
     default:
         // Should not reach here; unsupported operation
@@ -281,3 +286,14 @@ void codegenPrintInt(int reg) { nasmPrintIntFromReg(reg); }
  * @id: The index of the global symbol to declare.
  */
 void codegenDeclareGlobalSymbol(int id) { nasmDeclareGlobalSymbol(id); }
+
+/**
+ * codegenGetPrimitiveTypeSize - Wraps CPU-specific primitive type size query.
+ *
+ * @primitiveType: The primitive type to query.
+ *
+ * @return int The size of the primitive type in bytes.
+ */
+int codegenGetPrimitiveTypeSize(int primitiveType) {
+    return nasmGetPrimitiveTypeSize(primitiveType);
+}

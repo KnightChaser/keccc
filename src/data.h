@@ -11,6 +11,8 @@
 extern_ int Line;
 // Character put back by scanner for re-reading
 extern_ int Putback;
+// Symbol ID of the current function being processed
+extern_ int CurrentFunctionSymbolID;
 // Input file (source code)
 extern_ FILE *Infile;
 // Output file (generated code, currently Assembly)

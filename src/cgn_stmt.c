@@ -1,9 +1,9 @@
 // src/cgn_stmt.c
 
+#include "cgn_regs.h"
 #include "data.h"
 #include "decl.h"
 #include "defs.h"
-#include "cgn_regs.h"
 
 /**
  * NOTE:
@@ -18,41 +18,39 @@
  */
 
 /**
- * nasmPreamble - Outputs the assembly code preamble, including
- *              function prologues for main and printint.
+ * nasmPreamble - Print the assembly code preamble.
  */
 void nasmPreamble() {
     nasmResetRegisterPool();
-    fputs("\tglobal\tmain\n"
+    fputs("\textern\tprintint\n", Outfile);
+}
 
-          "\textern\tprintf\n"
+/**
+ * nasmFunctionCall - Generates code to call a function with an argument in a
+ * register.
+ *
+ * @registerIndex: Index of the register containing the argument.
+ * @functionSymbolId: The function's symbol table ID.
+ *
+ * Returns: Index of the register containing the function's return value.
+ */
+int nasmFunctionCall(int registerIndex, int functionSymbolId) {
+    int outRegister = allocateRegister();
+    fprintf(Outfile, "\tmov\trdi, %s\n", qwordRegisterList[registerIndex]);
+    fprintf(Outfile, "\tcall\t%s\n", GlobalSymbolTable[functionSymbolId].name);
+    fprintf(Outfile, "\tmov\t%s, rax\n", qwordRegisterList[outRegister]);
+    freeRegister(registerIndex);
 
-          "\tsection\t.text\n"
-          "LC0:\tdb\t\"%d\",10,0\n"
-
-          "printint:\n"
-          "\tpush\trbp\n"
-          "\tmov\trbp, rsp\n"
-          "\tsub\trsp, 16\n"
-          "\tmov\t[rbp-4], edi\n"
-          "\tmov\teax, [rbp-4]\n"
-          "\tmov\tesi, eax\n"
-          "\tlea	rdi, [rel LC0]\n"
-          "\tmov	eax, 0\n"
-          "\tcall	printf\n"
-          "\tnop\n"
-          "\tleave\n"
-          "\tret\n"
-          "\n",
-          Outfile);
+    return outRegister;
 }
 
 /**
  * nasmFunctionPreamble - Outputs the assembly code function preamble.
  *
- * @functionName: The name of the function.
+ * @id: The function's symbol table ID.
  */
-void nasmFunctionPreamble(char *functionName) {
+void nasmFunctionPreamble(int id) {
+    char *functionName = GlobalSymbolTable[id].name;
     fprintf(Outfile, "\tsection\t.text\n");
     fprintf(Outfile, "\tglobal\t%s\n", functionName);
     fprintf(Outfile, "%s:\n", functionName);
@@ -61,12 +59,43 @@ void nasmFunctionPreamble(char *functionName) {
 }
 
 /**
- * nasmFunctionPostamble - Outputs the assembly code function postamble.
+ * nasmReturnFromFunction - Generates code to return a value from a function.
+ * (After moving the return value to rax, jumps to function end label)
+ *
+ * @reg: Index of the register containing the return value.
+ * @id: The function's symbol table ID.
  */
-void nasmFunctionPostamble() {
+void nasmReturnFromFunction(int reg, int id) {
+    int primitiveType = GlobalSymbolTable[id].primitiveType;
+
+    switch (primitiveType) {
+    case P_CHAR:
+        fprintf(Outfile, "\tmovzx\teax, %s\n", byteRegisterList[reg]);
+        break;
+    case P_INT:
+        fprintf(Outfile, "\tmov\teax, %s\n", dwordRegisterList[reg]);
+        break;
+    case P_LONG:
+        fprintf(Outfile, "\tmov\trax, %s\n", qwordRegisterList[reg]);
+        break;
+    default:
+        logFatald("Error: Unsupported primitive type in nasmReturnFromFunction",
+                  primitiveType);
+    }
+
+    // After moving the return value to rax, jump to function end label
+    nasmJump(GlobalSymbolTable[id].endLabel);
+}
+
+/**
+ * nasmFunctionPostamble - Outputs the assembly code function postamble.
+ *
+ * @id: The function's symbol table ID.
+ */
+void nasmFunctionPostamble(int id) {
+    nasmLabel(GlobalSymbolTable[id].endLabel);
     // TODO: Return value from main
-    fputs("\tmov eax, 0\n"
-          "\tpop rbp\n"
+    fputs("\tpop rbp\n"
           "\tret\n",
           Outfile);
 }

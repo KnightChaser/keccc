@@ -16,10 +16,10 @@
  * - "Are these two types compatible?"
  * - "If so, which side needs to be widened?"
  *
- *
- * @param primitiveType1 Pointer to the first primitive type
- * @param primitiveType2 Pointer to the second primitive type
- * @param onlyRight      If true, only allow widening of the right type
+ * @param leftHandPrimitiveType  Pointer to the left-hand side primitive type
+ * @param rightHandPrimitiveType Pointer to the right-hand side primitive type
+ * @param onlyRight              If true, only the right-hand side can be
+ * widened
  *
  * NOTE:
  *  "@param onlyRight" is about asymmetry.
@@ -31,37 +31,43 @@
  *
  * @return true if the types are compatible, false otherwise
  */
-bool checkPrimitiveTypeCompatibility(int *primitiveType1, int *primitiveType2,
+bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
+                                     int *rightHandPrimitiveType,
                                      bool onlyRight) {
-    // Void type is incompatible with any type
-    if (*primitiveType1 == P_VOID || *primitiveType2 == P_VOID) {
+    // Same types, they are compatible
+    if (*leftHandPrimitiveType == *rightHandPrimitiveType) {
+        *leftHandPrimitiveType = *rightHandPrimitiveType = 0;
+        return true;
+    }
+
+    int leftHandPrimitiveSize =
+        codegenGetPrimitiveTypeSize(*leftHandPrimitiveType);
+    int rightHandPrimitiveSize =
+        codegenGetPrimitiveTypeSize(*rightHandPrimitiveType);
+
+    // Types with zero size are not compatible with anything
+    if (leftHandPrimitiveSize == 0 || rightHandPrimitiveSize == 0) {
         return false;
     }
 
-    // Same types, they are compatible
-    if (*primitiveType1 == *primitiveType2) {
-        *primitiveType1 = *primitiveType2 = 0;
+    // Widen type as required
+    if (leftHandPrimitiveSize < rightHandPrimitiveSize) {
+        *leftHandPrimitiveType = A_WIDENTYPE;
+        *rightHandPrimitiveType = 0;
         return true;
     }
 
-    // Widening char(P_CHAR) to int(P_INT) is possible.
-    if ((*primitiveType1 == P_CHAR) && (*primitiveType2 == P_INT)) {
-        *primitiveType1 = A_WIDENTYPE;
-        *primitiveType2 = 0;
-        return true;
-    }
-
-    if ((*primitiveType1 == P_INT) && (*primitiveType2 == P_CHAR)) {
+    if (leftHandPrimitiveSize > rightHandPrimitiveSize) {
         if (onlyRight) {
-            // P_INT can't be narrowed to P_CHAR
             return false;
         }
-        *primitiveType1 = 0;
-        *primitiveType2 = A_WIDENTYPE;
+        *leftHandPrimitiveType = 0;
+        *rightHandPrimitiveType = A_WIDENTYPE;
         return true;
     }
 
-    // Anything remaining is considered compatible
-    *primitiveType1 = *primitiveType2 = 0;
+    // Anything remaining is the same size
+    // and thus compatible
+    *leftHandPrimitiveType = *rightHandPrimitiveType = 0;
     return true;
 }
