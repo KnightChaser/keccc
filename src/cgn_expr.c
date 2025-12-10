@@ -166,7 +166,7 @@ void nasmDeclareGlobalSymbol(int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
     int typeSize = nasmGetPrimitiveTypeSize(primitiveType);
 
-    fprintf(Outfile, "\tcommon\t%s %d:%d",
+    fprintf(Outfile, "\tcommon\t%s %d:%d\n",
             GlobalSymbolTable[id].name, // symbol name
             typeSize,                   // size in bytes
             typeSize                    // alignment
