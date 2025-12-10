@@ -8,13 +8,17 @@ NOTE: It uses Meson as the build system.
 
 ```sh
 # Set up the build directory
+
+# Option1: with AddressSanitizer and UndefinedBehaviorSanitizer
 meson setup builddir-asan --buildtype=debug -Db_sanitize=address,undefined
+# Option2: without sanitizers (normal)
+meson setup builddir
 
 # Compile the project
-meson compile -C builddir-asan
+meson compile -C builddir
 
 # Run the tests (/tests)
-meson test -C builddir-asan --print-errorlogs
+meson test -C builddir --print-errorlogs
 ```
 
 ## Individual test during development
