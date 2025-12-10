@@ -1,7 +1,9 @@
 # Simple meson build for the keccc executable
 
 executable('keccc', [
-    'cgn.c',
+    'cgn_expr.c',
+    'cgn_regs.c',
+    'cgn_stmt.c',
     'decl.c',
     'expr.c',
     'gen.c',
