@@ -34,15 +34,17 @@
 bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
                                      int *rightHandPrimitiveType,
                                      bool onlyRight) {
+    int leftHandPrimitiveSize;
+    int rightHandPrimitiveSize;
+
     // Same types, they are compatible
     if (*leftHandPrimitiveType == *rightHandPrimitiveType) {
         *leftHandPrimitiveType = *rightHandPrimitiveType = 0;
         return true;
     }
 
-    int leftHandPrimitiveSize =
-        codegenGetPrimitiveTypeSize(*leftHandPrimitiveType);
-    int rightHandPrimitiveSize =
+    leftHandPrimitiveSize = codegenGetPrimitiveTypeSize(*leftHandPrimitiveType);
+    rightHandPrimitiveSize =
         codegenGetPrimitiveTypeSize(*rightHandPrimitiveType);
 
     // Types with zero size are not compatible with anything
@@ -52,8 +54,8 @@ bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
 
     // Widen type as required
     if (leftHandPrimitiveSize < rightHandPrimitiveSize) {
-        *leftHandPrimitiveType = A_WIDENTYPE;
-        *rightHandPrimitiveType = 0;
+        *leftHandPrimitiveType = A_WIDENTYPE; // Widen left side
+        *rightHandPrimitiveType = 0;          // No widening on right side
         return true;
     }
 
