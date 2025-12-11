@@ -175,10 +175,8 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Then free registers used in each sub-tree
         codegenAST(n->left, NOREG, n->op);
         nasmResetRegisterPool();
-        if (n->right) {
-            codegenAST(n->right, NOREG, n->op);
-            nasmResetRegisterPool();
-        }
+        codegenAST(n->right, NOREG, n->op);
+        nasmResetRegisterPool();
         return NOREG;
     case A_FUNCTION:
         nasmFunctionPreamble(n->v.identifierIndex);
