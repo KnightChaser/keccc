@@ -7,6 +7,9 @@
 #include "defs.h"
 #include <stdio.h> // Just for FILE
 
+// Selected code generation target (see defs.h TARGET_*)
+extern_ int CurrentTarget;
+
 // Current Line number
 extern_ int Line;
 // Character put back by scanner for re-reading

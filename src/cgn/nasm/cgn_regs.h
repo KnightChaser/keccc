@@ -1,4 +1,4 @@
-// src/cgn_regs.h
+// src/cgn/nasm/cgn_regs.h
 
 #pragma once
 

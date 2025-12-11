@@ -1,6 +1,6 @@
-// src/cgn_regs.c
+// src/cgn/nasm/cgn_regs.c
 
-#include "cgn_regs.h"
+#include "cgn/nasm/cgn_regs.h"
 #include "data.h"
 #include "decl.h"
 

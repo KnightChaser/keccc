@@ -7,6 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Code generation targets
+enum {
+    TARGET_NASM = 1, // NASM-flavored x86_64 assembly
+};
+
 // Length of symbols in input
 #define TEXTLEN 512
 

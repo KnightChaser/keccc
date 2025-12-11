@@ -26,10 +26,21 @@ meson test -C builddir --print-errorlogs
 Move to the project root and run:
 
 ```sh
-./src/keccc input
+./src/keccc --target nasm input
 bat ./out.s
 nasm -f elf64 out.s -o out.o
 gcc -no-pie out.o -o out
 echo "Assembly and linking finished."
 ./out
 ```
+
+## Targets and layout
+
+- `--target`: Selects the backend code generation target. Currently only `nasm` (x86_64) is supported and is the default.
+  - Example: `./src/keccc --target nasm tests/input01.kc`
+- Machine-dependent codegen is organized under `src/cgn/*/`:
+  - `cgn_regs.c|h`: register pool and register names
+  - `cgn_expr.c`: loads/stores, arithmetic, comparisons
+  - `cgn_stmt.c`: labels, jumps, preamble/postamble, calls/returns
+
+Generic/target-agnostic lowering lives in `src/gen.c` and dispatches to NASM routines.

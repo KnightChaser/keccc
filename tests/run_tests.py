@@ -179,7 +179,7 @@ def run_single_test(
 
     # 1) Compile to assembly with keccc
     ok, _, _ = run_command(
-        [str(keccc_path), str(test_case.source)],
+        [str(keccc_path), "--target", "nasm", str(test_case.source)],
         cwd=cwd,
         description=f"{test_case.name}: keccc",
     )

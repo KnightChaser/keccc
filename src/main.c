@@ -7,7 +7,10 @@
 #undef extern_
 
 #include <errno.h>
+#include <getopt.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void init() {
     Line = 1;
@@ -15,23 +18,51 @@ static void init() {
 }
 
 static void usage(char *program) {
-    fprintf(stderr, "Usage: %s infile\n", program);
+    fprintf(stderr, "Usage: %s [--target nasm|-t nasm] infile\n", program);
     exit(1);
 }
 
 int main(int argc, char **argv) {
     struct ASTnode *tree;
+    // Parse arguments using getopt_long
+    char *infile_path = NULL;
+    const char *target_name = "nasm"; // default target
 
-    if (argc != 2) {
+    static struct option longopts[] = {{"target", required_argument, 0, 't'},
+                                       {0, 0, 0, 0}};
+
+    int opt;
+    while ((opt = getopt_long(argc, argv, "t:", longopts, NULL)) != -1) {
+        switch (opt) {
+        case 't':
+            target_name = optarg;
+            break;
+        default:
+            usage(argv[0]);
+        }
+    }
+
+    // Remaining non-option argument should be the input file
+    if (optind == argc - 1) {
+        infile_path = argv[optind];
+    } else {
         usage(argv[0]);
     }
+
+    // For now, only NASM is supported
+    if (strcmp(target_name, "nasm") != 0) {
+        fprintf(stderr, "Unsupported target '%s' (only 'nasm' supported)\n",
+                target_name);
+        exit(1);
+    }
+    CurrentTarget = TARGET_NASM;
 
     init();
 
     // Open up the input file
-    Infile = fopen(argv[1], "r");
+    Infile = fopen(infile_path, "r");
     if (Infile == NULL) {
-        fprintf(stderr, "Cannot open %s: %s\n", argv[1], strerror(errno));
+        fprintf(stderr, "Cannot open %s: %s\n", infile_path, strerror(errno));
         exit(1);
     }
 
