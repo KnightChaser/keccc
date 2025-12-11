@@ -85,7 +85,7 @@ int nasmLoadGlobalSymbol(int id) {
         );
         break;
     case P_INT:
-        fprintf(Outfile, "\txor %s, %s\n", qwordRegisterList[registerIndex],
+        fprintf(Outfile, "\txor\t%s, %s\n", qwordRegisterList[registerIndex],
                 qwordRegisterList[registerIndex]);  // Clear the register first)
         fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n", // Load 4 bytes only
                 dwordRegisterList[registerIndex],   // destination register
@@ -124,14 +124,14 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
     switch (primitiveType) {
     case P_CHAR:
         fprintf(
-            Outfile, "\tmov\tBYTE [%s], %s\n",
+            Outfile, "\tmov\t[%s], %s\n",
             GlobalSymbolTable[id].name,     // destination global symbol
             byteRegisterList[registerIndex] // source register (lower 8 bits)
         );
         break;
     case P_INT:
         fprintf(
-            Outfile, "\tmov\tDWORD [%s], %s\n",
+            Outfile, "\tmov\t[%s], %s\n",
             GlobalSymbolTable[id].name,      // destination global symbol
             dwordRegisterList[registerIndex] // source register (lower 32 bits)
         );
@@ -182,11 +182,11 @@ void nasmDeclareGlobalSymbol(int id) {
  * Returns: Index of the register containing the result.
  */
 int nasmAddRegs(int r1, int r2) {
-    fprintf(Outfile, "\tadd\t%s, %s\n", qwordRegisterList[r1],
-            qwordRegisterList[r2]);
-    freeRegister(r2);
+    fprintf(Outfile, "\tadd\t%s, %s\n", qwordRegisterList[r2],
+            qwordRegisterList[r1]);
+    freeRegister(r1);
 
-    return r1;
+    return r2;
 }
 
 /**
@@ -214,11 +214,11 @@ int nasmSubRegs(int r1, int r2) {
  * Returns: Index of the register containing the result.
  */
 int nasmMulRegs(int r1, int r2) {
-    fprintf(Outfile, "\timul\t%s, %s\n", qwordRegisterList[r1],
-            qwordRegisterList[r2]);
-    freeRegister(r2);
+    fprintf(Outfile, "\timul\t%s, %s\n", qwordRegisterList[r2],
+            qwordRegisterList[r1]);
+    freeRegister(r1);
 
-    return r1;
+    return r2;
 }
 
 /**

@@ -95,7 +95,7 @@ void nasmReturnFromFunction(int reg, int id) {
 void nasmFunctionPostamble(int id) {
     nasmLabel(GlobalSymbolTable[id].endLabel);
     // TODO: Return value from main
-    fputs("\tpop rbp\n"
+    fputs("\tpop\trbp\n"
           "\tret\n",
           Outfile);
 }
@@ -105,8 +105,8 @@ void nasmFunctionPostamble(int id) {
  *               including function epilogue for main.
  */
 void nasmPostamble() {
-    fputs("\tmov	eax, 0\n"
-          "\tpop	rbp\n"
+    fputs("\tmov\teax, 0\n"
+          "\tpop\trbp\n"
           "\tret\n",
           Outfile);
 }
