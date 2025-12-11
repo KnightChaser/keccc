@@ -21,6 +21,66 @@ int codegenLabel(void) {
 }
 
 /**
+ * NOTE:
+ * Small helpers to route to the correct backend
+ * TODO:
+ * Organize 'em
+ */
+
+/**
+ * backendLabel - Outputs a label in the assembly code
+ * for the current target backend.
+ *
+ * @label: The label number to output.
+ */
+static void backendLabel(int label) {
+    if (CurrentTarget == TARGET_NASM) {
+        nasmLabel(label);
+    } else if (CurrentTarget == TARGET_ARM64) {
+        arm64Label(label);
+    }
+
+    logFatal("Error: Unsupported target in backendLabel");
+}
+
+/**
+ * backendJump - Generates an unconditional jump to a label
+ * for the current target backend.
+ *
+ * @label: The label number to jump to.
+ */
+static void backendJump(int label) {
+    if (CurrentTarget == TARGET_NASM) {
+        nasmJump(label);
+    } else if (CurrentTarget == TARGET_ARM64) {
+        arm64Jump(label);
+    }
+
+    logFatal("Error: Unsupported target in backendJump");
+}
+
+/**
+ * backendCompareAndJump - Generates code to compare two registers
+ * and jump to a label based on the comparison result
+ * for the current target backend.
+ *
+ * @ASTop: The AST operation code representing the comparison.
+ * @r1: Index of the first register.
+ * @r2: Index of the second register.
+ * @label: The label number to jump to if the comparison is true.
+ */
+static int backendCompareAndJump(int ASTop, int r1, int r2, int label) {
+    if (CurrentTarget == TARGET_NASM) {
+        return nasmCompareAndJump(ASTop, r1, r2, label);
+    } else if (CurrentTarget == TARGET_ARM64) {
+        return arm64CompareAndJump(ASTop, r1, r2, label);
+    }
+
+    logFatal("Error: Unsupported target in backendCompareAndJump");
+    return NOREG; // unreachable
+}
+
+/**
  * codegenIfStatementAST - Generates code for an IF statement AST node.
  *
  * NOTE:
@@ -71,17 +131,20 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     if (n->right) {
-        nasmJump(labelEndStatement);
+        // nasmJump(labelEndStatement);
+        backendJump(labelEndStatement);
     }
 
-    nasmLabel(labelFalseStatement);
+    // nasmLabel(labelFalseStatement);
+    backendLabel(labelFalseStatement);
 
     // Optional ELSE clause exists
     // Generate the false compount statement and the end label
     if (n->right) {
         codegenAST(n->right, NOREG, n->op);
         codegenResetRegisters();
-        nasmLabel(labelEndStatement);
+        // nasmLabel(labelEndStatement);
+        backendLabel(labelEndStatement);
     }
 
     return NOREG;
@@ -122,7 +185,8 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     // - one for the end of the loop
     labelStartLoop = codegenLabel();
     labelEndLoop = codegenLabel();
-    nasmLabel(labelStartLoop);
+    // nasmLabel(labelStartLoop);
+    backendLabel(labelStartLoop);
 
     // Generate the loop condition
     codegenAST(n->left, labelEndLoop, n->op);
@@ -133,8 +197,10 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     // Jump back to the start of the loop
-    nasmJump(labelStartLoop);
-    nasmLabel(labelEndLoop);
+    // nasmJump(labelStartLoop);
+    // nasmLabel(labelEndLoop);
+    backendJump(labelStartLoop);
+    backendLabel(labelEndLoop);
 
     return NOREG;
 }
@@ -174,14 +240,34 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // and return NOREG since GLUE does not produce a value
         // Then free registers used in each sub-tree
         codegenAST(n->left, NOREG, n->op);
-        nasmResetRegisterPool();
+        // TODO: Refactor backend-specific reset register pool
+        if (CurrentTarget == TARGET_NASM) {
+            nasmResetRegisterPool();
+        } else if (CurrentTarget == TARGET_ARM64) {
+            arm64ResetRegisterPool();
+        }
         codegenAST(n->right, NOREG, n->op);
-        nasmResetRegisterPool();
+        // TODO: Refactor backend-specific reset register pool
+        if (CurrentTarget == TARGET_NASM) {
+            nasmResetRegisterPool();
+        } else if (CurrentTarget == TARGET_ARM64) {
+            arm64ResetRegisterPool();
+        }
         return NOREG;
     case A_FUNCTION:
-        nasmFunctionPreamble(n->v.identifierIndex);
+        // TODO: Refactor backend-specific function preamble
+        if (CurrentTarget == TARGET_NASM) {
+            nasmFunctionPreamble(n->v.identifierIndex);
+        } else if (CurrentTarget == TARGET_ARM64) {
+            arm64FunctionPreamble(n->v.identifierIndex);
+        }
         codegenAST(n->left, NOREG, n->op);
-        nasmFunctionPostamble(n->v.identifierIndex);
+        // TODO: Refactor backend-specific function postamble
+        if (CurrentTarget == TARGET_NASM) {
+            nasmFunctionPostamble(n->v.identifierIndex);
+        } else if (CurrentTarget == TARGET_ARM64) {
+            arm64FunctionPostamble(n->v.identifierIndex);
+        }
         return NOREG;
     }
 
@@ -199,14 +285,23 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
 
     switch (n->op) {
     // Arithmetic operations
+    // TODO: Refactor backend-specific arithmetic operations
     case A_ADD:
-        return nasmAddRegs(leftRegister, rightRegister);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmAddRegs(leftRegister, rightRegister)
+                   : arm64AddRegs(leftRegister, rightRegister);
     case A_SUBTRACT:
-        return nasmSubRegs(leftRegister, rightRegister);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmSubRegs(leftRegister, rightRegister)
+                   : arm64SubRegs(leftRegister, rightRegister);
     case A_MULTIPLY:
-        return nasmMulRegs(leftRegister, rightRegister);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmMulRegs(leftRegister, rightRegister)
+                   : arm64MulRegs(leftRegister, rightRegister);
     case A_DIVIDE:
-        return nasmDivRegsSigned(leftRegister, rightRegister);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmDivRegsSigned(leftRegister, rightRegister)
+                   : arm64DivRegsSigned(leftRegister, rightRegister);
 
     // Comparison operations
     case A_EQ:
@@ -220,18 +315,33 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Otherwise, compare registers and set one to 1 or 0 based on the
         // comparison.
         if (parentASTop == A_IF || parentASTop == A_WHILE) {
-            return nasmCompareAndJump(n->op, leftRegister, rightRegister, reg);
+            // return nasmCompareAndJump(n->op, leftRegister, rightRegister,
+            // reg);
+            return backendCompareAndJump(n->op, leftRegister, rightRegister,
+                                         reg);
         } else {
-            return nasmCompareAndSet(n->op, leftRegister, rightRegister);
+            // return nasmCompareAndSet(n->op, leftRegister, rightRegister);
+            // TODO: Refactor backend-specific compare and set
+            if (CurrentTarget == TARGET_NASM) {
+                return nasmCompareAndSet(n->op, leftRegister, rightRegister);
+            } else if (CurrentTarget == TARGET_ARM64) {
+                return arm64CompareAndSet(n->op, leftRegister, rightRegister);
+            }
         }
 
     // Leaf nodes
     case A_INTLIT:
-        return nasmLoadImmediateInt(n->v.intvalue, n->primitiveType);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmLoadImmediateInt(n->v.intvalue, n->primitiveType)
+                   : arm64LoadImmediateInt(n->v.intvalue, n->primitiveType);
     case A_IDENTIFIER:
-        return nasmLoadGlobalSymbol(n->v.identifierIndex);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmLoadGlobalSymbol(n->v.identifierIndex)
+                   : arm64LoadGlobalSymbol(n->v.identifierIndex);
     case A_LVALUEIDENTIFIER:
-        return nasmStoreGlobalSymbol(reg, n->v.identifierIndex);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmStoreGlobalSymbol(leftRegister, n->v.identifierIndex)
+                   : arm64StoreGlobalSymbol(leftRegister, n->v.identifierIndex);
     case A_ASSIGN:
         // The work has already been done, return the result
         return rightRegister;
@@ -241,13 +351,26 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         return NOREG;
     case A_WIDENTYPE:
         // Widen the child node's primitive type to the parent node's type
-        return nasmWidenPrimitiveType(leftRegister, n->left->primitiveType,
-                                      n->primitiveType);
+        // return nasmWidenPrimitiveType(leftRegister, n->left->primitiveType,
+        //                               n->primitiveType);
+        // TODO: Refactor backend-specific widen primitive type
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmWidenPrimitiveType(
+                         leftRegister, n->left->primitiveType, n->primitiveType)
+                   : arm64WidenPrimitiveType(leftRegister,
+                                             n->left->primitiveType,
+                                             n->primitiveType);
     case A_RETURN:
-        nasmReturnFromFunction(leftRegister, CurrentFunctionSymbolID);
+        // nasmReturnFromFunction(leftRegister, CurrentFunctionSymbolID);
+        // TODO: Refactor backend-specific return from function
+        (CurrentTarget == TARGET_NASM)
+            ? nasmReturnFromFunction(leftRegister, CurrentFunctionSymbolID)
+            : arm64ReturnFromFunction(leftRegister, CurrentFunctionSymbolID);
         return NOREG;
     case A_FUNCTIONCALL:
-        return nasmFunctionCall(leftRegister, n->v.identifierIndex);
+        return (CurrentTarget == TARGET_NASM)
+                   ? nasmFunctionCall(leftRegister, n->v.identifierIndex)
+                   : arm64FunctionCall(leftRegister, n->v.identifierIndex);
 
     default:
         // Should not reach here; unsupported operation
@@ -259,31 +382,86 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
 /**
  * codegenPreamble - Wraps CPU-specific preamble generation.
  */
-void codegenPreamble() { nasmPreamble(); }
+void codegenPreamble() {
+    switch (CurrentTarget) {
+    case TARGET_NASM:
+        nasmPreamble();
+        break;
+    case TARGET_ARM64:
+        arm64Preamble();
+        break;
+    default:
+        logFatal("Error: Unsupported target in codegenPreamble");
+    }
+}
 
 /**
  * codegenPostamble - Wraps CPU-specific postamble generation.
  */
-void codegenPostamble() { nasmPostamble(); }
+void codegenPostamble() {
+    switch (CurrentTarget) {
+    case TARGET_NASM:
+        nasmPostamble();
+        break;
+    case TARGET_ARM64:
+        arm64Postamble();
+        break;
+    default:
+        logFatal("Error: Unsupported target in codegenPostamble");
+    }
+}
 
 /**
  * codegenResetRegisters - Frees all registers used during code generation.
  */
-void codegenResetRegisters() { nasmResetRegisterPool(); }
+void codegenResetRegisters() {
+    switch (CurrentTarget) {
+    case TARGET_NASM:
+        nasmResetRegisterPool();
+        break;
+    case TARGET_ARM64:
+        arm64ResetRegisterPool();
+        break;
+    default:
+        logFatal("Error: Unsupported target in codegenResetRegisters");
+    }
+}
 
 /**
  * codegenPrintInt - Wraps CPU-specific integer printing.
  *
  * @reg: The register index containing the integer to print.
  */
-void codegenPrintInt(int reg) { nasmPrintIntFromReg(reg); }
+void codegenPrintInt(int reg) {
+    switch (CurrentTarget) {
+    case TARGET_NASM:
+        nasmPrintIntFromReg(reg);
+        break;
+    case TARGET_ARM64:
+        arm64PrintIntFromReg(reg);
+        break;
+    default:
+        logFatal("Error: Unsupported target in codegenPrintInt");
+    }
+}
 
 /**
  * codegenDeclareGlobalSymbol - Wraps CPU-specific global symbol generation.
  *
  * @id: The index of the global symbol to declare.
  */
-void codegenDeclareGlobalSymbol(int id) { nasmDeclareGlobalSymbol(id); }
+void codegenDeclareGlobalSymbol(int id) {
+    switch (CurrentTarget) {
+    case TARGET_NASM:
+        nasmDeclareGlobalSymbol(id);
+        break;
+    case TARGET_ARM64:
+        arm64DeclareGlobalSymbol(id);
+        break;
+    default:
+        logFatal("Error: Unsupported target in codegenDeclareGlobalSymbol");
+    }
+}
 
 /**
  * codegenGetPrimitiveTypeSize - Wraps CPU-specific primitive type size query.
@@ -293,5 +471,13 @@ void codegenDeclareGlobalSymbol(int id) { nasmDeclareGlobalSymbol(id); }
  * @return int The size of the primitive type in bytes.
  */
 int codegenGetPrimitiveTypeSize(int primitiveType) {
-    return nasmGetPrimitiveTypeSize(primitiveType);
+    switch (CurrentTarget) {
+    case TARGET_NASM:
+        return nasmGetPrimitiveTypeSize(primitiveType);
+    case TARGET_ARM64:
+        return arm64GetPrimitiveTypeSize(primitiveType);
+    default:
+        logFatal("Error: Unsupported target in codegenGetPrimitiveTypeSize");
+        return -1; // unreachable
+    }
 }

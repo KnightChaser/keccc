@@ -18,12 +18,14 @@ static void init() {
 }
 
 static void usage(char *program) {
-    fprintf(stderr, "Usage: %s [--target nasm|-t nasm] infile\n", program);
+    fprintf(stderr, "Usage: %s [--target nasm|arm64|-t nasm|arm64] infile\n",
+            program);
     exit(1);
 }
 
 int main(int argc, char **argv) {
     struct ASTnode *tree;
+
     // Parse arguments using getopt_long
     char *infile_path = NULL;
     const char *target_name = "nasm"; // default target
@@ -50,12 +52,17 @@ int main(int argc, char **argv) {
     }
 
     // For now, only NASM is supported
-    if (strcmp(target_name, "nasm") != 0) {
-        fprintf(stderr, "Unsupported target '%s' (only 'nasm' supported)\n",
-                target_name);
-        exit(1);
+    if (strcmp(target_name, "nasm") == 0) {
+        CurrentTarget = TARGET_NASM;
+    } else if (strcmp(target_name, "arm64") == 0) {
+        CurrentTarget = TARGET_ARM64;
+    } else {
+        fprintf(
+            stderr,
+            "Unsupported target: %s (only 'nasm' or 'arm64' is supported)\n",
+            target_name);
+        usage(argv[0]);
     }
-    CurrentTarget = TARGET_NASM;
 
     init();
 

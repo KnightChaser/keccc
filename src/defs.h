@@ -10,6 +10,7 @@
 // Code generation targets
 enum {
     TARGET_NASM = 1, // NASM-flavored x86_64 assembly
+    TARGET_ARM64,    // ARM64 assembly
 };
 
 // Length of symbols in input

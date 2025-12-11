@@ -41,9 +41,11 @@ void codegenDeclareGlobalSymbol(int id);
 int codegenGetPrimitiveTypeSize(int primitiveType);
 void codegenReturnFromFunction(int reg, int id);
 
-// NOTE: cgn_*.c
+// NOTE: cgn/*/*.c
 // (cgn_expr.c, cgn_stmt.c, cgn_regs.c)
 // Code generation utilities (NASM x86-64)
+
+// NASM x86-64 backend
 void nasmResetRegisterPool(void);
 void nasmPreamble();
 void nasmPostamble();
@@ -66,6 +68,30 @@ void nasmLabel(int label);
 void nasmJump(int label);
 int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
 int nasmGetPrimitiveTypeSize(int primitiveType);
+
+// ARM64 AArch64 backend
+void arm64ResetRegisterPool(void);
+void arm64Preamble(void);
+void arm64Postamble(void);
+int arm64FunctionCall(int registerId, int id);
+void arm64FunctionPreamble(int id);
+void arm64ReturnFromFunction(int reg, int id);
+void arm64FunctionPostamble(int id);
+int arm64LoadImmediateInt(int value, int primitiveType);
+int arm64LoadGlobalSymbol(int id);
+int arm64StoreGlobalSymbol(int registerIndex, int id);
+void arm64DeclareGlobalSymbol(int id);
+int arm64AddRegs(int dstReg, int srcReg);
+int arm64SubRegs(int dstReg, int srcReg);
+int arm64MulRegs(int dstReg, int srcReg);
+int arm64DivRegsSigned(int dividendReg, int divisorReg);
+void arm64PrintIntFromReg(int reg);
+int arm64CompareAndSet(int ASTop, int r1, int r2);
+int arm64CompareAndJump(int ASTop, int r1, int r2, int label);
+void arm64Label(int label);
+void arm64Jump(int label);
+int arm64WidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
+int arm64GetPrimitiveTypeSize(int primitiveType);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
