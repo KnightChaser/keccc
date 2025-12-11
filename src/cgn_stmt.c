@@ -22,7 +22,20 @@
  */
 void nasmPreamble() {
     nasmResetRegisterPool();
-    fputs("\textern\tprintint\n", Outfile);
+    fputs("\textern\tprintf\n", Outfile);
+    fputs("\tsection\t.rodata\n", Outfile);
+    fputs("fmtint:\t\tdb\t\"%ld\", 10, 0\n", Outfile);
+    fputs("\tsection\t.text\n", Outfile);
+    fputs("\tglobal\tprintint\n", Outfile);
+    fputs("printint:\n", Outfile);
+    fputs("\tpush\trbp\n", Outfile);
+    fputs("\tmov\trbp, rsp\n", Outfile);
+    fputs("\tmov\trsi, rdi\n", Outfile);
+    fputs("\tlea\trdi, [rel fmtint]\n", Outfile);
+    fputs("\txor\teax, eax\n", Outfile);
+    fputs("\tcall\tprintf\n", Outfile);
+    fputs("\tpop\trbp\n", Outfile);
+    fputs("\tret\n", Outfile);
 }
 
 /**
