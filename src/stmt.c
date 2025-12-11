@@ -122,7 +122,7 @@ static struct ASTnode *assignmentStatement(void) {
     if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
         logFatals("Undeclared identifier: ", Text);
     }
-    // Build LHS as an lvalue identifier (destination)
+    // Create a leaf node for the identifier (destination)
     rightNode = makeASTLeaf(A_LVALUEIDENTIFIER,
                             GlobalSymbolTable[identifierIndex].primitiveType,
                             identifierIndex);
@@ -145,7 +145,7 @@ static struct ASTnode *assignmentStatement(void) {
         logFatal("Type error: incompatible types in assignment statement");
     }
 
-    // Widen RHS to match LHS if necessary
+    // Widen the right node to the left node's type if necessary
     if (leftPrimitiveType) {
         leftNode = makeASTUnary(leftPrimitiveType,        // A_WIDENTYPE
                                 rightNode->primitiveType, // destination type
