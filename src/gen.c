@@ -344,8 +344,8 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
                    : arm64LoadGlobalSymbol(n->v.identifierIndex);
     case A_LVALUEIDENTIFIER:
         return (CurrentTarget == TARGET_NASM)
-                   ? nasmStoreGlobalSymbol(leftRegister, n->v.identifierIndex)
-                   : arm64StoreGlobalSymbol(leftRegister, n->v.identifierIndex);
+                   ? nasmStoreGlobalSymbol(reg, n->v.identifierIndex)
+                   : arm64StoreGlobalSymbol(reg, n->v.identifierIndex);
     case A_ASSIGN:
         // The work has already been done, return the result
         return rightRegister;
