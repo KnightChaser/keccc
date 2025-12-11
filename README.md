@@ -34,6 +34,19 @@ echo "Assembly and linking finished."
 ./out
 ```
 
+## Editor setup (clangd/Neovim)
+
+- A `compile_commands.json` is generated under `builddir/` by Meson. Many language servers (clangd) need to know where this file lives.
+- This repo includes a `.clangd` that points clangd to `builddir` and adds `-Isrc` as a fallback. If your build dir differs (e.g. `builddir-asan`), either:
+  - change `.clangd` `CompilationDatabase: builddir-asan`, or
+  - symlink the compile database into the repo root:
+
+```sh
+ln -sf builddir/compile_commands.json compile_commands.json
+```
+
+- For tools that look for `compile_flags.txt`, one is provided with `-Isrc`.
+
 ## Targets and layout
 
 - `--target`: Selects the backend code generation target. Currently only `nasm` (x86_64) is supported and is the default.

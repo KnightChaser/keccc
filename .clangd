@@ -1,0 +1,8 @@
+CompileFlags:
+  # Point clangd to Meson build dir for compile_commands.json
+  CompilationDatabase: builddir
+  # Extra include hints for fallback when DB isn't picked up yet
+  Add: [
+    "-Isrc",
+    "-I."
+  ]
