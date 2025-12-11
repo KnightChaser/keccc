@@ -124,20 +124,20 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
     switch (primitiveType) {
     case P_CHAR:
         fprintf(
-            Outfile, "\tmov\t[%s], %s\n",
+            Outfile, "\tmov\t[%s], BYTE %s\n",
             GlobalSymbolTable[id].name,     // destination global symbol
             byteRegisterList[registerIndex] // source register (lower 8 bits)
         );
         break;
     case P_INT:
         fprintf(
-            Outfile, "\tmov\t[%s], %s\n",
+            Outfile, "\tmov\t[%s], DWORD %s\n",
             GlobalSymbolTable[id].name,      // destination global symbol
             dwordRegisterList[registerIndex] // source register (lower 32 bits)
         );
         break;
     case P_LONG:
-        fprintf(Outfile, "\tmov\t[%s], %s\n",
+        fprintf(Outfile, "\tmov\t[%s], QWORD %s\n",
                 GlobalSymbolTable[id].name,      // destination global symbol
                 qwordRegisterList[registerIndex] // source register
         );
