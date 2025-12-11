@@ -213,18 +213,20 @@ struct ASTnode *binexpr(int ptp) {
 
         // Widen the primitive type if necessary
         if (leftPrimitiveType) {
-            left = makeASTNode(A_WIDENTYPE, leftPrimitiveType, left, NULL, NULL,
-                               0);
+            left = makeASTUnary(leftPrimitiveType,    // A_WIDENTYPE,
+                                right->primitiveType, // type of RHS
+                                left, 0);
         }
         if (rightPrimitiveType) {
-            right = makeASTNode(A_WIDENTYPE, rightPrimitiveType, right, NULL,
-                                NULL, 0);
+            right = makeASTUnary(rightPrimitiveType,  // A_WIDENTYPE,
+                                 left->primitiveType, // type of LHS
+                                 right, 0);
         }
 
-        // Combine left and right nodes into a binary AST node
-        // Convert the token into an AST operation at the same time.
-        left = makeASTNode(tokenToASTOperator(tokentype), leftPrimitiveType,
-                           left, NULL, right, 0);
+        left =
+            makeASTNode(tokenToASTOperator(tokentype),
+                        left->primitiveType, // Result type is the widened type
+                        left, NULL, right, 0);
 
         // Update the details of the current token.
         // If we hit a semicolon, or right parenthesis,

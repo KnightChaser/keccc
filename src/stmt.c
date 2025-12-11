@@ -122,28 +122,33 @@ static struct ASTnode *assignmentStatement(void) {
     if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
         logFatals("Undeclared identifier: ", Text);
     }
-    rightNode = makeASTLeaf(A_LVALUEIDENTIFIER,
-                            GlobalSymbolTable[identifierIndex].primitiveType,
-                            identifierIndex);
+    // Build LHS as an lvalue identifier (destination)
+    leftNode = makeASTLeaf(A_LVALUEIDENTIFIER,
+                           GlobalSymbolTable[identifierIndex].primitiveType,
+                           identifierIndex);
 
     // Match the '=' token
     match(T_ASSIGN, "=");
 
-    // Parse the expression on the right-hand side of the '='
-    leftNode = binexpr(0);
+    // Parse the expression on the right-hand side of the '=' (source)
+    rightNode = binexpr(0);
 
     // Ensure type compatibility between left and right nodes
-    leftPrimitiveType = leftNode->primitiveType;
-    rightPrimitiveType = rightNode->primitiveType;
+    // Check type compatibility: RHS must adjust to the LHS destination type
+    leftPrimitiveType = rightNode->primitiveType; // source type
+    rightPrimitiveType = leftNode->primitiveType; // destination type
     if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
                                          &rightPrimitiveType, true)) {
+        fprintf(stderr, "Type mismatch: RHS(Source)=%d, LHS(Dest)=%d\n",
+                rightNode->primitiveType, leftNode->primitiveType);
         logFatal("Type error: incompatible types in assignment statement");
     }
 
-    // Widen the primitive type if necessary
+    // Widen RHS to match LHS if necessary
     if (leftPrimitiveType) {
-        leftNode = makeASTNode(A_WIDENTYPE, leftPrimitiveType, leftNode, NULL,
-                               NULL, 0);
+        rightNode = makeASTUnary(leftPrimitiveType,       // A_WIDENTYPE
+                                 leftNode->primitiveType, // destination type
+                                 rightNode, 0);
     }
 
     // Create an assignment AST node
@@ -329,7 +334,7 @@ static struct ASTnode *returnStatement(void) {
     // Ensure this is compatible with the function's type
     returnType = treeNode->primitiveType;
     functionType = GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType;
-    if (!checkPrimitiveTypeCompatibility(&functionType, &returnType, true)) {
+    if (!checkPrimitiveTypeCompatibility(&returnType, &functionType, true)) {
         // NOTE:
         // Return type must be compatible with function type.
         // It's a unidirectional compatibility check.
@@ -374,10 +379,10 @@ static struct ASTnode *singleStatement(void) {
         return ifStatement();
     case T_WHILE:
         return whileStatement();
-    case T_RETURN:
-        return returnStatement();
     case T_FOR:
         return forStatement();
+    case T_RETURN:
+        return returnStatement();
     }
 
     // default

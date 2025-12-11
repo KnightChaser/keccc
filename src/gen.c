@@ -142,8 +142,8 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
 /**
  * codegenAST - Generates code for the given AST node and its subtrees.
  *
- * @n: The AST node to generate code for.
- * @param reg: The register index to use for code generation.
+ * @n:                 The AST node to generate code for.
+ * @param reg:         The register index to use for code generation.
  * @param parentASTop: The operator of the parent AST node.
  *
  * NOTE:
