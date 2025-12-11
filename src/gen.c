@@ -36,8 +36,10 @@ int codegenLabel(void) {
 static void backendLabel(int label) {
     if (CurrentTarget == TARGET_NASM) {
         nasmLabel(label);
+        return;
     } else if (CurrentTarget == TARGET_ARM64) {
         arm64Label(label);
+        return;
     }
 
     logFatal("Error: Unsupported target in backendLabel");
@@ -52,8 +54,10 @@ static void backendLabel(int label) {
 static void backendJump(int label) {
     if (CurrentTarget == TARGET_NASM) {
         nasmJump(label);
+        return;
     } else if (CurrentTarget == TARGET_ARM64) {
         arm64Jump(label);
+        return;
     }
 
     logFatal("Error: Unsupported target in backendJump");
