@@ -123,15 +123,15 @@ static struct ASTnode *assignmentStatement(void) {
         logFatals("Undeclared identifier: ", Text);
     }
     // Build LHS as an lvalue identifier (destination)
-    leftNode = makeASTLeaf(A_LVALUEIDENTIFIER,
-                           GlobalSymbolTable[identifierIndex].primitiveType,
-                           identifierIndex);
+    rightNode = makeASTLeaf(A_LVALUEIDENTIFIER,
+                            GlobalSymbolTable[identifierIndex].primitiveType,
+                            identifierIndex);
 
     // Match the '=' token
     match(T_ASSIGN, "=");
 
     // Parse the expression on the right-hand side of the '=' (source)
-    rightNode = binexpr(0);
+    leftNode = binexpr(0);
 
     // Ensure type compatibility between left and right nodes
     // Check type compatibility: RHS must adjust to the LHS destination type
@@ -139,6 +139,7 @@ static struct ASTnode *assignmentStatement(void) {
     rightPrimitiveType = leftNode->primitiveType; // destination type
     if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
                                          &rightPrimitiveType, true)) {
+        // DEBUG:
         fprintf(stderr, "Type mismatch: RHS(Source)=%d, LHS(Dest)=%d\n",
                 rightNode->primitiveType, leftNode->primitiveType);
         logFatal("Type error: incompatible types in assignment statement");
@@ -146,9 +147,9 @@ static struct ASTnode *assignmentStatement(void) {
 
     // Widen RHS to match LHS if necessary
     if (leftPrimitiveType) {
-        rightNode = makeASTUnary(leftPrimitiveType,       // A_WIDENTYPE
-                                 leftNode->primitiveType, // destination type
-                                 rightNode, 0);
+        leftNode = makeASTUnary(leftPrimitiveType,        // A_WIDENTYPE
+                                rightNode->primitiveType, // destination type
+                                leftNode, 0);
     }
 
     // Create an assignment AST node
