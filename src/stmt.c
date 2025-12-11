@@ -135,8 +135,8 @@ static struct ASTnode *assignmentStatement(void) {
 
     // Ensure type compatibility between left and right nodes
     // Check type compatibility: RHS must adjust to the LHS destination type
-    leftPrimitiveType = rightNode->primitiveType; // source type
-    rightPrimitiveType = leftNode->primitiveType; // destination type
+    leftPrimitiveType = leftNode->primitiveType;   // source type
+    rightPrimitiveType = rightNode->primitiveType; // destination type
     if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
                                          &rightPrimitiveType, true)) {
         // DEBUG:
