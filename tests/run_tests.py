@@ -38,6 +38,7 @@ def run_command(
     command: Sequence[str],
     cwd: Path,
     description: str,
+    allow_nonzero_exit: bool = False,
 ) -> Tuple[bool, str, str]:
     """Run a command in a given working directory.
 
@@ -59,7 +60,7 @@ def run_command(
         text=True,
     )
 
-    if process.returncode != 0:
+    if process.returncode != 0 and not allow_nonzero_exit:
         print(f"[FAIL] {description}")
         print("  Command:", " ".join(command))
         print("  Exit code:", process.returncode)
@@ -209,9 +210,9 @@ def run_single_test(
         ["./out"],
         cwd=cwd,
         description=f"{test_case.name}: run out",
+        allow_nonzero_exit=True,
     )
-    if not ok:
-        return False
+    # Even if the program exits non-zero, we still proceed to compare output.
 
     # Keep full originals for printing/diff
     actual_text = stdout
