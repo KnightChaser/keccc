@@ -288,7 +288,7 @@ def main(argv: Sequence[str]) -> int:
     source_root = Path(args.source_root).resolve()
     build_root = Path(args.build_root).resolve()
 
-    tests_dir = source_root / "tests"
+    tests_dir = source_root / "tests" / "testcases"
     keccc_path = build_root / "src" / "keccc"
 
     if not keccc_path.exists():
