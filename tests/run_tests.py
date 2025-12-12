@@ -127,7 +127,7 @@ def run_single_test_nasm(
     Returns a tuple of (success: bool, stdout: str).
     """
     # Build artifacts in workdir
-    out_s = workdir / "out.s"
+    out_asm = workdir / "out.asm"
     out_o = workdir / "out.o"
     start_o = workdir / "start.o"
     printint_o = workdir / "printint.o"
@@ -139,7 +139,7 @@ def run_single_test_nasm(
 
     # 1) Compile to assembly (keccc writes out.s in cwd)
     ok, _, _ = run_command(
-        [str(keccc_path), "--target", "nasm", str(test_case.source)],
+        [str(keccc_path), "--output", "out.asm", "--target", "nasm", str(test_case.source)],
         cwd=workdir,
         description=f"{test_case.name}: keccc(nasm)",
     )
@@ -147,15 +147,15 @@ def run_single_test_nasm(
         return False, ""
 
     # keccc wrote "out.s" into workdir; keep it as out.s already
-    if not (workdir / "out.s").exists():
+    if not (workdir / "out.asm").exists():
         print(f"[FAIL] {test_case.name}: keccc did not produce out.s in {workdir}")
         return False, ""
 
     # 2) Assemble program
     ok, _, _ = run_command(
-        [nasm, "-felf64", str(out_s), "-o", str(out_o)],
+        [nasm, "-felf64", str(out_asm), "-o", str(out_o)],
         cwd=workdir,
-        description=f"{test_case.name}: nasm out.s",
+        description=f"{test_case.name}: nasm out.asm",
     )
     if not ok:
         return False, ""
@@ -217,12 +217,12 @@ def run_single_test_aarch64(
     out_bin = workdir / "out_aarch64"
 
     rt_dir = source_root / "src" / "rt" / "aarch64"
-    start_s = rt_dir / "start.asm"
-    printint_s = rt_dir / "printint.asm"
+    start_s = rt_dir / "start.s"
+    printint_s = rt_dir / "printint.s"
 
     # 1) Compile to assembly (keccc writes out.s in cwd)
     ok, _, _ = run_command(
-        [str(keccc_path), "--target", "aarch64", str(test_case.source)],
+        [str(keccc_path), "--output", "out.s", "--target", "aarch64", str(test_case.source)],
         cwd=workdir,
         description=f"{test_case.name}: keccc(aarch64)",
     )
