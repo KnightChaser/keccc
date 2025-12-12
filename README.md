@@ -1,3 +1,4 @@
+
 # keccc
 
 Knight's Experimental Compact C Compiler (supposedly).
@@ -8,10 +9,6 @@ NOTE: It uses Meson as the build system.
 
 ```sh
 # Set up the build directory
-
-# Option1: with AddressSanitizer and UndefinedBehaviorSanitizer
-meson setup builddir-asan --buildtype=debug -Db_sanitize=address,undefined
-# Option2: without sanitizers (normal)
 meson setup builddir
 
 # Compile the project
@@ -23,16 +20,41 @@ meson test -C builddir --print-errorlogs
 
 ## Individual test during development
 
-Move to the project root and run:
+Suppose you're at the project root, and the input file is located at `./builddir`, after you successfully build the project with `meson compile -C ./builddir` command.
+
+- **x86_64** NASM target
 
 ```sh
-./src/keccc --target nasm input
-bat ./out.s
-nasm -f elf64 out.s -o out.o
-gcc -no-pie out.o -o out
-echo "Assembly and linking finished."
-./out
+./builddir/src/keccc --output ./builddir/out.asm --target nasm ./builddir/input
+nasm -felf64 ./builddir/out.asm -o ./builddir/out.o
+nasm -felf64 src/rt/x86_64/start.asm -o ./builddir/start.o
+nasm -felf64 src/rt/x86_64/printint.asm -o ./builddir/printint.o
+ld -o ./builddir/out ./builddir/out.o ./builddir/start.o ./builddir/printint.o
+./builddir/out
 ```
+
+- **AArch64** (ARM64) target
+
+```sh
+./builddir/src/keccc --output ./builddir/out.s --target aarch64 ./builddir/input
+aarch64-linux-gnu-as ./builddir/out.s -o ./builddir/out.o
+aarch64-linux-gnu-as src/rt/aarch64/start.s -o ./builddir/start.o
+aarch64-linux-gnu-as src/rt/aarch64/printint.s -o ./builddir/printint.o
+aarch64-linux-gnu-ld -o ./builddir/out_arm64 ./builddir/out.o ./builddir/start.o ./builddir/printint.o
+qemu-aarch64 ./builddir/out_arm64
+```
+
+## Targets and layout
+
+- `--target`: Selects the backend code generation target. `nasm` (Intel x86_64, NASM flavored) and `aarch64`(ARM64) is supported. Note that `aarch64` is tested via `qemu-aarch64`.
+  - Example: `./src/keccc --target nasm tests/input01.kc`
+- Machine-dependent codegen is organized under `src/cgn/*/`:
+  - `cgn_regs.c|h`: register pool and register names
+  - `cgn_expr.c`: loads/stores, arithmetic, comparisons
+  - `cgn_stmt.c`: labels, jumps, preamble/postamble, calls/returns
+  - `cgn_ops.c`: An abstraction layer between backend-agnostic code generation part to backend-dependent ASM code generation functions
+
+Generic/target-agnostic lowering lives in `src/gen.c` and dispatches to NASM routines.
 
 ## Editor setup (clangd/Neovim)
 
@@ -46,14 +68,3 @@ ln -sf builddir/compile_commands.json compile_commands.json
 ```
 
 - For tools that look for `compile_flags.txt`, one is provided with `-Isrc`.
-
-## Targets and layout
-
-- `--target`: Selects the backend code generation target. Currently only `nasm` (x86_64) is supported and is the default.
-  - Example: `./src/keccc --target nasm tests/input01.kc`
-- Machine-dependent codegen is organized under `src/cgn/*/`:
-  - `cgn_regs.c|h`: register pool and register names
-  - `cgn_expr.c`: loads/stores, arithmetic, comparisons
-  - `cgn_stmt.c`: labels, jumps, preamble/postamble, calls/returns
-
-Generic/target-agnostic lowering lives in `src/gen.c` and dispatches to NASM routines.
