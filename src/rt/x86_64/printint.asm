@@ -36,13 +36,13 @@ printint:
 
 .not_min:
     ; sign flag in r8d: 0 or 1
-    xor     r8d, r8d
+    xor     r8d, r8d            ; negative = 0
 
-    mov     rax, rdi            ; working value (signed)
+    mov     rax, rdi            ; n = working value (signed)
     test    rax, rax
     jge     .abs_ready
-    neg     rax
-    mov     r8d, 1              ; negative
+    neg     rax                 ; n = -n
+    mov     r8d, 1              ; negative = 1
 
 .abs_ready:
 
@@ -52,7 +52,7 @@ printint:
 
     ; Handle 0
     test    rax, rax
-    jne     .convert
+    jne     .convert            ; if the value is non-zero, convert it
     dec     r11
     mov     byte [r11], '0'
     jmp     .maybe_sign
@@ -62,31 +62,31 @@ printint:
 
 .loop:
     xor     rdx, rdx
-    div     r9                  ; unsigned: rdx:rax / 10 -> rax=quot, rdx=rem
+    div     r9                  ; unsigned: rdx:rax / 10 -> rax=quotient, rdx=remainder
     add     dl, '0'             ; convert to ASCII (e.g. 3 -> '3')
-    dec     r11
-    mov     [r11], dl
-    test    rax, rax
+    dec     r11                 ; move back one byte
+    mov     [r11], dl           ; store digit
+    test    rax, rax            ; while quotient != 0
     jne     .loop
 
 .maybe_sign:
-    test    r8d, r8d
+    test    r8d, r8d            ; if the value n is negative
     jz      .write_num
     dec     r11
-    mov     byte [r11], '-'
+    mov     byte [r11], '-'     ; don't forget the sign
 
 .write_num:
     ; write(stdout, start=r11, len=end-r11)
     mov     eax, 1              ; __NR_write
-    mov     edi, 1              ; stdout
-    mov     rsi, r11
+    mov     rdi, 1              ; stdout
+    mov     rsi, r11            ; start ptr
     mov     rdx, r10
-    sub     rdx, r11
+    sub     rdx, r11            ; length (=end - start)
     syscall
 
     ; write newline
     mov     eax, 1
-    mov     edi, 1
+    mov     rdi, 1
     lea     rsi, [rel nl]
     mov     edx, 1
     syscall
