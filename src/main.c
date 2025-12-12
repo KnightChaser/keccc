@@ -25,11 +25,15 @@ static void initCompilerState(void) {
 /**
  * dieUsage - Print usage message and exit.
  *
+ * NOTE:
+ *
  * @program: Name of the program (typically argv[0]).
  */
 static void dieUsage(const char *program) {
     fprintf(stderr,
-            "Usage: %s [--target [nasm|aarch64]|-t [nasm|aarch64]] infile\n",
+            "Usage: %s [--output outfile | -o outfile]"
+            "[--target [nasm|aarch64]|-t [nasm|aarch64]]"
+            "infile\n",
             program);
     exit(1);
 }
@@ -65,23 +69,30 @@ static int parseTargetOrDie(const char *targetName, const char *program) {
  * @argv: Argument vector.
  * @outTargetName: Output parameter for the target name.
  * @outInfilePath: Output parameter for the input file path.
+ * @outOutfilePath: Output parameter for the output file path.
  */
 static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
-                           const char **outInfilePath) {
+                           const char **outInfilePath,
+                           const char **outOutfilePath) {
     // Defaults
     const char *targetName = "nasm"; // TARGET_NASM
     const char *infilePath = NULL;
+    const char *outfilePath = "out.asm"; // default
 
     static struct option longopts[] = {
         {"target", required_argument, 0, 't'},
+        {"output", required_argument, 0, 'o'},
         {0, 0, 0, 0},
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "t:", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "t:o:", longopts, NULL)) != -1) {
         switch (opt) {
         case 't':
             targetName = optarg;
+            break;
+        case 'o':
+            outfilePath = optarg;
             break;
         default:
             dieUsage(argv[0]);
@@ -96,6 +107,7 @@ static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
 
     *outTargetName = targetName;
     *outInfilePath = infilePath;
+    *outOutfilePath = outfilePath;
 }
 
 /**
@@ -135,16 +147,15 @@ int main(int argc, char **argv) {
 
     const char *targetName = NULL;
     const char *infilePath = NULL;
+    const char *outfilePath = NULL;
 
-    parseArgsOrDie(argc, argv, &targetName, &infilePath);
+    parseArgsOrDie(argc, argv, &targetName, &infilePath, &outfilePath);
 
     CurrentTarget = parseTargetOrDie(targetName, argv[0]);
     codegenSelectTargetBackend(CurrentTarget);
 
     initCompilerState();
 
-    // TODO: make outfile configurable later. Keeping your behavior.
-    const char *outfilePath = "out.s";
     openFilesOrDie(infilePath, outfilePath);
 
     // Ensure runtime-provided function is known to the compiler.
