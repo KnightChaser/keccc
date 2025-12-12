@@ -17,35 +17,8 @@
 void aarch64Preamble(void) {
     aarch64ResetRegisterPool();
 
-    // We'll layout like:
-    //   .text
-    //   .global printint
-    //   .extern printf
-    //   .section .rodata
-    // fmtint: .string "%ld\n"
-    //   .text
-    // printint:
-    //   prologue, move arg, call printf, epilogue
-
     fputs("\t.text\n", Outfile);
-    fputs("\t.global\tprintint\n", Outfile);
     fputs("\t.extern\tprintf\n", Outfile);
-    fputs("\t.section\t.rodata\n", Outfile);
-
-    fputs("fmtint:\n", Outfile);
-    fputs("\t.string\t\"%ld\\n\"\n", Outfile);
-    fputs("\t.text\n", Outfile);
-
-    fputs("printint:\n"
-          "\tstp\tx29, x30, [sp, -16]!\n"
-          "\tmov\tx29, sp\n"
-          "\tmov\tx1, x0\n"
-          "\tadrp\tx0, fmtint\n"
-          "\tadd\tx0, x0, :lo12:fmtint\n"
-          "\tbl\tprintf\n"
-          "\tldp\tx29, x30, [sp], 16\n"
-          "\tret\n",
-          Outfile);
 }
 
 /**
