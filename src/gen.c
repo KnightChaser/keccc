@@ -12,7 +12,7 @@
 #include "defs.h"
 
 /**
- * codegenlabel - Generates a unique label number for code generation.
+ * codegenLabel - Generates a unique label number for code generation.
  *
  * @return int A unique label number.
  */
@@ -27,17 +27,7 @@ int codegenLabel(void) {
  *
  * @label: The label number to output.
  */
-static void backendLabel(int label) {
-    if (CurrentTarget == TARGET_NASM) {
-        nasmLabel(label);
-        return;
-    } else if (CurrentTarget == TARGET_AARCH64) {
-        aarch64Label(label);
-        return;
-    }
-
-    logFatal("Error: Unsupported target in backendLabel");
-}
+static void backendLabel(int label) { CG->label(label); }
 
 /**
  * backendJump - Generates an unconditional jump to a label
@@ -45,17 +35,7 @@ static void backendLabel(int label) {
  *
  * @label: The label number to jump to.
  */
-static void backendJump(int label) {
-    if (CurrentTarget == TARGET_NASM) {
-        nasmJump(label);
-        return;
-    } else if (CurrentTarget == TARGET_AARCH64) {
-        aarch64Jump(label);
-        return;
-    }
-
-    logFatal("Error: Unsupported target in backendJump");
-}
+static void backendJump(int label) { CG->jump(label); }
 
 /**
  * backendCompareAndJump - Generates code to compare two registers
@@ -68,14 +48,7 @@ static void backendJump(int label) {
  * @label: The label number to jump to if the comparison is true.
  */
 static int backendCompareAndJump(int ASTop, int r1, int r2, int label) {
-    if (CurrentTarget == TARGET_NASM) {
-        return nasmCompareAndJump(ASTop, r1, r2, label);
-    } else if (CurrentTarget == TARGET_AARCH64) {
-        return aarch64CompareAndJump(ASTop, r1, r2, label);
-    }
-
-    logFatal("Error: Unsupported target in backendCompareAndJump");
-    return NOREG; // unreachable
+    return CG->compareAndJump(ASTop, r1, r2, label);
 }
 
 /**
@@ -85,8 +58,7 @@ static int backendCompareAndJump(int ASTop, int r1, int r2, int label) {
  * The If statement is represented in the AST as follows:
  * ----------------------------------------
  *        [  A_IF  ]
- *        /   |    \
- *    cond  true  false
+ *        /   |     *    cond  true  false
  *  (left)(middle)(right)
  * ----------------------------------------
  * Conventional if statement will be
@@ -129,11 +101,9 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     if (n->right) {
-        // nasmJump(labelEndStatement);
         backendJump(labelEndStatement);
     }
 
-    // nasmLabel(labelFalseStatement);
     backendLabel(labelFalseStatement);
 
     // Optional ELSE clause exists
@@ -141,7 +111,6 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     if (n->right) {
         codegenAST(n->right, NOREG, n->op);
         codegenResetRegisters();
-        // nasmLabel(labelEndStatement);
         backendLabel(labelEndStatement);
     }
 
@@ -155,7 +124,7 @@ static int codegenIfStatementAST(struct ASTnode *n) {
  * The While statement is represented in the AST as follows:
  * ----------------------------------------
  *       [  A_WHILE  ]
- *        /     \
+ *        /      \
  *      cond     body
  *     (left)   (middle)
  * ----------------------------------------
@@ -183,7 +152,6 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     // - one for the end of the loop
     labelStartLoop = codegenLabel();
     labelEndLoop = codegenLabel();
-    // nasmLabel(labelStartLoop);
     backendLabel(labelStartLoop);
 
     // Generate the loop condition
@@ -195,8 +163,6 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     // Jump back to the start of the loop
-    // nasmJump(labelStartLoop);
-    // nasmLabel(labelEndLoop);
     backendJump(labelStartLoop);
     backendLabel(labelEndLoop);
 
@@ -238,34 +204,14 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // and return NOREG since GLUE does not produce a value
         // Then free registers used in each sub-tree
         codegenAST(n->left, NOREG, n->op);
-        // TODO: Refactor backend-specific reset register pool
-        if (CurrentTarget == TARGET_NASM) {
-            nasmResetRegisterPool();
-        } else if (CurrentTarget == TARGET_AARCH64) {
-            aarch64ResetRegisterPool();
-        }
+        CG->resetRegisters();
         codegenAST(n->right, NOREG, n->op);
-        // TODO: Refactor backend-specific reset register pool
-        if (CurrentTarget == TARGET_NASM) {
-            nasmResetRegisterPool();
-        } else if (CurrentTarget == TARGET_AARCH64) {
-            aarch64ResetRegisterPool();
-        }
+        CG->resetRegisters();
         return NOREG;
     case A_FUNCTION:
-        // TODO: Refactor backend-specific function preamble
-        if (CurrentTarget == TARGET_NASM) {
-            nasmFunctionPreamble(n->v.identifierIndex);
-        } else if (CurrentTarget == TARGET_AARCH64) {
-            aarch64FunctionPreamble(n->v.identifierIndex);
-        }
+        CG->functionPreamble(n->v.identifierIndex);
         codegenAST(n->left, NOREG, n->op);
-        // TODO: Refactor backend-specific function postamble
-        if (CurrentTarget == TARGET_NASM) {
-            nasmFunctionPostamble(n->v.identifierIndex);
-        } else if (CurrentTarget == TARGET_AARCH64) {
-            aarch64FunctionPostamble(n->v.identifierIndex);
-        }
+        CG->functionPostamble(n->v.identifierIndex);
         return NOREG;
     }
 
@@ -283,23 +229,14 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
 
     switch (n->op) {
     // Arithmetic operations
-    // TODO: Refactor backend-specific arithmetic operations
     case A_ADD:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmAddRegs(leftRegister, rightRegister)
-                   : aarch64AddRegs(leftRegister, rightRegister);
+        return CG->addRegs(leftRegister, rightRegister);
     case A_SUBTRACT:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmSubRegs(leftRegister, rightRegister)
-                   : aarch64SubRegs(leftRegister, rightRegister);
+        return CG->subRegs(leftRegister, rightRegister);
     case A_MULTIPLY:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmMulRegs(leftRegister, rightRegister)
-                   : aarch64MulRegs(leftRegister, rightRegister);
+        return CG->mulRegs(leftRegister, rightRegister);
     case A_DIVIDE:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmDivRegsSigned(leftRegister, rightRegister)
-                   : aarch64DivRegsSigned(leftRegister, rightRegister);
+        return CG->divRegsSigned(leftRegister, rightRegister);
 
     // Comparison operations
     case A_EQ:
@@ -313,33 +250,19 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Otherwise, compare registers and set one to 1 or 0 based on the
         // comparison.
         if (parentASTop == A_IF || parentASTop == A_WHILE) {
-            // return nasmCompareAndJump(n->op, leftRegister, rightRegister,
-            // reg);
             return backendCompareAndJump(n->op, leftRegister, rightRegister,
                                          reg);
         } else {
-            // return nasmCompareAndSet(n->op, leftRegister, rightRegister);
-            // TODO: Refactor backend-specific compare and set
-            if (CurrentTarget == TARGET_NASM) {
-                return nasmCompareAndSet(n->op, leftRegister, rightRegister);
-            } else if (CurrentTarget == TARGET_AARCH64) {
-                return aarch64CompareAndSet(n->op, leftRegister, rightRegister);
-            }
+            return CG->compareAndSet(n->op, leftRegister, rightRegister);
         }
 
     // Leaf nodes
     case A_INTLIT:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmLoadImmediateInt(n->v.intvalue, n->primitiveType)
-                   : aarch64LoadImmediateInt(n->v.intvalue, n->primitiveType);
+        return CG->loadImmediateInt(n->v.intvalue, n->primitiveType);
     case A_IDENTIFIER:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmLoadGlobalSymbol(n->v.identifierIndex)
-                   : aarch64LoadGlobalSymbol(n->v.identifierIndex);
+        return CG->loadGlobalSymbol(n->v.identifierIndex);
     case A_LVALUEIDENTIFIER:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmStoreGlobalSymbol(reg, n->v.identifierIndex)
-                   : aarch64StoreGlobalSymbol(reg, n->v.identifierIndex);
+        return CG->storeGlobalSymbol(reg, n->v.identifierIndex);
     case A_ASSIGN:
         // The work has already been done, return the result
         return rightRegister;
@@ -349,26 +272,13 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         return NOREG;
     case A_WIDENTYPE:
         // Widen the child node's primitive type to the parent node's type
-        // return nasmWidenPrimitiveType(leftRegister, n->left->primitiveType,
-        //                               n->primitiveType);
-        // TODO: Refactor backend-specific widen primitive type
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmWidenPrimitiveType(
-                         leftRegister, n->left->primitiveType, n->primitiveType)
-                   : aarch64WidenPrimitiveType(leftRegister,
-                                               n->left->primitiveType,
-                                               n->primitiveType);
+        return CG->widenPrimitiveType(leftRegister, n->left->primitiveType,
+                                      n->primitiveType);
     case A_RETURN:
-        // nasmReturnFromFunction(leftRegister, CurrentFunctionSymbolID);
-        // TODO: Refactor backend-specific return from function
-        (CurrentTarget == TARGET_NASM)
-            ? nasmReturnFromFunction(leftRegister, CurrentFunctionSymbolID)
-            : aarch64ReturnFromFunction(leftRegister, CurrentFunctionSymbolID);
+        CG->returnFromFunction(leftRegister, CurrentFunctionSymbolID);
         return NOREG;
     case A_FUNCTIONCALL:
-        return (CurrentTarget == TARGET_NASM)
-                   ? nasmFunctionCall(leftRegister, n->v.identifierIndex)
-                   : aarch64FunctionCall(leftRegister, n->v.identifierIndex);
+        return CG->functionCall(leftRegister, n->v.identifierIndex);
 
     default:
         // Should not reach here; unsupported operation
