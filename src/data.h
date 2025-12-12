@@ -16,6 +16,8 @@ extern_ int Line;
 extern_ int Putback;
 // Symbol ID of the current function being processed
 extern_ int CurrentFunctionSymbolID;
+// Position of the next free global symbol slot
+static int NextGlobalSymbolIndex = 0;
 // Input file (source code)
 extern_ FILE *Infile;
 // Output file (generated code, currently Assembly)

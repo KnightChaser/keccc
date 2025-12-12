@@ -4,9 +4,6 @@
 #include "decl.h"
 #include "defs.h"
 
-// Position of the next free global symbol slot
-static int NextGlobalSymbolIndex = 0;
-
 /**
  * findGlobalSymbol - Find a global symbol in the symbol table.
  *
