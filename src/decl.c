@@ -75,7 +75,7 @@ struct ASTnode *functionDeclaration(void) {
     // Get a label-id for the end label,
     // add the function to the symbol table as declared,
     // and set the CurrentFunctionSymbolID to the function's symbol ID
-    endLabel = codegenLabel();
+    endLabel = codegenGetLabelNumber();
     functionNameIndex = addGlobalSymbol(Text, type, S_FUNCTION, endLabel);
     CurrentFunctionSymbolID = functionNameIndex;
 

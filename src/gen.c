@@ -12,33 +12,33 @@
 #include "defs.h"
 
 /**
- * codegenLabel - Generates a unique label number for code generation.
+ * codegenGetLabelNumber - Generates a unique label number for code generation.
  *
  * @return int A unique label number.
  */
-int codegenLabel(void) {
+int codegenGetLabelNumber(void) {
     static int id = 1;
     return (id++);
 }
 
 /**
- * backendLabel - Outputs a label in the assembly code
+ * codegenLabel - Outputs a label in the assembly code
  * for the current target backend.
  *
  * @label: The label number to output.
  */
-static void backendLabel(int label) { CG->label(label); }
+static void codegenLabel(int label) { CG->label(label); }
 
 /**
- * backendJump - Generates an unconditional jump to a label
+ * codegenJump - Generates an unconditional jump to a label
  * for the current target backend.
  *
  * @label: The label number to jump to.
  */
-static void backendJump(int label) { CG->jump(label); }
+static void codegenJump(int label) { CG->jump(label); }
 
 /**
- * backendCompareAndJump - Generates code to compare two registers
+ * codegenCompareAndJump - Generates code to compare two registers
  * and jump to a label based on the comparison result
  * for the current target backend.
  *
@@ -47,7 +47,7 @@ static void backendJump(int label) { CG->jump(label); }
  * @r2: Index of the second register.
  * @label: The label number to jump to if the comparison is true.
  */
-static int backendCompareAndJump(int ASTop, int r1, int r2, int label) {
+static int codegenCompareAndJump(int ASTop, int r1, int r2, int label) {
     return CG->compareAndJump(ASTop, r1, r2, label);
 }
 
@@ -86,9 +86,9 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     // - one for the false branch
     // - one for the end of the if statement
     // (When there is no ELSE clause, labelFalseStatement is the ending label.
-    labelFalseStatement = codegenLabel();
+    labelFalseStatement = codegenGetLabelNumber();
     if (n->right) {
-        labelEndStatement = codegenLabel();
+        labelEndStatement = codegenGetLabelNumber();
     }
 
     // WARNING:
@@ -101,17 +101,17 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     if (n->right) {
-        backendJump(labelEndStatement);
+        codegenJump(labelEndStatement);
     }
 
-    backendLabel(labelFalseStatement);
+    codegenLabel(labelFalseStatement);
 
     // Optional ELSE clause exists
     // Generate the false compount statement and the end label
     if (n->right) {
         codegenAST(n->right, NOREG, n->op);
         codegenResetRegisters();
-        backendLabel(labelEndStatement);
+        codegenLabel(labelEndStatement);
     }
 
     return NOREG;
@@ -150,9 +150,9 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     // Generate two labels:
     // - one for the start of the loop
     // - one for the end of the loop
-    labelStartLoop = codegenLabel();
-    labelEndLoop = codegenLabel();
-    backendLabel(labelStartLoop);
+    labelStartLoop = codegenGetLabelNumber();
+    labelEndLoop = codegenGetLabelNumber();
+    codegenLabel(labelStartLoop);
 
     // Generate the loop condition
     codegenAST(n->left, labelEndLoop, n->op);
@@ -163,8 +163,8 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     // Jump back to the start of the loop
-    backendJump(labelStartLoop);
-    backendLabel(labelEndLoop);
+    codegenJump(labelStartLoop);
+    codegenLabel(labelEndLoop);
 
     return NOREG;
 }
@@ -250,7 +250,7 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Otherwise, compare registers and set one to 1 or 0 based on the
         // comparison.
         if (parentASTop == A_IF || parentASTop == A_WHILE) {
-            return backendCompareAndJump(n->op, leftRegister, rightRegister,
+            return codegenCompareAndJump(n->op, leftRegister, rightRegister,
                                          reg);
         } else {
             return CG->compareAndSet(n->op, leftRegister, rightRegister);

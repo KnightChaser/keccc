@@ -32,7 +32,7 @@ struct ASTnode *makeASTUnary(int op,               // AST operation code
 
 // NOTE: gen.c (target-agnostic code generation)
 int codegenAST(struct ASTnode *n, int reg, int parentASTop);
-int codegenLabel(void);
+int codegenGetLabelNumber(void);
 void codegenPreamble();
 void codegenPostamble();
 void codegenResetRegisters();
