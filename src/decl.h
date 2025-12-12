@@ -69,29 +69,30 @@ void nasmJump(int label);
 int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
 int nasmGetPrimitiveTypeSize(int primitiveType);
 
-// ARM64 AArch64 backend
-void arm64ResetRegisterPool(void);
-void arm64Preamble(void);
-void arm64Postamble(void);
-int arm64FunctionCall(int registerId, int id);
-void arm64FunctionPreamble(int id);
-void arm64ReturnFromFunction(int reg, int id);
-void arm64FunctionPostamble(int id);
-int arm64LoadImmediateInt(int value, int primitiveType);
-int arm64LoadGlobalSymbol(int id);
-int arm64StoreGlobalSymbol(int registerIndex, int id);
-void arm64DeclareGlobalSymbol(int id);
-int arm64AddRegs(int dstReg, int srcReg);
-int arm64SubRegs(int dstReg, int srcReg);
-int arm64MulRegs(int dstReg, int srcReg);
-int arm64DivRegsSigned(int dividendReg, int divisorReg);
-void arm64PrintIntFromReg(int reg);
-int arm64CompareAndSet(int ASTop, int r1, int r2);
-int arm64CompareAndJump(int ASTop, int r1, int r2, int label);
-void arm64Label(int label);
-void arm64Jump(int label);
-int arm64WidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
-int arm64GetPrimitiveTypeSize(int primitiveType);
+// aarch64 AArch64 backend
+void aarch64ResetRegisterPool(void);
+void aarch64Preamble(void);
+void aarch64Postamble(void);
+int aarch64FunctionCall(int registerId, int id);
+void aarch64FunctionPreamble(int id);
+void aarch64ReturnFromFunction(int reg, int id);
+void aarch64FunctionPostamble(int id);
+int aarch64LoadImmediateInt(int value, int primitiveType);
+int aarch64LoadGlobalSymbol(int id);
+int aarch64StoreGlobalSymbol(int registerIndex, int id);
+void aarch64DeclareGlobalSymbol(int id);
+int aarch64AddRegs(int dstReg, int srcReg);
+int aarch64SubRegs(int dstReg, int srcReg);
+int aarch64MulRegs(int dstReg, int srcReg);
+int aarch64DivRegsSigned(int dividendReg, int divisorReg);
+void aarch64PrintIntFromReg(int reg);
+int aarch64CompareAndSet(int ASTop, int r1, int r2);
+int aarch64CompareAndJump(int ASTop, int r1, int r2, int label);
+void aarch64Label(int label);
+void aarch64Jump(int label);
+int aarch64WidenPrimitiveType(int r, int oldPrimitiveType,
+                              int newPrimitiveType);
+int aarch64GetPrimitiveTypeSize(int primitiveType);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);

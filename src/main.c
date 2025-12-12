@@ -1,5 +1,6 @@
 // src/main.c
 
+#include "cgn/cg_ops.h"
 #include "decl.h"
 
 #define extern_
@@ -18,7 +19,8 @@ static void init() {
 }
 
 static void usage(char *program) {
-    fprintf(stderr, "Usage: %s [--target nasm|arm64|-t nasm|arm64] infile\n",
+    fprintf(stderr,
+            "Usage: %s [--target nasm|aarch64|-t nasm|aarch64] infile\n",
             program);
     exit(1);
 }
@@ -54,15 +56,16 @@ int main(int argc, char **argv) {
     // For now, only NASM is supported
     if (strcmp(target_name, "nasm") == 0) {
         CurrentTarget = TARGET_NASM;
-    } else if (strcmp(target_name, "arm64") == 0) {
-        CurrentTarget = TARGET_ARM64;
+    } else if (strcmp(target_name, "aarch64") == 0) {
+        CurrentTarget = TARGET_AARCH64;
     } else {
         fprintf(
             stderr,
-            "Unsupported target: %s (only 'nasm' or 'arm64' is supported)\n",
+            "Unsupported target: %s (only 'nasm' or 'aarch64' is supported)\n",
             target_name);
         usage(argv[0]);
     }
+    codegenSelectTargetBackend(CurrentTarget);
 
     init();
 

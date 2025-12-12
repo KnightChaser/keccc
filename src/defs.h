@@ -2,6 +2,11 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+/**
+ * WARNING:
+ * These header files are included in multiple source files,
+ * so don't delete the include statements here.
+ */
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,8 +14,8 @@
 
 // Code generation targets
 enum {
-    TARGET_NASM = 1, // NASM-flavored x86_64 assembly
-    TARGET_ARM64,    // ARM64 assembly
+    TARGET_NASM = 1,    // NASM-flavored x86_64 assembly
+    TARGET_AARCH64 = 2, // AArch64 (ARM64) GNU as-style assembly
 };
 
 // Length of symbols in input

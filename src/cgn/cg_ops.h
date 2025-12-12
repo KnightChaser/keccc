@@ -1,0 +1,52 @@
+// src/cgn/cg_ops.h
+#pragma once
+
+struct CodegenOps {
+    // Register pool
+    void (*resetRegisters)(void);
+
+    // Preamble / postamble
+    void (*preamble)(void);
+    void (*postamble)(void);
+
+    // Functions
+    int (*functionCall)(int reg, int funcSymId);
+    void (*functionPreamble)(int funcSymId);
+    void (*returnFromFunction)(int reg, int funcSymId);
+    void (*functionPostamble)(int funcSymId);
+
+    // Data
+    void (*declareGlobalSymbol)(int symId);
+
+    // Expressions / loads / stores
+    int (*loadImmediateInt)(int value, int primitiveType);
+    int (*loadGlobalSymbol)(int symId);
+    int (*storeGlobalSymbol)(int reg, int symId);
+
+    // Arithmetic
+    int (*addRegs)(int r1, int r2);
+    int (*subRegs)(int r1, int r2);
+    int (*mulRegs)(int r1, int r2);
+    int (*divRegsSigned)(int r1, int r2);
+
+    // Comparisons
+    int (*compareAndSet)(int astOp, int r1, int r2);
+    int (*compareAndJump)(int astOp, int r1, int r2, int label);
+
+    // Control flow helpers
+    void (*label)(int label);
+    void (*jump)(int label);
+
+    // Types
+    int (*widenPrimitiveType)(int r, int oldType, int newType);
+    int (*getPrimitiveTypeSize)(int primitiveType);
+
+    // Builtins
+    void (*printIntFromReg)(int reg);
+};
+
+// Selected backend-specific operation table
+// (Set once in main() after parsing "--target" argument)
+extern const struct CodegenOps *CG;
+
+void codegenSelectTargetBackend(int target);
