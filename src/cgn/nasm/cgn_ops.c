@@ -35,4 +35,7 @@ const struct CodegenOps nasmOps = {
     .getPrimitiveTypeSize = nasmGetPrimitiveTypeSize,
 
     .printIntFromReg = nasmPrintIntFromReg,
+
+    .addressOfGlobalSymbol = nasmAddressOfGlobalSymbol,
+    .dereferencePointer = nasmDereferencePointer,
 };

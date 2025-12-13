@@ -141,6 +141,9 @@ int aarch64StoreGlobalSymbol(int r, int id) {
         fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
         break;
     case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
         fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
         break;
     default:

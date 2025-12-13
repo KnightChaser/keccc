@@ -34,4 +34,7 @@ const struct CodegenOps aarch64Ops = {
     .getPrimitiveTypeSize = aarch64GetPrimitiveTypeSize,
 
     .printIntFromReg = aarch64PrintIntFromReg,
+
+    .addressOfGlobalSymbol = aarch64AddressOfGlobalSymbol,
+    .dereferencePointer = aarch64DereferencePointer,
 };

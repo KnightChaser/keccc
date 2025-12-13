@@ -147,6 +147,9 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
         );
         break;
     case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
         fprintf(Outfile, "\tmov\t[%s], QWORD %s\n",
                 GlobalSymbolTable[id].name,      // destination global symbol
                 qwordRegisterList[registerIndex] // source register
