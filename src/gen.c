@@ -279,11 +279,15 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         return NOREG;
     case A_FUNCTIONCALL:
         return CG->functionCall(leftRegister, n->v.identifierIndex);
+    case A_ADDRESSOF:
+        return CG->addressOfGlobalSymbol(n->v.identifierIndex);
+    case A_DEREFERENCE:
+        return CG->dereferencePointer(leftRegister, n->left->primitiveType);
 
     default:
         // Should not reach here; unsupported operation
         logFatald("Unknown AST operator: ", n->op);
-        return -1;
+        return NOREG; // Unreachable
     }
 }
 

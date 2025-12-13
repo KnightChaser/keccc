@@ -73,3 +73,49 @@ bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
     *leftHandPrimitiveType = *rightHandPrimitiveType = 0;
     return true;
 }
+
+/**
+ * primitiveTypeToPointerType - Convert a primitive type to its pointer type
+ *
+ * @param primitiveType Primitive type to convert
+ * @return Corresponding pointer type
+ */
+int primitiveTypeToPointerType(int primitiveType) {
+    switch (primitiveType) {
+    case P_VOID:
+        return P_VOIDPTR;
+    case P_CHAR:
+        return P_CHARPTR;
+    case P_INT:
+        return P_INTPTR;
+    case P_LONG:
+        return P_LONGPTR;
+    default:
+        logFatald("Internal compiler error: unknown primitive type ",
+                  primitiveType);
+        return -1; // Unreachable
+    }
+}
+
+/**
+ * pointerToPrimitiveType - Convert a pointer type to its primitive type
+ *
+ * @param primitiveType Pointer type to convert
+ * @return Corresponding primitive type
+ */
+int pointerToPrimitiveType(int primitiveType) {
+    switch (primitiveType) {
+    case P_VOIDPTR:
+        return P_VOID;
+    case P_CHARPTR:
+        return P_CHAR;
+    case P_INTPTR:
+        return P_INT;
+    case P_LONGPTR:
+        return P_LONG;
+    default:
+        logFatald("Internal compiler error: unknown pointer type ",
+                  primitiveType);
+        return -1; // Unreachable
+    }
+}

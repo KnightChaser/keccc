@@ -22,9 +22,14 @@ static int primitiveSizeInBytes[] = {
     0, // P_VOID
     1, // P_CHAR
     4, // P_INT
-    8  // P_LONG
+    8, // P_LONG
        // NOTE: Long is 8 bytes (64 bits) in x86_64
        // Later, we can add support 32 bits long(x86) if needed
+
+    8, // P_CHARPTR
+    8, // P_INTPTR
+    8, // P_LONGPTR
+    8  // Extra entry for safety/P_LONGPTR if enum values shifted
 };
 
 /**
@@ -35,7 +40,7 @@ static int primitiveSizeInBytes[] = {
  * Returns: Size in bytes of the primitive type.
  */
 int nasmGetPrimitiveTypeSize(int type) {
-    if ((type < P_NONE) || (type > P_LONG)) {
+    if ((type < P_NONE) || (type > P_LONGPTR)) {
         fprintf(
             stderr,
             "Error: Invalid primitive type %d in nasmGetPrimitiveTypeSize\n",
@@ -93,6 +98,11 @@ int nasmLoadGlobalSymbol(int id) {
         );
         break;
     case P_LONG:
+    // NOTE:
+    // pointer types are treated as long (64 bits) in x86_64
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
         fprintf(Outfile, "\tmov\t%s, [%s]\n",
                 qwordRegisterList[registerIndex], // destination register
                 GlobalSymbolTable[id].name        // source global symbol
@@ -312,4 +322,60 @@ int nasmCompareAndSet(int ASTop, int r1, int r2) {
 int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType) {
     // No action needed for x86_64 as all integers are treated as 64-bit
     return r;
+}
+
+/**
+ * nasmAddressOfGlobalSymbol - Generates code to get the address of a global
+ * symbol. Returns the address in a register.
+ *
+ * @id: The ID of the global symbol in the symbol table.
+ *
+ * Returns: Index of the register containing the address of the global symbol.
+ */
+int nasmAddressOfGlobalSymbol(int id) {
+    int r = allocateRegister();
+
+    fprintf(Outfile, "\tlea\t%s, [rel %s]\n",
+            qwordRegisterList[r],      // destination register
+            GlobalSymbolTable[id].name // source global symbol
+    );
+    return r;
+}
+
+/**
+ * nasmDereferencePointer - Generates code to dereference a pointer stored in
+ * a register.
+ *
+ * @pointerReg: Index of the register containing the pointer.
+ * @primitiveType: The primitive type of the value being pointed to.
+ *
+ * Returns: Index of the register containing the dereferenced value.
+ */
+int nasmDereferencePointer(int pointerReg, int primitiveType) {
+    switch (primitiveType) {
+    case P_CHAR:
+        fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n",
+                qwordRegisterList[pointerReg], // destination register
+                qwordRegisterList[pointerReg]  // source pointer register
+        );
+        break;
+    case P_INT:
+        fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n",
+                dwordRegisterList[pointerReg], // destination register
+                qwordRegisterList[pointerReg]  // source pointer register
+        );
+        break;
+    case P_LONG:
+    case P_VOIDPTR:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
+        fprintf(Outfile, "\tmov\t%s, QWORD [%s]\n",
+                qwordRegisterList[pointerReg], // destination register
+                qwordRegisterList[pointerReg]  // source pointer register
+        );
+        break;
+    }
+
+    return pointerReg;
 }

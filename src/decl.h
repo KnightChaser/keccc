@@ -68,6 +68,8 @@ void nasmLabel(int label);
 void nasmJump(int label);
 int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
 int nasmGetPrimitiveTypeSize(int primitiveType);
+int nasmAddressOfGlobalSymbol(int id);
+int nasmDereferencePointer(int pointerReg, int primitiveType);
 
 // aarch64 AArch64 backend
 void aarch64ResetRegisterPool(void);
@@ -93,6 +95,8 @@ void aarch64Jump(int label);
 int aarch64WidenPrimitiveType(int r, int oldPrimitiveType,
                               int newPrimitiveType);
 int aarch64GetPrimitiveTypeSize(int primitiveType);
+int aarch64AddressOfGlobalSymbol(int id);
+int aarch64DereferencePointer(int pointerReg, int primitiveType);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
@@ -128,3 +132,5 @@ struct ASTnode *functionDeclaration(void);
 bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
                                      int *rightHandPrimitiveType,
                                      bool onlyRight);
+int primitiveTypeToPointerType(int primitiveType);
+int pointerToPrimitiveType(int primitiveType);

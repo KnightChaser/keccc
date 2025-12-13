@@ -171,6 +171,70 @@ static int operatorPrecedence(int tokentype) {
 }
 
 /**
+ * prefix - Parse a prefix expression and return a sub-tree representing it
+ *
+ * NOTE:
+ * prefix_expression := primary_expression
+ *      | '*' prefix_expression
+ *      | '&' prefix_expression
+ *      ;
+ */
+struct ASTnode *prefix(void) {
+    struct ASTnode *tree;
+    switch (Token.token) {
+    case T_AMPERSAND:
+        /**
+         * NOTE: & operator (address-of)
+         * It must be applied to an identifier only.
+         * This operator returns the address of the variable.
+         */
+
+        // Get the next token and parse it,
+        // recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        if (tree->op != A_IDENTIFIER) {
+            logFatal(
+                "Address-of operator '&' must be applied to an identifier");
+        }
+
+        // Change the operator to A_ADDRESSOF and the type to
+        // a pointer to the original type
+        tree->op = A_ADDRESSOF;
+        tree->primitiveType = primitiveTypeToPointerType(tree->primitiveType);
+        break;
+    case T_STAR:
+        /**
+         * NOTE: * operator (pointer dereference)
+         * It must be applied to a pointer type only.
+         * This operator returns the value at the address pointed to.
+         */
+
+        // Get the next token and parse it,
+        // recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        if (tree->op != A_IDENTIFIER && tree->op != A_DEREFERENCE) {
+            logFatal(
+                "Dereference operator '*' must be applied to a pointer (*)");
+        }
+
+        // Prepend an A_DEREF operation to the tree
+        tree =
+            makeASTUnary(A_DEREFERENCE,
+                         pointerToPrimitiveType(tree->primitiveType), tree, 0);
+        break;
+    default:
+        // Otherwise, parse as a primary expression
+        tree = primary();
+        break;
+    }
+    return tree;
+}
+
+/**
  * binexpr - Parse a binary expression based on operator precedence.
  *
  * @param ptp The previous token precedence level.
@@ -183,9 +247,9 @@ struct ASTnode *binexpr(int ptp) {
     int rightPrimitiveType;
     int tokentype;
 
-    // Get the integer literal on the leftest side,
-    // and fetch the next token at the same time.
-    left = primary();
+    // Parse the left-hand side expression
+    // And, fetch the next token at the same time
+    left = prefix();
 
     // If we hit a semicolon(";") or right parenthesis(")"),
     // it means it's end of the expression,

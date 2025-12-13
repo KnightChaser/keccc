@@ -43,6 +43,10 @@ struct CodegenOps {
 
     // Builtins
     void (*printIntFromReg)(int reg);
+
+    // Pointers
+    int (*addressOfGlobalSymbol)(int symId);
+    int (*dereferencePointer)(int pointerReg, int primitiveType);
 };
 
 // Selected backend-specific operation table

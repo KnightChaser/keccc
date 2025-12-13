@@ -5,27 +5,42 @@
 #include "defs.h"
 
 /**
- * parsePrimitiveType - Parses a (primitive-type) token and returns its internal
- * representation.
+ * parsePrimitiveType - Parses the current token and return
+ * a primitive type enum value. Also, scan in the next token.
  *
- * @param t: Token representing the primitive type.
- * @return: Internal representation of the primitive type.
+ * @return: Primitive type enum value.
  */
-int parsePrimitiveType(int t) {
-    switch (t) {
+int parsePrimitiveType(void) {
+    int type;
+    switch (Token.token) {
     case T_VOID:
-        return P_VOID;
+        type = P_VOID;
+        break;
     case T_CHAR:
-        return P_CHAR;
+        type = P_CHAR;
+        break;
     case T_INT:
-        return P_INT;
+        type = P_INT;
+        break;
     case T_LONG:
-        return P_LONG;
+        type = P_LONG;
+        break;
+    default:
+        logFatald("Error: Invalid primitive type token in parsePrimitiveType",
+                  Token.token);
     }
 
-    logFatald("Error: Unknown primitive type token in parsePrimitiveType", t);
+    // Scan in one or more further '*' tokens and
+    // determine the correct pointer type
+    while (true) {
+        scan(&Token);
+        if (Token.token != T_STAR) {
+            break;
+        }
+        type = primitiveTypeToPointerType(type);
+    }
 
-    return P_NONE; // Unreachable, but avoids compiler warning
+    return type;
 }
 
 /**
@@ -39,9 +54,9 @@ void variableDeclaration(void) {
     int id;
     int type;
 
-    // Get the type of the variable, then the identifier
-    type = parsePrimitiveType(Token.token);
-    scan(&Token);
+    // Get the type of the variable,
+    // which also scans in the identifier
+    type = parsePrimitiveType();
     matchIdentifierToken();
 
     // Text now has the identifier's name
@@ -67,9 +82,9 @@ struct ASTnode *functionDeclaration(void) {
     int type;
     int endLabel;
 
-    // Get the type of the variable, then the identifier...
-    type = parsePrimitiveType(Token.token);
-    scan(&Token);
+    // Get the function return type,
+    // which also scans in the identifier
+    type = parsePrimitiveType();
     matchIdentifierToken();
 
     // Get a label-id for the end label,
@@ -86,15 +101,21 @@ struct ASTnode *functionDeclaration(void) {
     // Get the AST tree for the compound statement
     treeNode = compoundStatement();
 
-    // If the function type isn't P_VOID,
-    // check that the last AST operation in the compound statement
-    // was a return statement (returning somthing)
     if (type != P_VOID) {
+        if (treeNode == NULL) {
+            fprintf(stderr,
+                    "No statements in fucntion with non-void type: %s\n", Text);
+            exit(1);
+        }
+
+        // Check that the last AST operation in the given
+        // compound statement was a return statement
         finalStatementNode =
             (treeNode->op == A_GLUE) ? treeNode->right : treeNode;
         if (finalStatementNode == NULL || finalStatementNode->op != A_RETURN) {
-            logFatals("Error: Non-void function '", Text);
-            logFatal("' missing return statement");
+            fprintf(stderr,
+                    "Error: Non-void function '%s' missing return statement\n",
+                    Text);
         }
     }
 

@@ -16,7 +16,10 @@ static int aarch64PrimitiveSizeInBytes[] = {
     0, // P_VOID
     1, // P_CHAR
     4, // P_INT
-    8  // P_LONG
+    8, // P_LONG
+    8, // P_CHARPTR
+    8, // P_INTPTR
+    8  // P_LONGPTR
 };
 
 /**
@@ -27,7 +30,7 @@ static int aarch64PrimitiveSizeInBytes[] = {
  * Returns: Size in bytes of the primitive type.
  */
 int aarch64GetPrimitiveTypeSize(int type) {
-    if (type < P_NONE || type > P_LONG) {
+    if (type < P_NONE || type > P_LONGPTR) {
         fprintf(
             stderr,
             "Error: Invalid primitive type %d in aarch64GetPrimitiveTypeSize\n",
@@ -96,6 +99,11 @@ int aarch64LoadGlobalSymbol(int id) {
         fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
         break;
     case P_LONG:
+    // NOTE:
+    // pointer types are treated as long (64 bits) in AArch64
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
         fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
         break;
     default:
@@ -310,4 +318,47 @@ int aarch64WidenPrimitiveType(int r, int oldPrimitiveType,
     (void)oldPrimitiveType;
     (void)newPrimitiveType;
     return r;
+}
+
+/**
+ * aarch64AddressOfGlobalSymbol - Generates code to get the address of a global
+ * symbol. Returns the address in a register.
+ *
+ * @id: The ID of the global symbol in the symbol table.
+ *
+ * Returns: Index of the register containing the address of the global symbol.
+ */
+int aarch64AddressOfGlobalSymbol(int id) {
+    int r = aarch64AllocateRegister();
+
+    // PC-relative addressing:
+    //   adrp xN, name             ; compute page address
+    //   add  xN, xN, :lo12:name   ; add page offset
+    fprintf(Outfile, "\tadrp\t%s, %s\n", aarch64QwordRegisterList[r],
+            GlobalSymbolTable[id].name);
+    fprintf(Outfile, "\tadd\t%s, %s, :lo12:%s\n", aarch64QwordRegisterList[r],
+            aarch64QwordRegisterList[r], GlobalSymbolTable[id].name);
+    return r;
+}
+
+int aarch64DereferencePointer(int pointerReg, int primitiveType) {
+    const char *x = aarch64QwordRegisterList[pointerReg];
+    const char *w = aarch64DwordRegisterList[pointerReg];
+
+    switch (primitiveType) {
+    case P_CHARPTR:
+        // zero-extend byte into wN (upper bites cleared)
+        fprintf(Outfile, "\tldrb\t%s, [%s]\n", w, x);
+        break;
+    case P_INTPTR:
+        // loads 32-bit into wN (upper bits cleared)
+        fprintf(Outfile, "\tldr\t%s, [%s]\n", w, x);
+        break;
+    case P_LONGPTR:
+        // loads 64-bit into xN
+        fprintf(Outfile, "\tldr\t%s, [%s]\n", x, x);
+        break;
+    }
+
+    return pointerReg;
 }

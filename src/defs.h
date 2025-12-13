@@ -48,6 +48,8 @@ enum {
     T_RBRACE,     // }
     T_LPAREN,     // (
     T_RPAREN,     // )
+    T_AMPERSAND,  // &
+    T_LOGAND,     // &&
 
     // Keywords
     T_PRINT,  // "print"
@@ -94,10 +96,13 @@ enum {
     A_WIDENTYPE,        // Widen data type (usually integer)
     A_RETURN,           // Return statement
     A_FUNCTIONCALL,     // Function call
+    A_DEREFERENCE,      // Pointer dereference
+    A_ADDRESSOF,        // Address-of operator
 };
 
 // Primitive types
 enum {
+    // Value
     P_NONE, // no type
     P_VOID, // void type
     P_CHAR, // character type (1 byte)
@@ -108,6 +113,12 @@ enum {
             // Here, we assume long is 8 bytes.
             // Later, we may need to modify this to handle different
             // architectures.
+
+    // Pointer
+    P_VOIDPTR, // pointer to void
+    P_CHARPTR, // pointer to char
+    P_INTPTR,  // pointer to int
+    P_LONGPTR, // pointer to long
 };
 
 // AST node structure
