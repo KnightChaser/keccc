@@ -366,13 +366,21 @@ static struct ASTnode *returnStatement(void) {
  * @return AST node representing the single statement.
  */
 static struct ASTnode *singleStatement(void) {
+    int type;
+
     switch (Token.token) {
     case T_PRINT:
         return printStatement();
     case T_CHAR: // primitive data type (char, 1 byte)
     case T_INT:  // primitive data type (int, 4 bytes)
     case T_LONG: // primitive data type (long, 8 bytes)
-        variableDeclaration();
+
+        // Parse the type and get the identifier.
+        // Then parse the rest of the declaration.
+        type = parsePrimitiveType();
+        matchIdentifierToken();
+        variableDeclaration(type);
+
         return NULL; // No AST node for declarations
     case T_IDENTIFIER:
         return assignmentStatement();

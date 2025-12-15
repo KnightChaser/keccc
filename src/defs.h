@@ -50,6 +50,7 @@ enum {
     T_RPAREN,     // )
     T_AMPERSAND,  // &
     T_LOGAND,     // &&
+    T_COMMA,      // ,
 
     // Keywords
     T_PRINT,  // "print"

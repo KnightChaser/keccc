@@ -143,8 +143,6 @@ static void closeFiles(void) {
 }
 
 int main(int argc, char **argv) {
-    struct ASTnode *tree;
-
     const char *targetName = NULL;
     const char *infilePath = NULL;
     const char *outfilePath = NULL;
@@ -165,15 +163,8 @@ int main(int argc, char **argv) {
 
     scan(&Token);      // Prime first token
     codegenPreamble(); // Emit target preamble
-
-    while (true) {
-        tree = functionDeclaration();
-        codegenAST(tree, NOREG, 0);
-
-        if (Token.token == T_EOF) {
-            break;
-        }
-    }
+    globalDeclaration();
+    codegenPostamble();
 
     closeFiles();
     return 0;

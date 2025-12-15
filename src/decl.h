@@ -125,8 +125,10 @@ int addGlobalSymbol(char *name, int primitiveType, int structuralType,
                     int endLabel);
 
 // NOTE: decl.c
-void variableDeclaration(void);
-struct ASTnode *functionDeclaration(void);
+int parsePrimitiveType(void);
+void variableDeclaration(int type);
+struct ASTnode *functionDeclaration(int type);
+void globalDeclaration(void);
 
 // NOTE: types.c
 bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,

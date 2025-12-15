@@ -44,49 +44,57 @@ int parsePrimitiveType(void) {
 }
 
 /**
- * variableDeclaration - Parses a variable declaration.
+ * variableDeclaration - Parses the declaration statement of a list of
+ * variables. The identifier has been scanned and we haev the type
+ * when this function is called.
  *
  * NOTE:
  * variable_declaration: type identifier ";" ;
  *
  */
-void variableDeclaration(void) {
+void variableDeclaration(int type) {
     int id;
-    int type;
 
-    // Get the type of the variable,
-    // which also scans in the identifier
-    type = parsePrimitiveType();
-    matchIdentifierToken();
+    while (true) {
+        // Text now has the identifier's name
+        // Add it as a known identifier and generate its space in assembly
+        id = addGlobalSymbol(Text, type, S_VARIABLE, 0);
+        codegenDeclareGlobalSymbol(id);
 
-    // Text now has the identifier's name
-    id = addGlobalSymbol(Text, type, S_VARIABLE, 0);
-    codegenDeclareGlobalSymbol(id);
+        // If the next token is a semicolon, skip it and return.
+        if (Token.token == T_SEMICOLON) {
+            matchSemicolonToken();
+            return;
+        }
 
-    // Finally, match the semicolon(";")
-    matchSemicolonToken();
+        // Otherwise, expect a comma and continue parsing variable declarations
+        if (Token.token == T_COMMA) {
+            scan(&Token);
+            matchIdentifierToken();
+            continue;
+        }
+
+        logFatald("Error: Unexpected token in variableDeclaration: ",
+                  Token.token);
+    }
 }
 
 /**
  * functionDeclaration - Parses a function declaration and returns its AST.
+ * The identifier has been scanned and we have the type
  *
  * NOTE:
  * function_declaration: type identifier "(" ")" compound_statement ;
  *
  * @return: AST node representing the function declaration.
  */
-struct ASTnode *functionDeclaration(void) {
+struct ASTnode *functionDeclaration(int type) {
     struct ASTnode *treeNode;
     struct ASTnode *finalStatementNode;
     int functionNameIndex;
-    int type;
     int endLabel;
 
-    // Get the function return type,
-    // which also scans in the identifier
-    type = parsePrimitiveType();
-    matchIdentifierToken();
-
+    // Text now has the identifier's name
     // Get a label-id for the end label,
     // add the function to the symbol table as declared,
     // and set the CurrentFunctionSymbolID to the function's symbol ID
@@ -120,4 +128,43 @@ struct ASTnode *functionDeclaration(void) {
     }
 
     return makeASTUnary(A_FUNCTION, type, treeNode, functionNameIndex);
+}
+
+/**
+ * globalDeclaration - Parses global declarations (functions and variables).
+ *
+ * NOTE:
+ * global_declaration: (function_declaration | variable_declaration)* ;
+ *
+ */
+void globalDeclaration(void) {
+    struct ASTnode *treeNode;
+    int type;
+
+    while (true) {
+        // We have to read past the type and identifier to see
+        // either a '(' (T_LPAREN) for function declaration
+        // or a ',' or ';' for a variable declaration
+        type = parsePrimitiveType();
+        matchIdentifierToken();
+
+        if (Token.token == T_LPAREN) {
+            // parse the function declaration and generate the assembly code for
+            // it
+            treeNode = functionDeclaration(type);
+            codegenAST(treeNode, NOREG, NOREG);
+        } else if (Token.token == T_COMMA || Token.token == T_SEMICOLON) {
+            // parse the variable declaration and generate the assembly code for
+            // it
+            variableDeclaration(type);
+        } else {
+            logFatald("Error: Unexpected token in globalDeclaration: ",
+                      Token.token);
+        }
+
+        // Stop when we reach the end of the file
+        if (Token.token == T_EOF) {
+            break;
+        }
+    }
 }
