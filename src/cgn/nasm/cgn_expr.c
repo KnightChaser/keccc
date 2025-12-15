@@ -168,8 +168,6 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
 
 /**
  * nasmDeclareGlobalSymbol - Generates code to declare a global symbol.
- * It automatically calculates size and alignment
- * based on the given primitive type.
  *
  * @symbol: The name of the global symbol.
  */
@@ -179,11 +177,25 @@ void nasmDeclareGlobalSymbol(int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
     int typeSize = nasmGetPrimitiveTypeSize(primitiveType);
 
-    fprintf(Outfile, "\tcommon\t%s %d:%d\n",
-            GlobalSymbolTable[id].name, // symbol name
-            typeSize,                   // size in bytes
-            typeSize                    // alignment
+    fprintf(Outfile, "\tsection\t.data\n");
+    fprintf(Outfile, "\tglobal\t%s\n",
+            GlobalSymbolTable[id].name // symbol name
     );
+    switch (typeSize) {
+    case 1:
+        fprintf(Outfile, "%s:\tdb\t0\n", GlobalSymbolTable[id].name);
+        break;
+    case 4:
+        fprintf(Outfile, "%s:\tdd\t0\n", GlobalSymbolTable[id].name);
+        break;
+    case 8:
+        fprintf(Outfile, "%s:\tdq\t0\n", GlobalSymbolTable[id].name);
+        break;
+    default:
+        fprintf(stderr,
+                "Error: Unsupported type size %d in nasmDeclareGlobalSymbol\n",
+                typeSize);
+    }
 }
 
 /**
@@ -250,6 +262,20 @@ int nasmDivRegsSigned(int r1, int r2) {
     freeRegister(r2);
 
     return r1;
+}
+
+/**
+ * nasmShiftLeftConst - Generates code to shift a register's value left by a
+ * constant amount.
+ *
+ * @reg: Index of the register to shift.
+ * @shiftAmount: The constant amount to shift left.
+ *
+ * Returns: Index of the register containing the shifted value.
+ */
+int nasmShiftLeftConst(int reg, int shiftAmount) {
+    fprintf(Outfile, "\tshl\t%s, %d\n", qwordRegisterList[reg], shiftAmount);
+    return reg;
 }
 
 /**
@@ -356,22 +382,19 @@ int nasmAddressOfGlobalSymbol(int id) {
  */
 int nasmDereferencePointer(int pointerReg, int primitiveType) {
     switch (primitiveType) {
-    case P_CHAR:
+    case P_CHARPTR:
         fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n",
                 qwordRegisterList[pointerReg], // destination register
                 qwordRegisterList[pointerReg]  // source pointer register
         );
         break;
-    case P_INT:
+    case P_INTPTR:
         fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n",
                 dwordRegisterList[pointerReg], // destination register
                 qwordRegisterList[pointerReg]  // source pointer register
         );
         break;
-    case P_LONG:
     case P_VOIDPTR:
-    case P_CHARPTR:
-    case P_INTPTR:
     case P_LONGPTR:
         fprintf(Outfile, "\tmov\t%s, QWORD [%s]\n",
                 qwordRegisterList[pointerReg], // destination register

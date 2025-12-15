@@ -28,6 +28,7 @@ struct CodegenOps {
     int (*subRegs)(int r1, int r2);
     int (*mulRegs)(int r1, int r2);
     int (*divRegsSigned)(int r1, int r2);
+    int (*shiftLeftConst)(int reg, int shiftAmount);
 
     // Comparisons
     int (*compareAndSet)(int astOp, int r1, int r2);

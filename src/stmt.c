@@ -16,8 +16,6 @@ static struct ASTnode *singleStatement(void);
  */
 static struct ASTnode *printStatement(void) {
     struct ASTnode *tree;
-    int leftPrimitiveType;
-    int rightPrimitiveType;
 
     // Match "print" string at the first token
     match(T_PRINT, "print");
@@ -25,17 +23,10 @@ static struct ASTnode *printStatement(void) {
     // Parse the following expression
     tree = binexpr(0);
 
-    // Make an print AST tree
-    leftPrimitiveType = P_INT;
-    rightPrimitiveType = tree->primitiveType;
-    if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
-                                         &rightPrimitiveType, false)) {
-        logFatal("Incompatible type for print statement");
-    }
-
-    // Widen the tree if required.
-    if (rightPrimitiveType) {
-        tree = makeASTUnary(A_WIDENTYPE, leftPrimitiveType, tree, 0);
+    // Ensure the two types are compatible
+    tree = modifyASTType(tree, P_INT, A_NOTHING);
+    if (tree == NULL) {
+        logFatal("Type error: incompatible type in print statement");
     }
 
     // Wrap the expression in a print node so statement handling
@@ -55,8 +46,6 @@ static struct ASTnode *assignmentStatement(void) {
     struct ASTnode *leftNode = NULL;
     struct ASTnode *rightNode = NULL;
     struct ASTnode *treeNode = NULL;
-    int leftPrimitiveType;
-    int rightPrimitiveType;
     int identifierIndex;
 
     // Ensure we have an identifier
@@ -83,23 +72,10 @@ static struct ASTnode *assignmentStatement(void) {
     // Parse the expression on the right-hand side of the '=' (source)
     leftNode = binexpr(0);
 
-    // Ensure type compatibility between left and right nodes
-    // Check type compatibility: RHS must adjust to the LHS destination type
-    leftPrimitiveType = leftNode->primitiveType;   // source type
-    rightPrimitiveType = rightNode->primitiveType; // destination type
-    if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
-                                         &rightPrimitiveType, true)) {
-        // DEBUG:
-        fprintf(stderr, "Type mismatch: RHS(Source)=%d, LHS(Dest)=%d\n",
-                rightNode->primitiveType, leftNode->primitiveType);
-        logFatal("Type error: incompatible types in assignment statement");
-    }
-
-    // Widen the right node to the left node's type if necessary
-    if (leftPrimitiveType) {
-        leftNode = makeASTUnary(leftPrimitiveType,        // A_WIDENTYPE
-                                rightNode->primitiveType, // destination type
-                                leftNode, 0);
+    // Ensure the two types are compatible
+    leftNode = modifyASTType(leftNode, rightNode->primitiveType, A_NOTHING);
+    if (leftNode == NULL) {
+        logFatal("Type error: incompatible type in assignment statement");
     }
 
     // Create an assignment AST node
@@ -267,8 +243,6 @@ static struct ASTnode *forStatement(void) {
 
 static struct ASTnode *returnStatement(void) {
     struct ASTnode *treeNode;
-    int returnType;
-    int functionType;
 
     // Can't return a value if function returns P_VOID
     if (GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType == P_VOID) {
@@ -282,22 +256,12 @@ static struct ASTnode *returnStatement(void) {
     // Parse the following expression
     treeNode = binexpr(0);
 
-    // Ensure this is compatible with the function's type
-    returnType = treeNode->primitiveType;
-    functionType = GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType;
-    if (!checkPrimitiveTypeCompatibility(&returnType, &functionType, true)) {
-        // NOTE:
-        // Return type must be compatible with function type.
-        // It's a unidirectional compatibility check.
-        // e.g.)
-        // - P_CHAR (1 bytes) can be returned from P_INT (4 bytes) function
-        // - P_INT(4 bytes) CANNOT be returned from P_CHAR (1 bytes) function
-        logFatal("Incompatible return type in return statement");
-    }
-
-    // Widen the tree to the function's return type if necessary.
-    if (returnType) {
-        treeNode = makeASTUnary(returnType, functionType, treeNode, 0);
+    // Ensure the two types are compatible
+    treeNode = modifyASTType(
+        treeNode, GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType,
+        A_NOTHING);
+    if (treeNode == NULL) {
+        logFatal("Type error: incompatible type in return statement");
     }
 
     // Wrap the expression in a return node so statement handling

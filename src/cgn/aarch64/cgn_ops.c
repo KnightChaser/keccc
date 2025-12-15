@@ -23,6 +23,7 @@ const struct CodegenOps aarch64Ops = {
     .subRegs = aarch64SubRegs,
     .mulRegs = aarch64MulRegs,
     .divRegsSigned = aarch64DivRegsSigned,
+    .shiftLeftConst = aarch64ShiftLeftConst,
 
     .compareAndSet = aarch64CompareAndSet,
     .compareAndJump = aarch64CompareAndJump,

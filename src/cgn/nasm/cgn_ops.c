@@ -24,6 +24,7 @@ const struct CodegenOps nasmOps = {
     .subRegs = nasmSubRegs,
     .mulRegs = nasmMulRegs,
     .divRegsSigned = nasmDivRegsSigned,
+    .shiftLeftConst = nasmShiftLeftConst,
 
     .compareAndSet = nasmCompareAndSet,
     .compareAndJump = nasmCompareAndJump,

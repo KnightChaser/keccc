@@ -61,6 +61,7 @@ int nasmAddRegs(int dstReg, int srcReg);
 int nasmSubRegs(int dstReg, int srcReg);
 int nasmMulRegs(int dstReg, int srcReg);
 int nasmDivRegsSigned(int dividendReg, int divisorReg);
+int nasmShiftLeftConst(int reg, int shiftAmount);
 void nasmPrintIntFromReg(int reg);
 int nasmCompareAndSet(int ASTop, int r1, int r2);
 int nasmCompareAndJump(int ASTop, int r1, int r2, int label);
@@ -87,6 +88,7 @@ int aarch64AddRegs(int dstReg, int srcReg);
 int aarch64SubRegs(int dstReg, int srcReg);
 int aarch64MulRegs(int dstReg, int srcReg);
 int aarch64DivRegsSigned(int dividendReg, int divisorReg);
+int aarch64ShiftLeftConst(int reg, int shiftAmount);
 void aarch64PrintIntFromReg(int reg);
 int aarch64CompareAndSet(int ASTop, int r1, int r2);
 int aarch64CompareAndJump(int ASTop, int r1, int r2, int label);
@@ -131,8 +133,7 @@ struct ASTnode *functionDeclaration(int type);
 void globalDeclaration(void);
 
 // NOTE: types.c
-bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
-                                     int *rightHandPrimitiveType,
-                                     bool onlyRight);
 int primitiveTypeToPointerType(int primitiveType);
 int pointerToPrimitiveType(int primitiveType);
+struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,
+                              int operation);

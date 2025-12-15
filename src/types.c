@@ -9,69 +9,38 @@
  */
 
 /**
- * checkPrimitiveTypeCompatibility - Check if two primitive types are compatible
+ * isIntegerType - Check if a primitive type is an integer type
  *
- * NOTE:
- * It's answering two fundamental questions about data type:
- * - "Are these two types compatible?"
- * - "If so, which side needs to be widened?"
- *
- * @param leftHandPrimitiveType  Pointer to the left-hand side primitive type
- * @param rightHandPrimitiveType Pointer to the right-hand side primitive type
- * @param onlyRight              If true, only the right-hand side can be
- * widened
- *
- * NOTE:
- *  "@param onlyRight" is about asymmetry.
- *  arithmetic(e.g. "a + b"), comparisons(e.g. "a < b") and print(e.g. "print
- * expr;") are considered symmetric contexts, which don't have destinations.
- *  However, assignment(e.g, "a = b;") or return statement(e.g, "return expr;")
- * are asymmetric contexts, which have destinations. Generally, left side (or
- * expected type) is the fixed destination; the right side must adjust to fit.
- *
- * @return true if the types are compatible, false otherwise
+ * @param primitiveType Primitive type to check
+ * @return true if the type is an integer type, false otherwise
  */
-bool checkPrimitiveTypeCompatibility(int *leftHandPrimitiveType,
-                                     int *rightHandPrimitiveType,
-                                     bool onlyRight) {
-    int leftHandPrimitiveSize;
-    int rightHandPrimitiveSize;
-
-    // Same types, they are compatible
-    if (*leftHandPrimitiveType == *rightHandPrimitiveType) {
-        *leftHandPrimitiveType = *rightHandPrimitiveType = 0;
+bool isIntegerType(int primitiveType) {
+    switch (primitiveType) {
+    case P_CHAR:
+    case P_INT:
+    case P_LONG:
         return true;
-    }
-
-    leftHandPrimitiveSize = codegenGetPrimitiveTypeSize(*leftHandPrimitiveType);
-    rightHandPrimitiveSize =
-        codegenGetPrimitiveTypeSize(*rightHandPrimitiveType);
-
-    // Types with zero size are not compatible with anything
-    if (leftHandPrimitiveSize == 0 || rightHandPrimitiveSize == 0) {
+    default:
         return false;
     }
+}
 
-    // Widen type as required
-    if (leftHandPrimitiveSize < rightHandPrimitiveSize) {
-        *leftHandPrimitiveType = A_WIDENTYPE; // Widen left side
-        *rightHandPrimitiveType = 0;          // No widening on right side
+/**
+ * isPointerType - Check if a primitive type is a pointer type
+ *
+ * @param primitiveType Primitive type to check
+ * @return true if the type is a pointer type, false otherwise
+ */
+bool isPointerType(int primitiveType) {
+    switch (primitiveType) {
+    case P_VOIDPTR:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
         return true;
+    default:
+        return false;
     }
-
-    if (leftHandPrimitiveSize > rightHandPrimitiveSize) {
-        if (onlyRight) {
-            return false;
-        }
-        *leftHandPrimitiveType = 0;
-        *rightHandPrimitiveType = A_WIDENTYPE;
-        return true;
-    }
-
-    // Anything remaining is the same size
-    // and thus compatible
-    *leftHandPrimitiveType = *rightHandPrimitiveType = 0;
-    return true;
 }
 
 /**
@@ -118,4 +87,71 @@ int pointerToPrimitiveType(int primitiveType) {
                   primitiveType);
         return -1; // Unreachable
     }
+}
+
+/**
+ * modifyASTType - Modify the AST node type to match the right type if possible
+ *
+ * @param treeNode AST node to modify
+ * @param rightType Primitive type to match against
+ * @param operation Operation being performed (for context)
+ * @return Modified AST node if types are compatible, NULL otherwise
+ */
+struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,
+                              int operation) {
+    int leftType;
+    int leftSize;
+    int rightSize;
+
+    leftType = treeNode->primitiveType;
+
+    // Compare scalar integer types
+    if (isIntegerType(leftType) && isIntegerType(rightType)) {
+        // Both types are the same, it's ok
+        if (leftType == rightType) {
+            return treeNode;
+        }
+
+        leftSize = codegenGetPrimitiveTypeSize(leftType);
+        rightSize = codegenGetPrimitiveTypeSize(rightType);
+
+        // Tree's size is too big
+        if (leftSize > rightSize) {
+            return NULL;
+        }
+
+        // Widen the right size
+        if (rightSize > leftSize) {
+            return makeASTUnary(A_WIDENTYPE, rightType, treeNode, 0);
+        }
+    }
+
+    // Pointer type is on the left
+    if (isPointerType(leftType)) {
+        // If it's the same type and right node is doing nothing
+        if (operation == A_NOTHING && leftType == rightType) {
+            return treeNode;
+        }
+    }
+
+    // NOTE:
+    // We can scale only on A_ADD or A_SUBTRACT operation
+    // e.g. pointer arithmetic like "ptr + int" or "ptr - int"
+    if (operation == A_ADD || operation == A_SUBTRACT) {
+        // Left is the integer type, and the right is the pointer type and the
+        // size of the original type is >1, then scale the left
+        if (isIntegerType(leftType) && isPointerType(rightType)) {
+            // Scale by the size of the pointed-to type, not by the pointer
+            // size. E.g. int* + 1 => +4 bytes on LP64.
+            rightSize =
+                codegenGetPrimitiveTypeSize(pointerToPrimitiveType(rightType));
+            if (rightSize > 1) {
+                return makeASTUnary(A_SCALETYPE, rightType, treeNode,
+                                    rightSize);
+            }
+        }
+    }
+
+    // Type is not compatible
+    return NULL;
 }

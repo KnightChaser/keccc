@@ -283,6 +283,22 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         return CG->addressOfGlobalSymbol(n->v.identifierIndex);
     case A_DEREFERENCE:
         return CG->dereferencePointer(leftRegister, n->left->primitiveType);
+    case A_SCALETYPE:
+        // Small optimization:
+        // use shift if the scale value is a known power of 2
+        switch (n->v.size) {
+        case 2:
+            return CG->shiftLeftConst(leftRegister, 1);
+        case 4:
+            return CG->shiftLeftConst(leftRegister, 2);
+        case 8:
+            return CG->shiftLeftConst(leftRegister, 3);
+        default:
+            // Load a register with the size and multiply
+            // the left register by this size...
+            rightRegister = CG->loadImmediateInt(n->v.size, P_INT);
+            return CG->mulRegs(leftRegister, rightRegister);
+        }
 
     default:
         // Should not reach here; unsupported operation

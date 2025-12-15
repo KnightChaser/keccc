@@ -243,9 +243,10 @@ struct ASTnode *prefix(void) {
 struct ASTnode *binexpr(int ptp) {
     struct ASTnode *left;
     struct ASTnode *right;
-    int leftPrimitiveType;
-    int rightPrimitiveType;
+    struct ASTnode *leftTemp;
+    struct ASTnode *rightTemp;
     int tokentype;
+    int ASToperation;
 
     // Parse the left-hand side expression
     // And, fetch the next token at the same time
@@ -262,29 +263,27 @@ struct ASTnode *binexpr(int ptp) {
     // While the precedence of this token is
     // more than that of the previous token precedence
     while (operatorPrecedence(tokentype) > ptp) {
+        // Fetch in the next integer literal
         scan(&Token);
 
         // Recurse to get the right-hand side expression
         right = binexpr(operatorPrecedence(tokentype));
 
-        // Ensure type compatibility between left and right nodes
-        leftPrimitiveType = left->primitiveType;
-        rightPrimitiveType = right->primitiveType;
-        if (!checkPrimitiveTypeCompatibility(&leftPrimitiveType,
-                                             &rightPrimitiveType, false)) {
-            logFatal("Type error: incompatible types in binary expression");
+        // Ensure the two types are compatible by trying to modify each tree to
+        // match the other's type.
+        ASToperation = tokenToASTOperator(tokentype);
+        leftTemp = modifyASTType(left, right->primitiveType, ASToperation);
+        rightTemp = modifyASTType(right, left->primitiveType, ASToperation);
+        if (leftTemp == NULL && rightTemp == NULL) {
+            logFatal("Incompatible types in binary expression");
         }
-
-        // Widen the primitive type if necessary
-        if (leftPrimitiveType) {
-            left = makeASTUnary(leftPrimitiveType,    // A_WIDENTYPE,
-                                right->primitiveType, // type of RHS
-                                left, 0);
+        if (leftTemp != NULL) {
+            // Use the modified left node if possible
+            left = leftTemp;
         }
-        if (rightPrimitiveType) {
-            right = makeASTUnary(rightPrimitiveType,  // A_WIDENTYPE,
-                                 left->primitiveType, // type of LHS
-                                 right, 0);
+        if (rightTemp != NULL) {
+            // Use the modified right node if possible
+            right = rightTemp;
         }
 
         left =

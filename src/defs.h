@@ -50,7 +50,6 @@ enum {
     T_RPAREN,     // )
     T_AMPERSAND,  // &
     T_LOGAND,     // &&
-    T_COMMA,      // ,
 
     // Keywords
     T_PRINT,  // "print"
@@ -75,6 +74,7 @@ struct token {
 
 // AST node types
 enum {
+    A_NOTHING = 0,      // No operation
     A_ADD = 1,          // Addition
     A_SUBTRACT,         // Subtraction
     A_MULTIPLY,         // Multiplication
@@ -99,6 +99,7 @@ enum {
     A_FUNCTIONCALL,     // Function call
     A_DEREFERENCE,      // Pointer dereference
     A_ADDRESSOF,        // Address-of operator
+    A_SCALETYPE,        // Scale pointer arithmetic
 };
 
 // Primitive types
@@ -140,7 +141,8 @@ struct ASTnode {
      */
     union {
         int intvalue;
-        int identifierIndex;
+        int identifierIndex; // For A_FUNCTION, the symbol slot number
+        int size;            // For A_SCALE, the size of scale by
     } v;
 };
 

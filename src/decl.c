@@ -44,9 +44,7 @@ int parsePrimitiveType(void) {
 }
 
 /**
- * variableDeclaration - Parses the declaration statement of a list of
- * variables. The identifier has been scanned and we haev the type
- * when this function is called.
+ * variableDeclaration - Parse the declaration of a variable
  *
  * NOTE:
  * variable_declaration: type identifier ";" ;
@@ -55,28 +53,14 @@ int parsePrimitiveType(void) {
 void variableDeclaration(int type) {
     int id;
 
-    while (true) {
-        // Text now has the identifier's name
-        // Add it as a known identifier and generate its space in assembly
-        id = addGlobalSymbol(Text, type, S_VARIABLE, 0);
-        codegenDeclareGlobalSymbol(id);
+    // Text now has the identifier's name.
+    // Add it as a known identifier,
+    // and generate its space in assembly
+    id = addGlobalSymbol(Text, type, S_VARIABLE, 0);
+    codegenDeclareGlobalSymbol(id);
 
-        // If the next token is a semicolon, skip it and return.
-        if (Token.token == T_SEMICOLON) {
-            matchSemicolonToken();
-            return;
-        }
-
-        // Otherwise, expect a comma and continue parsing variable declarations
-        if (Token.token == T_COMMA) {
-            scan(&Token);
-            matchIdentifierToken();
-            continue;
-        }
-
-        logFatald("Error: Unexpected token in variableDeclaration: ",
-                  Token.token);
-    }
+    // Match the semicolon
+    matchSemicolonToken();
 }
 
 /**
@@ -153,13 +137,9 @@ void globalDeclaration(void) {
             // it
             treeNode = functionDeclaration(type);
             codegenAST(treeNode, NOREG, NOREG);
-        } else if (Token.token == T_COMMA || Token.token == T_SEMICOLON) {
-            // parse the variable declaration and generate the assembly code for
-            // it
-            variableDeclaration(type);
         } else {
-            logFatald("Error: Unexpected token in globalDeclaration: ",
-                      Token.token);
+            // Assume
+            variableDeclaration(type);
         }
 
         // Stop when we reach the end of the file

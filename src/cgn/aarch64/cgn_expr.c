@@ -159,8 +159,6 @@ int aarch64StoreGlobalSymbol(int r, int id) {
 
 /**
  * aarch64DeclareGlobalSymbol - Generates code to declare a global symbol.
- * It automatically calculates size and alignment
- * based on the given primitive type.
  *
  * @id: The ID of the global symbol in the symbol table.
  */
@@ -168,8 +166,35 @@ void aarch64DeclareGlobalSymbol(int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
     int typeSize = aarch64GetPrimitiveTypeSize(primitiveType);
 
-    fprintf(Outfile, "\t.comm\t%s, %d, %d\n", GlobalSymbolTable[id].name,
-            typeSize, typeSize);
+    fprintf(Outfile, "\t.data\n");
+    fprintf(Outfile, "\t.globl\t%s\n", GlobalSymbolTable[id].name);
+
+    // Optional but recommended: alignment
+    // 1->no alignment needed, 4->2^2, 8->2^3
+    if (typeSize == 4)
+        fprintf(Outfile, "\t.p2align\t2\n");
+    if (typeSize == 8)
+        fprintf(Outfile, "\t.p2align\t3\n");
+
+    fprintf(Outfile, "%s:\n", GlobalSymbolTable[id].name);
+
+    switch (typeSize) {
+    case 1:
+        fprintf(Outfile, "\t.byte\t0\n");
+        break;
+    case 4:
+        fprintf(Outfile, "\t.word\t0\n");
+        break;
+    case 8:
+        fprintf(Outfile, "\t.quad\t0\n"); // or "\t.xword\t0\n"
+        break;
+    default:
+        fprintf(
+            stderr,
+            "Error: Unsupported type size %d in aarch64DeclareGlobalSymbol\n",
+            typeSize);
+        break;
+    }
 }
 
 /**
@@ -246,6 +271,21 @@ int aarch64DivRegsSigned(int r1, int r2) {
     );
     aarch64FreeRegister(r2);
     return r1;
+}
+
+/**
+ * aarch64ShiftLeftConst - Generates code to shift a register left by a
+ * constant amount.
+ *
+ * @reg: Index of the register to shift.
+ * @shiftAmount: The constant amount to shift left.
+ *
+ * Returns: Index of the register containing the shifted value.
+ */
+int aarch64ShiftLeftConst(int reg, int shiftAmount) {
+    fprintf(Outfile, "\tlsl\t%s, %s, #%d\n", aarch64QwordRegisterList[reg],
+            aarch64QwordRegisterList[reg], shiftAmount);
+    return reg;
 }
 
 /**
