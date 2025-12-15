@@ -6,56 +6,6 @@
 
 #include <stdbool.h>
 
-/**
- * A brief BNF expressions note:
- *
- * compound_statements:  '{' '}' // empty compound statement
- *      |     '{' statement '}'
- *      |     '{' statement compound_statements '}'
- *      ;
- *
- * statement: print_statement
- *      |     declaration
- *      |     assignment_statement
- *      |     function_call
- *      |     if_statement
- *      |     while_statement
- *      |     for_statement
- *      |     return_statement
- *      ;
- *
- * print_statement: 'print' expression ';' ;
- *
- * declaration: 'int' identifier ';' ; // only int type supported
- *
- * assignment_statement: identifier '=' expression ';' ;
- *
- * function_call: identifier '(' ')' ';' ; // NOTE: no-arg function call for now
- *
- * if_statement: if_head
- *      |        if_head 'else' compound_statements
- *      ;
- *
- * if_head: 'if' '(' true_false_expression ')' compound_statements ;
- *
- *
- * while_statement: 'while' '(' true_false_expression ')' compound_statements ;
- *
- *
- * for_statement: 'for' '(' preop_statement ';'
- *                        true_false_expression ';'
- *                        postop_statement ')' compound_statement  ;
- *
- * return_statement: 'return' expression ';' ;
- *
- * preop_statement: staetment ;   // (for now)
- * postop_statement: statement ;  // (for now)
- *
- * identifier = T_IDENTIFIER;
- *      ;
- *
- */
-
 // Forward declarations
 static struct ASTnode *singleStatement(void);
 
