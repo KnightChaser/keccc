@@ -1,6 +1,7 @@
 # Test file
 input
 .vscode/settings.json
+.vscode/tasks.json
 .gdb_history
 
 # Prerequisites
