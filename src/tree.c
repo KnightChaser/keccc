@@ -29,6 +29,7 @@ struct ASTnode *makeASTNode(int op, int primitiveType, struct ASTnode *left,
 
     n->op = op;
     n->primitiveType = primitiveType;
+    n->isRvalue = false; // default to lvalue until context sets rvalue
     n->left = left;
     n->middle = middle;
     n->right = right;

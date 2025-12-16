@@ -328,6 +328,12 @@ struct ASTnode *binexpr(int ptp) {
             leftTemp = left;
             left = right;
             right = leftTemp;
+
+            // Mark the LHS (now in right subtree) as an lvalue so that
+            // dereference on the LHS yields an address, not a loaded value.
+            if (right) {
+                right->isRvalue = false;
+            }
         } else {
             // Normal arithmetic operations or comparisons
             // We are not doing an assignment, so both trees should be rvalues
