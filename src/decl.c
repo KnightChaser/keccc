@@ -8,7 +8,7 @@
  * parsePrimitiveType - Parses the current token and return
  * a primitive type enum value. Also, scan in the next token.
  *
- * @return: Primitive type enum value.
+ * @return Primitive type enum value.
  */
 int parsePrimitiveType(void) {
     int type;
@@ -49,6 +49,7 @@ int parsePrimitiveType(void) {
  * NOTE:
  * variable_declaration: type identifier ";" ;
  *
+ * @param type The primitive type of the variable.
  */
 void variableDeclaration(int type) {
     int id;
@@ -69,8 +70,10 @@ void variableDeclaration(int type) {
  *
  * NOTE:
  * function_declaration: type identifier "(" ")" compound_statement ;
+ * 
+ * @param type The primitive type of the function.
  *
- * @return: AST node representing the function declaration.
+ * @return AST node representing the function declaration.
  */
 struct ASTnode *functionDeclaration(int type) {
     struct ASTnode *treeNode;
@@ -119,7 +122,6 @@ struct ASTnode *functionDeclaration(int type) {
  *
  * NOTE:
  * global_declaration: (function_declaration | variable_declaration)* ;
- *
  */
 void globalDeclaration(void) {
     struct ASTnode *treeNode;

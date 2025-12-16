@@ -35,9 +35,9 @@ static int primitiveSizeInBytes[] = {
 /**
  * nasmGetPrimitiveTypeSize - Returns the size in bytes of a primitive type.
  *
- * @type: The primitive type (e.g., P_INT).
+ * @param type The primitive type (e.g., P_INT).
  *
- * Returns: Size in bytes of the primitive type.
+ * @return Size in bytes of the primitive type.
  */
 int nasmGetPrimitiveTypeSize(int type) {
     if ((type < P_NONE) || (type > P_LONGPTR)) {
@@ -54,13 +54,13 @@ int nasmGetPrimitiveTypeSize(int type) {
  * nasmLoadImmediateInt - Generates code to load an integer constant into a
  * register.
  *
- * @value: The integer constant to load.
- * @primitiveType: The primitive type of the integer (e.g., P_INT).
+ * @param value The integer constant to load.
+ * @param primitiveType The primitive type of the integer (e.g., P_INT).
  *
  * NOTE:
  * For x86_64, type is not used since all integers are treated as 64-bit.
  *
- * Returns: Index of the register containing the loaded integer.
+ * @return Index of the register containing the loaded integer.
  */
 int nasmLoadImmediateInt(int value, int primitiveType) {
     int registerIndex = allocateRegister();
@@ -74,9 +74,9 @@ int nasmLoadImmediateInt(int value, int primitiveType) {
  * nasmLoadGlobalSymbol - Generates code to load a global symbol's value into a
  *                        register.
  *
- * @id: The ID of the global symbol in the symbol table.
+ * @param id The ID of the global symbol in the symbol table.
  *
- * Returns: Index of the register containing the loaded value.
+ * @return Index of the register containing the loaded value.
  */
 int nasmLoadGlobalSymbol(int id) {
     int registerIndex = allocateRegister();
@@ -123,10 +123,10 @@ int nasmLoadGlobalSymbol(int id) {
  * nasmStoreGlobalSymbol - Generates code to store a register's value into a
  * global symbol.
  *
- * @registerIndex: Index of the register containing the value to store.
- * @id: The ID of the global symbol in the symbol table.
+ * @param registerIndex Index of the register containing the value to store.
+ * @param id The ID of the global symbol in the symbol table.
  *
- * Returns: Index of the register that was stored.
+ * @return Index of the register that was stored.
  */
 int nasmStoreGlobalSymbol(int registerIndex, int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
@@ -169,7 +169,7 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
 /**
  * nasmDeclareGlobalSymbol - Generates code to declare a global symbol.
  *
- * @symbol: The name of the global symbol.
+ * @param id The ID of the global symbol in the symbol table.
  */
 void nasmDeclareGlobalSymbol(int id) {
     // TODO: Use .bss section later
@@ -201,10 +201,10 @@ void nasmDeclareGlobalSymbol(int id) {
 /**
  * nasmAddRegs - Generates code to add values in two registers.
  *
- * @r1: Index of the first register.
- * @r2: Index of the second register.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
  *
- * Returns: Index of the register containing the result.
+ * @return Index of the register containing the result.
  */
 int nasmAddRegs(int r1, int r2) {
     fprintf(Outfile, "\tadd\t%s, %s\n", qwordRegisterList[r2],
@@ -217,10 +217,10 @@ int nasmAddRegs(int r1, int r2) {
 /**
  * nasmSubRegs - Generates code to subtract values in two registers.
  *
- * @r1: Index of the first register.
- * @r2: Index of the second register.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
  *
- * Returns: Index of the register containing the result.
+ * @return Index of the register containing the result.
  */
 int nasmSubRegs(int r1, int r2) {
     fprintf(Outfile, "\tsub\t%s, %s\n", qwordRegisterList[r1],
@@ -233,10 +233,10 @@ int nasmSubRegs(int r1, int r2) {
 /**
  * nasmMulRegs - Generates code to multiply values in two registers.
  *
- * @r1: Index of the first register.
- * @r2: Index of the second register.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
  *
- * Returns: Index of the register containing the result.
+ * @return Index of the register containing the result.
  */
 int nasmMulRegs(int r1, int r2) {
     fprintf(Outfile, "\timul\t%s, %s\n", qwordRegisterList[r2],
@@ -249,10 +249,10 @@ int nasmMulRegs(int r1, int r2) {
 /**
  * nasmDivRegsSigned - Generates code to divide values in two registers.
  *
- * @r1: Index of the dividend register.
- * @r2: Index of the divisor register.
+ * @param r1 Index of the dividend register.
+ * @param r2 Index of the divisor register.
  *
- * Returns: Index of the register containing the result (quotient).
+ * @return Index of the register containing the result (quotient).
  */
 int nasmDivRegsSigned(int r1, int r2) {
     fprintf(Outfile, "\tmov\trax, %s\n", qwordRegisterList[r1]);
@@ -268,10 +268,10 @@ int nasmDivRegsSigned(int r1, int r2) {
  * nasmShiftLeftConst - Generates code to shift a register's value left by a
  * constant amount.
  *
- * @reg: Index of the register to shift.
- * @shiftAmount: The constant amount to shift left.
+ * @param reg Index of the register to shift.
+ * @param shiftAmount The constant amount to shift left.
  *
- * Returns: Index of the register containing the shifted value.
+ * @return Index of the register containing the shifted value.
  */
 int nasmShiftLeftConst(int reg, int shiftAmount) {
     fprintf(Outfile, "\tshl\t%s, %d\n", qwordRegisterList[reg], shiftAmount);
@@ -282,11 +282,11 @@ int nasmShiftLeftConst(int reg, int shiftAmount) {
  * nasmCompareAndSet - Generates code to compare two registers and set a third
  * register based on the comparison result.
  *
- * @ASTop: The AST operation code representing the comparison.
- * @r1: Index of the first register.
- * @r2: Index of the second register.
+ * @param ASTop The AST operation code representing the comparison.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
  *
- * Returns: Index of the register containing the comparison result (0 or 1).
+ * @return Index of the register containing the comparison result (0 or 1).
  */
 int nasmCompareAndSet(int ASTop, int r1, int r2) {
     if (!((ASTop == A_EQ) || (ASTop == A_NE) || (ASTop == A_LT) ||
@@ -339,14 +339,14 @@ int nasmCompareAndSet(int ASTop, int r1, int r2) {
 /**
  * nasmWidenPrimitiveType - Handles widening of primitive types.
  *
- * @r: Index of the register containing the value.
- * @oldPrimitiveType: The original primitive type.
- * @newPrimitiveType: The target primitive type.
+ * @param r Index of the register containing the value.
+ * @param oldPrimitiveType The original primitive type.
+ * @param newPrimitiveType The target primitive type.
  *
  * NOTE:
  * For x86_64, no action is needed since all integers are treated as 64-bit.
  *
- * Returns: Index of the register containing the (possibly widened) value.
+ * @return Index of the register containing the (possibly widened) value.
  */
 int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType) {
     // No action needed for x86_64 as all integers are treated as 64-bit
@@ -357,9 +357,9 @@ int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType) {
  * nasmAddressOfGlobalSymbol - Generates code to get the address of a global
  * symbol. Returns the address in a register.
  *
- * @id: The ID of the global symbol in the symbol table.
+ * @param id The ID of the global symbol in the symbol table.
  *
- * Returns: Index of the register containing the address of the global symbol.
+ * @return Index of the register containing the address of the global symbol.
  */
 int nasmAddressOfGlobalSymbol(int id) {
     int r = allocateRegister();
@@ -375,10 +375,10 @@ int nasmAddressOfGlobalSymbol(int id) {
  * nasmDereferencePointer - Generates code to dereference a pointer stored in
  * a register.
  *
- * @pointerReg: Index of the register containing the pointer.
- * @primitiveType: The primitive type of the value being pointed to.
+ * @param pointerReg Index of the register containing the pointer.
+ * @param primitiveType The primitive type of the value being pointed to.
  *
- * Returns: Index of the register containing the dereferenced value.
+ * @return Index of the register containing the dereferenced value.
  */
 int nasmDereferencePointer(int pointerReg, int primitiveType) {
     switch (primitiveType) {

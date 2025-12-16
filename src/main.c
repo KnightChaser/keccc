@@ -27,7 +27,7 @@ static void initCompilerState(void) {
  *
  * NOTE:
  *
- * @program: Name of the program (typically argv[0]).
+ * @param program Name of the program (typically argv[0]).
  */
 static void dieUsage(const char *program) {
     fprintf(stderr,
@@ -42,10 +42,10 @@ static void dieUsage(const char *program) {
  * parseTargetOrDie - Parse the target name and return the corresponding
  * target constant. Exit if the target is unsupported.
  *
- * @targetName: The name of the target (e.g., "nasm", "aarch64").
- * @program: Name of the program (typically argv[0]).
+ * @param targetName The name of the target (e.g., "nasm", "aarch64").
+ * @param program Name of the program (typically argv[0]).
  *
- * Returns: The target constant.
+ * @return The target constant.
  */
 static int parseTargetOrDie(const char *targetName, const char *program) {
     if (strcmp(targetName, "nasm") == 0) {
@@ -65,11 +65,11 @@ static int parseTargetOrDie(const char *targetName, const char *program) {
 /**
  * parseArgsOrDie - Parse command-line arguments and set output parameters.
  *
- * @argc: Argument count.
- * @argv: Argument vector.
- * @outTargetName: Output parameter for the target name.
- * @outInfilePath: Output parameter for the input file path.
- * @outOutfilePath: Output parameter for the output file path.
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ * @param outTargetName Output parameter for the target name.
+ * @param outInfilePath Output parameter for the input file path.
+ * @param outOutfilePath Output parameter for the output file path.
  */
 static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
                            const char **outInfilePath,
@@ -113,8 +113,8 @@ static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
 /**
  * openFilesOrDie - Open input and output files, or exit on failure.
  *
- * @infilePath: Path to the input file.
- * @outfilePath: Path to the output file.
+ * @param infilePath Path to the input file.
+ * @param outfilePath Path to the output file.
  */
 static void openFilesOrDie(const char *infilePath, const char *outfilePath) {
     Infile = fopen(infilePath, "r");

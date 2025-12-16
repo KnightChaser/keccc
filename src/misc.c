@@ -9,8 +9,8 @@
  *         If they match, it scans the next token.
  *         If they don't match, it prints an error message and exits.
  *
- * @t: The expected token type.
- * @what: A string description of the expected token (for error messages).
+ * @param t The expected token type.
+ * @param what A string description of the expected token (for error messages).
  */
 void match(int t, char *what) {
     if (Token.token == t) {
@@ -55,7 +55,7 @@ void matchRightParenthesisToken(void) { match(T_RPAREN, ")"); }
 /**
  * logFatal - Logs a fatal error message and exits.
  *
- * @s: The error message to log.
+ * @param s The error message to log.
  */
 void logFatal(char *s) {
     fprintf(stderr, "Fatal error: %s, line %d\n", s, Line);
@@ -65,8 +65,8 @@ void logFatal(char *s) {
 /**
  * logFatals - Logs a fatal error message with two strings and exits.
  *
- * @s1: The first part of the error message.
- * @s2: The second part of the error message.
+ * @param s1 The first part of the error message.
+ * @param s2 The second part of the error message.
  */
 void logFatals(char *s1, char *s2) {
     fprintf(stderr, "Fatal error: %s%s, line %d\n", s1, s2, Line);
@@ -77,8 +77,8 @@ void logFatals(char *s1, char *s2) {
  * logFatald - Logs a fatal error message with a string and an integer, then
  * exits.
  *
- * @s: The string part of the error message.
- * @d: The integer part of the error message.
+ * @param s The string part of the error message.
+ * @param d The integer part of the error message.
  */
 void logFatald(char *s, int d) {
     fprintf(stderr, "Fatal error: %s%d, line %d\n", s, d, Line);
@@ -89,8 +89,8 @@ void logFatald(char *s, int d) {
  * logFatalc - Logs a fatal error message with a string and a character, then
  * exits.
  *
- * @s: The string part of the error message.
- * @c: The character part of the error message.
+ * @param s The string part of the error message.
+ * @param c The character part of the error message.
  */
 void logFatalc(char *s, int c) {
     fprintf(stderr, "Fatal error: %s:%c, line %d\n", s, c, Line);

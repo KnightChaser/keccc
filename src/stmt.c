@@ -96,6 +96,8 @@ static struct ASTnode *assignmentStatement(void) {
  *    else-statements (else AST)
  * }
  * -----------------------------------
+ * 
+ * @return AST node representing the if statement.
  */
 static struct ASTnode *ifStatement(void) {
     struct ASTnode *conditionAST;   // condition
@@ -241,6 +243,17 @@ static struct ASTnode *forStatement(void) {
     return treeNode;
 }
 
+/**
+ * returnStatement - Parse and handle a return statement.
+ *
+ * NOTE:
+ * Return statement is composed of:
+ * -----------------------------------
+ * return (expression)
+ * -----------------------------------
+ *
+ * @return AST node representing the return statement.
+ */
 static struct ASTnode *returnStatement(void) {
     struct ASTnode *treeNode;
 

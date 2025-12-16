@@ -33,10 +33,10 @@ void nasmPreamble() {
  * nasmFunctionCall - Generates code to call a function with an argument in a
  * register.
  *
- * @registerIndex: Index of the register containing the argument.
- * @functionSymbolId: The function's symbol table ID.
+ * @param registerIndex Index of the register containing the argument.
+ * @param functionSymbolId The function's symbol table ID.
  *
- * Returns: Index of the register containing the function's return value.
+ * @return Index of the register containing the function's return value.
  */
 int nasmFunctionCall(int registerIndex, int functionSymbolId) {
     int outRegister = allocateRegister();
@@ -51,7 +51,7 @@ int nasmFunctionCall(int registerIndex, int functionSymbolId) {
 /**
  * nasmFunctionPreamble - Outputs the assembly code function preamble.
  *
- * @id: The function's symbol table ID.
+ * @param id The function's symbol table ID.
  */
 void nasmFunctionPreamble(int id) {
     char *functionName = GlobalSymbolTable[id].name;
@@ -66,8 +66,8 @@ void nasmFunctionPreamble(int id) {
  * nasmReturnFromFunction - Generates code to return a value from a function.
  * (After moving the return value to rax, jumps to function end label)
  *
- * @reg: Index of the register containing the return value.
- * @id: The function's symbol table ID.
+ * @param reg Index of the register containing the return value.
+ * @param id The function's symbol table ID.
  */
 void nasmReturnFromFunction(int reg, int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
@@ -94,7 +94,7 @@ void nasmReturnFromFunction(int reg, int id) {
 /**
  * nasmFunctionPostamble - Outputs the assembly code function postamble.
  *
- * @id: The function's symbol table ID.
+ * @param id The function's symbol table ID.
  */
 void nasmFunctionPostamble(int id) {
     nasmLabel(GlobalSymbolTable[id].endLabel);
@@ -119,7 +119,7 @@ void nasmPostamble() {
  * nasmPrintIntFromReg - Generates code to print an integer value from a
  * register.
  *
- * @r: Index of the register containing the integer to print.
+ * @param r Index of the register containing the integer to print.
  */
 void nasmPrintIntFromReg(int r) {
     fprintf(Outfile, "\tmov\trdi, %s\n", qwordRegisterList[r]);
@@ -130,14 +130,14 @@ void nasmPrintIntFromReg(int r) {
 /**
  * nasmLabel - Outputs a label in the assembly code.
  *
- * @label: The label number to output.
+ * @param label The label number to output.
  */
 void nasmLabel(int label) { fprintf(Outfile, "L%d:\n", label); }
 
 /**
  * nasmJump - Generates an unconditional jump to a label.
  *
- * @label: The label number to jump to.
+ * @param label The label number to jump to.
  */
 void nasmJump(int label) { fprintf(Outfile, "\tjmp\tL%d\n", label); }
 
@@ -145,12 +145,12 @@ void nasmJump(int label) { fprintf(Outfile, "\tjmp\tL%d\n", label); }
  * nasmCompareAndJump - Generates code to compare two registers and jump to a
  * label based on the comparison result.
  *
- * @ASTop: The AST operation code representing the comparison.
- * @r1: Index of the first register.
- * @r2: Index of the second register.
- * @label: The label number to jump to if the comparison is true.
+ * @param ASTop The AST operation code representing the comparison.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
+ * @param label The label number to jump to if the comparison is true.
  *
- * Returns: NOREG (indicating no register is returned).
+ * @return NOREG (indicating no register is returned).
  */
 int nasmCompareAndJump(int ASTop, int r1, int r2, int label) {
     if (!((ASTop == A_EQ) || (ASTop == A_NE) || (ASTop == A_LT) ||

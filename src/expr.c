@@ -146,6 +146,7 @@ int tokenToASTOperator(int token) {
  *  https://en.cppreference.com/w/c/language/operator_precedence.html
  *
  * @param tokentype The token type to check.
+ * 
  * @return int The precedence of the operator.
  */
 static int operatorPrecedence(int tokentype) {
@@ -178,6 +179,8 @@ static int operatorPrecedence(int tokentype) {
  *      | '*' prefix_expression
  *      | '&' prefix_expression
  *      ;
+ * 
+ * @return ASTnode* The AST node representing the prefix expression.
  */
 struct ASTnode *prefix(void) {
     struct ASTnode *tree;
@@ -204,6 +207,7 @@ struct ASTnode *prefix(void) {
         tree->op = A_ADDRESSOF;
         tree->primitiveType = primitiveTypeToPointerType(tree->primitiveType);
         break;
+
     case T_STAR:
         /**
          * NOTE: * operator (pointer dereference)
@@ -238,6 +242,7 @@ struct ASTnode *prefix(void) {
  * binexpr - Parse a binary expression based on operator precedence.
  *
  * @param ptp The previous token precedence level.
+ * 
  * @return ASTnode* The AST node representing the binary expression.
  */
 struct ASTnode *binexpr(int ptp) {

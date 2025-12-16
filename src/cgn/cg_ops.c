@@ -14,7 +14,7 @@ const struct CodegenOps *CG = NULL;
 /**
  * codegenSelectTargetBackend - Select the code generation target backend.
  *
- * @target Target identifier (e.g., TARGET_NASM, TARGET_AARCH64).
+ * @param target Target identifier (e.g., TARGET_NASM, TARGET_AARCH64).
  */
 void codegenSelectTargetBackend(int target) {
     switch (target) {

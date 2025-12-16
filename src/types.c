@@ -12,6 +12,7 @@
  * isIntegerType - Check if a primitive type is an integer type
  *
  * @param primitiveType Primitive type to check
+ * 
  * @return true if the type is an integer type, false otherwise
  */
 bool isIntegerType(int primitiveType) {
@@ -29,6 +30,7 @@ bool isIntegerType(int primitiveType) {
  * isPointerType - Check if a primitive type is a pointer type
  *
  * @param primitiveType Primitive type to check
+ * 
  * @return true if the type is a pointer type, false otherwise
  */
 bool isPointerType(int primitiveType) {
@@ -47,6 +49,7 @@ bool isPointerType(int primitiveType) {
  * primitiveTypeToPointerType - Convert a primitive type to its pointer type
  *
  * @param primitiveType Primitive type to convert
+ * 
  * @return Corresponding pointer type
  */
 int primitiveTypeToPointerType(int primitiveType) {
@@ -70,6 +73,7 @@ int primitiveTypeToPointerType(int primitiveType) {
  * pointerToPrimitiveType - Convert a pointer type to its primitive type
  *
  * @param primitiveType Pointer type to convert
+ * 
  * @return Corresponding primitive type
  */
 int pointerToPrimitiveType(int primitiveType) {
@@ -95,6 +99,7 @@ int pointerToPrimitiveType(int primitiveType) {
  * @param treeNode AST node to modify
  * @param rightType Primitive type to match against
  * @param operation Operation being performed (for context)
+ * 
  * @return Modified AST node if types are compatible, NULL otherwise
  */
 struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,

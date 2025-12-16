@@ -34,10 +34,10 @@ void aarch64Postamble(void) {}
  * aarch64FunctionCall - Generates code to call a function with an argument in a
  * register.
  *
- * @r: Index of the register containing the argument.
- * @functionSymbolId: The function's symbol table ID.
+ * @param r Index of the register containing the argument.
+ * @param functionSymbolId The function's symbol table ID.
  *
- * Returns: Index of the register containing the function's return value.
+ * @return Index of the register containing the function's return value.
  */
 int aarch64FunctionCall(int r, int functionSymbolId) {
     int out = aarch64AllocateRegister();
@@ -53,7 +53,7 @@ int aarch64FunctionCall(int r, int functionSymbolId) {
 /**
  * aarch64FunctionPreamble - Outputs the assembly code function preamble.
  *
- * @id: The function's symbol table ID.
+ * @param id The function's symbol table ID.
  */
 void aarch64FunctionPreamble(int id) {
     char *functionName = GlobalSymbolTable[id].name;
@@ -68,8 +68,8 @@ void aarch64FunctionPreamble(int id) {
 /**
  * aarch64ReturnFromFunction - Generates code to return a value from a function.
  *
- * @reg: Index of the register containing the return value.
- * @id: The function's symbol table ID.
+ * @param reg Index of the register containing the return value.
+ * @param id The function's symbol table ID.
  */
 void aarch64ReturnFromFunction(int reg, int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
@@ -97,7 +97,7 @@ void aarch64ReturnFromFunction(int reg, int id) {
 /**
  * aarch64FunctionPostamble - Outputs the assembly code function postamble.
  *
- * @id: The function's symbol table ID.
+ * @param id The function's symbol table ID.
  */
 void aarch64FunctionPostamble(int id) {
     (void)id;
@@ -114,7 +114,7 @@ void aarch64FunctionPostamble(int id) {
  * aarch64PrintIntFromReg - Generates code to print an integer value from a
  * register.
  *
- * @r: Index of the register containing the integer to print.
+ * @param r Index of the register containing the integer to print.
  */
 void aarch64PrintIntFromReg(int r) {
     fprintf(Outfile, "\tmov\tx0, %s\n", aarch64QwordRegisterList[r]);
@@ -125,14 +125,14 @@ void aarch64PrintIntFromReg(int r) {
 /**
  * aarch64Label - Outputs a label in the assembly code.
  *
- * @label: The label number to output.
+ * @param label The label number to output.
  */
 void aarch64Label(int label) { fprintf(Outfile, "L%d:\n", label); }
 
 /**
  * aarch64Jump - Generates an unconditional jump to a label.
  *
- * @label: The label number to jump to.
+ * @param label The label number to jump to.
  */
 void aarch64Jump(int label) { fprintf(Outfile, "\tb\tL%d\n", label); }
 
@@ -140,12 +140,12 @@ void aarch64Jump(int label) { fprintf(Outfile, "\tb\tL%d\n", label); }
  * aarch64CompareAndJump - Generates code to compare two registers and jump to a
  * label based on the comparison result.
  *
- * @ASTop: The AST operation code representing the comparison.
- * @r1: Index of the first register.
- * @r2: Index of the second register.
- * @label: The label number to jump to if the comparison is true.
+ * @param ASTop The AST operation code representing the comparison.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
+ * @param label The label number to jump to if the comparison is true.
  *
- * Returns: NOREG (indicating no register is returned).
+ * @return NOREG (indicating no register is returned).
  */
 int aarch64CompareAndJump(int ASTop, int r1, int r2, int label) {
     if (!((ASTop == A_EQ) || (ASTop == A_NE) || (ASTop == A_LT) ||

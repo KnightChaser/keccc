@@ -25,7 +25,7 @@ int codegenGetLabelNumber(void) {
  * codegenLabel - Outputs a label in the assembly code
  * for the current target backend.
  *
- * @label: The label number to output.
+ * @param label The label number to output.
  */
 static void codegenLabel(int label) { CG->label(label); }
 
@@ -33,7 +33,7 @@ static void codegenLabel(int label) { CG->label(label); }
  * codegenJump - Generates an unconditional jump to a label
  * for the current target backend.
  *
- * @label: The label number to jump to.
+ * @param label The label number to jump to.
  */
 static void codegenJump(int label) { CG->jump(label); }
 
@@ -42,10 +42,12 @@ static void codegenJump(int label) { CG->jump(label); }
  * and jump to a label based on the comparison result
  * for the current target backend.
  *
- * @ASTop: The AST operation code representing the comparison.
- * @r1: Index of the first register.
- * @r2: Index of the second register.
- * @label: The label number to jump to if the comparison is true.
+ * @param ASTop The AST operation code representing the comparison.
+ * @param r1 Index of the first register.
+ * @param r2 Index of the second register.
+ * @param label The label number to jump to if the comparison is true.
+ *
+ * @return The register index where the result is stored (NOREG).
  */
 static int codegenCompareAndJump(int ASTop, int r1, int r2, int label) {
     return CG->compareAndJump(ASTop, r1, r2, label);
@@ -58,7 +60,7 @@ static int codegenCompareAndJump(int ASTop, int r1, int r2, int label) {
  * The If statement is represented in the AST as follows:
  * ----------------------------------------
  *        [  A_IF  ]
- *        /   |     *    cond  true  false
+ *        /   |    \    cond  true  false
  *  (left)(middle)(right)
  * ----------------------------------------
  * Conventional if statement will be
@@ -74,9 +76,9 @@ static int codegenCompareAndJump(int ASTop, int r1, int r2, int label) {
  * L2:
  * ----------------------------------------
  *
- * @n: The AST node representing the IF statement.
+ * @param n The AST node representing the IF statement.
  *
- * @return int The register index where the result is stored (NOREG).
+ * @return The register index where the result is stored (NOREG).
  */
 static int codegenIfStatementAST(struct ASTnode *n) {
     int labelFalseStatement;
@@ -124,9 +126,9 @@ static int codegenIfStatementAST(struct ASTnode *n) {
  * The While statement is represented in the AST as follows:
  * ----------------------------------------
  *       [  A_WHILE  ]
- *        /      \
- *      cond     body
- *     (left)   (middle)
+ *          /      \
+ *        cond     body
+ *       (left)  (middle)
  * ----------------------------------------
  * Conventional while statement will be
  * converted into the following assembly
@@ -139,9 +141,9 @@ static int codegenIfStatementAST(struct ASTnode *n) {
  * L2:
  * ----------------------------------------
  *
- * @n: The AST node representing the WHILE statement.
+ * @param n The AST node representing the WHILE statement.
  *
- * @return int The register index where the result is stored (NOREG).
+ * @return The register index where the result is stored (NOREG).
  */
 static int codegenWhileStatementAST(struct ASTnode *n) {
     int labelStartLoop;
@@ -172,18 +174,18 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
 /**
  * codegenAST - Generates code for the given AST node and its subtrees.
  *
- * @n:                 The AST node to generate code for.
- * @param reg:         The register index to use for code generation.
- * @param parentASTop: The operator of the parent AST node.
+ * @param n           The AST node to generate code for.
+ * @param reg         The register index to use for code generation.
+ * @param parentASTop The operator of the parent AST node.
  *
  * NOTE:
  * If parentASTop is A_IF, comparison operations will generate
  * a jump instruction instead of setting a register value.
- * (e.g., if (b < c) { ... } )
+ * (e.g., `if (b < c) { ... }` )
  * Otherwise, comparison operations will set a register to 1 or 0
- * (e.g., int a = (b < c); )
+ * (e.g., `int a = (b < c);` )
  *
- * @return int The register index where the result is stored.
+ * @return The register index where the result is stored.
  */
 int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     int leftRegister, rightRegister;

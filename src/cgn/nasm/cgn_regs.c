@@ -55,7 +55,7 @@ void nasmResetRegisterPool(void) {
  * allocateRegister - Allocates a free register and returns its index.
  * Dies with an error if no registers are available.
  *
- * Returns: Index of the allocated register.
+ * @return Index of the allocated register.
  */
 int allocateRegister(void) {
     int registerCount = sizeof(freeRegisters) / sizeof(freeRegisters[0]);
@@ -74,7 +74,7 @@ int allocateRegister(void) {
  * freeRegister - Frees the register at the given index.
  * Dies with an error if the register is already free.
  *
- * @r: Index of the register to free.
+ * @param r Index of the register to free.
  */
 void freeRegister(int r) {
     if (freeRegisters[r] == 1) {
