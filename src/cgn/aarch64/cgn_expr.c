@@ -451,11 +451,10 @@ int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
         );
         break;
 
-    case P_VOID:
     case P_LONG:
         // Store 8 bytes: STR Xt, [Xn]
         fprintf(Outfile, "\tstr\t%s, [%s]\n",
-                aarch64DwordRegisterList[valueReg],  // source (xN)
+                aarch64QwordRegisterList[valueReg],  // source (xN)
                 aarch64QwordRegisterList[pointerReg] // address (xM)
         );
         break;
