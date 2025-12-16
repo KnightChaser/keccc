@@ -99,14 +99,20 @@ static struct ASTnode *primary(void) {
 }
 
 /**
- * tokenToASTOperator - Convert token into corresponding AST node
+ * tokenToASTOperator - Covnert a binary operator token into a binary AST
+ * operation.
  * e.g. T_PLUS(+) token means A_ADD, which is the AST node type
  *
  * @param token The token to map.
+ *
  * @return int The corresponding arithmetic operator.
  */
 int tokenToASTOperator(int token) {
     switch (token) {
+    // Assignment
+    case T_ASSIGN:
+        return A_ASSIGN;
+
     // Arithmetic operators
     case T_PLUS:
         return A_ADD;
@@ -139,6 +145,22 @@ int tokenToASTOperator(int token) {
 }
 
 /**
+ * isTokenRightAssociative - Check if a token is right associative.
+ *
+ * @param tokentype The token type to check.
+ *
+ * @return bool True if the token is right associative, false otherwise.
+ */
+static bool isTokenRightAssociative(int tokentype) {
+    switch (tokentype) {
+    case T_ASSIGN:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/**
  * operatorPrecedence - Get the precedence of a given operator token.
  *
  *  NOTE:
@@ -146,28 +168,31 @@ int tokenToASTOperator(int token) {
  *  https://en.cppreference.com/w/c/language/operator_precedence.html
  *
  * @param tokentype The token type to check.
- * 
+ *
  * @return int The precedence of the operator.
  */
 static int operatorPrecedence(int tokentype) {
     switch (tokentype) {
-    case T_PLUS:  // Addition (+)
-    case T_MINUS: // Subtraction (-)
-        return 10;
-    case T_STAR:  // Multiplication (*)
-    case T_SLASH: // Division (/)
-        return 20;
-    case T_EQ: // Equal (==)
-    case T_NE: // Not Equal (!=)
-        return 30;
-    case T_LT: // Less Than (<)
-    case T_GT: // Greater Than (>)
-    case T_LE: // Less Than or Equal (<=)
-    case T_GE: // Greater Than or Equal (>=)
-        return 40;
-    default:
-        // e.g. T_SEMICOLON, T_RPAREN, etc.
-        return 0;
+    case T_EOF:    // (end of file)
+        return 0;  //
+    case T_ASSIGN: // Assignment (=)
+        return 10; //
+    case T_PLUS:   // Addition (+)
+    case T_MINUS:  // Subtraction (-)
+        return 20; //
+    case T_STAR:   // Multiplication (*)
+    case T_SLASH:  // Division (/)
+        return 30; //
+    case T_EQ:     // Equal (==)
+    case T_NE:     // Not Equal (!=)
+        return 40; //
+    case T_LT:     // Less Than (<)
+    case T_GT:     // Greater Than (>)
+    case T_LE:     // Less Than or Equal (<=)
+    case T_GE:     // Greater Than or Equal (>=)
+        return 50; //
+    default:       //
+        return 0;  // e.g. T_SEMICOLON, T_RPAREN, etc.
     }
 }
 
@@ -179,7 +204,7 @@ static int operatorPrecedence(int tokentype) {
  *      | '*' prefix_expression
  *      | '&' prefix_expression
  *      ;
- * 
+ *
  * @return ASTnode* The AST node representing the prefix expression.
  */
 struct ASTnode *prefix(void) {
@@ -242,7 +267,7 @@ struct ASTnode *prefix(void) {
  * binexpr - Parse a binary expression based on operator precedence.
  *
  * @param ptp The previous token precedence level.
- * 
+ *
  * @return ASTnode* The AST node representing the binary expression.
  */
 struct ASTnode *binexpr(int ptp) {
@@ -262,33 +287,70 @@ struct ASTnode *binexpr(int ptp) {
     // so we return just the left node. OvO
     tokentype = Token.token;
     if (tokentype == T_SEMICOLON || tokentype == T_RPAREN) {
+        left->isRvalue = true; // Means this node is an r-value
         return left;
     }
 
-    // While the precedence of this token is
-    // more than that of the previous token precedence
-    while (operatorPrecedence(tokentype) > ptp) {
+    // NOTE:
+    // While
+    // - the precedence of this token is more than that of the previous
+    //   token precedence, or,
+    // - It's right associative and the precedence is equal to that of
+    //   the previous token precedence ("=" chains, like "a = b = c")
+    while ((operatorPrecedence(tokentype) > ptp) ||
+           (isTokenRightAssociative(tokentype) &&
+            operatorPrecedence(tokentype) == ptp)) {
         // Fetch in the next integer literal
         scan(&Token);
 
-        // Recurse to get the right-hand side expression
+        // Recursively parse the RHS
         right = binexpr(operatorPrecedence(tokentype));
 
-        // Ensure the two types are compatible by trying to modify each tree to
-        // match the other's type.
+        // Determine the operation to be performed on the sub-trees
         ASToperation = tokenToASTOperator(tokentype);
-        leftTemp = modifyASTType(left, right->primitiveType, ASToperation);
-        rightTemp = modifyASTType(right, left->primitiveType, ASToperation);
-        if (leftTemp == NULL && rightTemp == NULL) {
-            logFatal("Incompatible types in binary expression");
-        }
-        if (leftTemp != NULL) {
-            // Use the modified left node if possible
-            left = leftTemp;
-        }
-        if (rightTemp != NULL) {
-            // Use the modified right node if possible
-            right = rightTemp;
+        if (ASToperation == A_ASSIGN) {
+            // assignment, the current node is a r-value
+            // because "b = (something)" needs the value of "something"
+            right->isRvalue = true;
+
+            // Ensure the right's type matches the left.
+            right = modifyASTType(right, left->primitiveType, A_NOTHING);
+
+            // NOTE: Sure about this?
+            if (left == NULL) {
+                logFatal("Incompatible expression in assignment");
+            }
+
+            // Make an assignment AST tree.
+            // However, switch left and right around,
+            // so that the right expression's code will be generated before the
+            // left expression.
+            leftTemp = left;
+            left = right;
+            right = leftTemp;
+        } else {
+            // Normal arithmetic operations or comparisons
+            // We are not doing an assignment, so both trees should be rvalues
+            // Convert both trees into rvalues if they are lvalue trees
+            left->isRvalue = true;
+            right->isRvalue = true;
+
+            // Ensure the two types are compatible by trying to modify each tree
+            // to match the other's type
+            leftTemp = modifyASTType(left, right->primitiveType, ASToperation);
+            rightTemp = modifyASTType(right, left->primitiveType, ASToperation);
+
+            if (leftTemp == NULL && rightTemp == NULL) {
+                logFatal("Incompatible types in binary expression");
+            }
+
+            // If one side could be converted, use that side's converted tree
+            if (leftTemp != NULL) {
+                left = leftTemp;
+            }
+            if (rightTemp != NULL) {
+                right = rightTemp;
+            }
         }
 
         left =
@@ -302,11 +364,13 @@ struct ASTnode *binexpr(int ptp) {
         // so we return just the left node. OvO
         tokentype = Token.token;
         if (tokentype == T_SEMICOLON || tokentype == T_RPAREN) {
+            left->isRvalue = true; // Means this node is an r-value
             return left;
         }
     }
 
     // Return the constructed AST node,
     // when the precedence is not higher than ptp.
+    left->isRvalue = true; // Means this node is an r-value
     return left;
 }

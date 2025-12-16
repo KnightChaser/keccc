@@ -405,3 +405,46 @@ int nasmDereferencePointer(int pointerReg, int primitiveType) {
 
     return pointerReg;
 }
+
+/**
+ * nasmStoreDereferencedPointer - Generates code to store a value from a
+ * register into a memory location pointed to by another register.
+ *
+ * @param valueReg Index of the register containing the value to store.
+ * @param pointerReg Index of the register containing the pointer.
+ * @param primitiveType The primitive type of the value being stored.
+ *
+ * @return Index of the register that was stored.
+ */
+int nasmStoreDereferencedPointer(int valueReg, int pointerReg,
+                                 int primitiveType) {
+    switch (primitiveType) {
+    case P_CHAR:
+        fprintf(Outfile, "\tmov\tBYTE [%s], %s\n",
+                qwordRegisterList[pointerReg], // destination pointer register
+                byteRegisterList[valueReg]     // source register (lower 8 bits)
+        );
+        break;
+    case P_INT:
+        fprintf(Outfile, "\tmov\tDWORD [%s], %s\n",
+                qwordRegisterList[pointerReg], // destination pointer register
+                dwordRegisterList[valueReg]    // source register (lower 32
+                                               // bits)
+        );
+        break;
+    case P_LONG:
+        fprintf(Outfile, "\tmov\tQWORD [%s], %s\n",
+                qwordRegisterList[pointerReg], // destination pointer register
+                qwordRegisterList[valueReg]    // source register
+        );
+        break;
+    default:
+        fprintf(stderr,
+                "Error: Unsupported primitive type %d in "
+                "nasmStoreDereferencedPointer\n",
+                primitiveType);
+        exit(1);
+    }
+
+    return valueReg;
+}

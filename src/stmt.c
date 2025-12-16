@@ -10,81 +10,6 @@
 static struct ASTnode *singleStatement(void);
 
 /**
- * printStatement - Parse and generate code for a print statement.
- *
- * @return AST node representing the print statement.
- */
-static struct ASTnode *printStatement(void) {
-    struct ASTnode *tree;
-
-    // Match "print" string at the first token
-    match(T_PRINT, "print");
-
-    // Parse the following expression
-    tree = binexpr(0);
-
-    // Ensure the two types are compatible
-    tree = modifyASTType(tree, P_INT, A_NOTHING);
-    if (tree == NULL) {
-        logFatal("Type error: incompatible type in print statement");
-    }
-
-    // Wrap the expression in a print node so statement handling
-    // can correctly require a trailing semicolon.
-    tree = makeASTUnary(A_PRINT, P_NONE, tree, 0);
-
-    return tree;
-}
-
-/**
- * assignmentStatement - Parse and handle an identifier assignment statement.
- * "Identifier" can be either a variable or a function call.
- *
- * @return AST node representing the assignment statement.
- */
-static struct ASTnode *assignmentStatement(void) {
-    struct ASTnode *leftNode = NULL;
-    struct ASTnode *rightNode = NULL;
-    struct ASTnode *treeNode = NULL;
-    int identifierIndex;
-
-    // Ensure we have an identifier
-    matchIdentifierToken();
-
-    // This could be a variable or a function call (identifier).
-    // If the next token is '(', it's a function call.
-    if (Token.token == T_LPAREN) {
-        return functionCall();
-    }
-
-    // Check it's been defined then make a leaf node for it
-    if ((identifierIndex = findGlobalSymbol(Text)) == -1) {
-        logFatals("Undeclared identifier: ", Text);
-    }
-    // Create a leaf node for the identifier (destination)
-    rightNode = makeASTLeaf(A_LVALUEIDENTIFIER,
-                            GlobalSymbolTable[identifierIndex].primitiveType,
-                            identifierIndex);
-
-    // Match the '=' token
-    match(T_ASSIGN, "=");
-
-    // Parse the expression on the right-hand side of the '=' (source)
-    leftNode = binexpr(0);
-
-    // Ensure the two types are compatible
-    leftNode = modifyASTType(leftNode, rightNode->primitiveType, A_NOTHING);
-    if (leftNode == NULL) {
-        logFatal("Type error: incompatible type in assignment statement");
-    }
-
-    // Create an assignment AST node
-    treeNode = makeASTNode(A_ASSIGN, P_INT, leftNode, NULL, rightNode, 0);
-
-    return treeNode;
-}
-
-/**
  * ifStatement - Parse and handle an if statement.
  *
  * NOTE:
@@ -96,7 +21,7 @@ static struct ASTnode *assignmentStatement(void) {
  *    else-statements (else AST)
  * }
  * -----------------------------------
- * 
+ *
  * @return AST node representing the if statement.
  */
 static struct ASTnode *ifStatement(void) {
@@ -296,8 +221,6 @@ static struct ASTnode *singleStatement(void) {
     int type;
 
     switch (Token.token) {
-    case T_PRINT:
-        return printStatement();
     case T_CHAR: // primitive data type (char, 1 byte)
     case T_INT:  // primitive data type (int, 4 bytes)
     case T_LONG: // primitive data type (long, 8 bytes)
@@ -309,8 +232,6 @@ static struct ASTnode *singleStatement(void) {
         variableDeclaration(type);
 
         return NULL; // No AST node for declarations
-    case T_IDENTIFIER:
-        return assignmentStatement();
     case T_IF:
         return ifStatement();
     case T_WHILE:
@@ -319,6 +240,11 @@ static struct ASTnode *singleStatement(void) {
         return forStatement();
     case T_RETURN:
         return returnStatement();
+    default:
+        // TODO:
+        // For now, see if this is an expression.
+        // This will catch an assignment statements.
+        return binexpr(0);
     }
 
     // default
@@ -346,8 +272,7 @@ struct ASTnode *compoundStatement(void) {
 
         // Some statement must be followed by a semicolon
         if (treeNode != NULL &&
-            (treeNode->op == A_PRINT ||      // e.g. "print expr;"
-             treeNode->op == A_ASSIGN ||     // e.g. "identifier = expr;"
+            (treeNode->op == A_ASSIGN ||     // e.g. "identifier = expr;"
              treeNode->op == A_RETURN ||     // e.g. "return expr;"
              treeNode->op == A_FUNCTIONCALL) // e.g. "functionCall(
         ) {

@@ -99,7 +99,7 @@ static int codegenIfStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     // Generate the true branch's compound statement
-    codegenAST(n->middle, NOREG, n->op);
+    codegenAST(n->middle, NOLABEL, n->op);
     codegenResetRegisters();
 
     if (n->right) {
@@ -161,7 +161,7 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
     codegenResetRegisters();
 
     // Generate the loop body (stored in right child for WHILE)
-    codegenAST(n->right, NOREG, n->op);
+    codegenAST(n->right, NOLABEL, n->op);
     codegenResetRegisters();
 
     // Jump back to the start of the loop
@@ -175,7 +175,7 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
  * codegenAST - Generates code for the given AST node and its subtrees.
  *
  * @param n           The AST node to generate code for.
- * @param reg         The register index to use for code generation.
+ * @param label       The label number for jump instructions (if needed).
  * @param parentASTop The operator of the parent AST node.
  *
  * NOTE:
@@ -187,7 +187,7 @@ static int codegenWhileStatementAST(struct ASTnode *n) {
  *
  * @return The register index where the result is stored.
  */
-int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
+int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     int leftRegister, rightRegister;
 
     if (n == NULL) {
@@ -205,14 +205,14 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // Do each sub-tree separately,
         // and return NOREG since GLUE does not produce a value
         // Then free registers used in each sub-tree
-        codegenAST(n->left, NOREG, n->op);
+        codegenAST(n->left, NOLABEL, n->op);
         CG->resetRegisters();
-        codegenAST(n->right, NOREG, n->op);
+        codegenAST(n->right, NOLABEL, n->op);
         CG->resetRegisters();
         return NOREG;
     case A_FUNCTION:
         CG->functionPreamble(n->v.identifierIndex);
-        codegenAST(n->left, NOREG, n->op);
+        codegenAST(n->left, NOLABEL, n->op);
         CG->functionPostamble(n->v.identifierIndex);
         return NOREG;
     }
@@ -223,10 +223,10 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     // Get the left and right sub-tree value
     if (n->left) {
         // Use NOREG because left subtree can use any register
-        leftRegister = codegenAST(n->left, NOREG, n->op);
+        leftRegister = codegenAST(n->left, NOLABEL, n->op);
     }
     if (n->right) {
-        rightRegister = codegenAST(n->right, leftRegister, n->op);
+        rightRegister = codegenAST(n->right, NOLABEL, n->op);
     }
 
     switch (n->op) {
@@ -253,7 +253,7 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
         // comparison.
         if (parentASTop == A_IF || parentASTop == A_WHILE) {
             return codegenCompareAndJump(n->op, leftRegister, rightRegister,
-                                         reg);
+                                         label);
         } else {
             return CG->compareAndSet(n->op, leftRegister, rightRegister);
         }
@@ -262,16 +262,22 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     case A_INTLIT:
         return CG->loadImmediateInt(n->v.intvalue, n->primitiveType);
     case A_IDENTIFIER:
-        return CG->loadGlobalSymbol(n->v.identifierIndex);
-    case A_LVALUEIDENTIFIER:
-        return CG->storeGlobalSymbol(reg, n->v.identifierIndex);
+        if (n->isRvalue || parentASTop == A_DEREFERENCE) {
+            return CG->loadGlobalSymbol(n->v.identifierIndex);
+        } else {
+            return NOREG; // Lvalue: return NOREG to indicate address needed
+        }
     case A_ASSIGN:
-        // The work has already been done, return the result
-        return rightRegister;
-    case A_PRINT:
-        codegenPrintInt(leftRegister);
-        codegenResetRegisters();
-        return NOREG;
+        switch (n->right->op) {
+        case A_IDENTIFIER:
+            return CG->storeGlobalSymbol(leftRegister,
+                                         n->right->v.identifierIndex);
+        case A_DEREFERENCE:
+            return CG->storeDereferencedPointer(leftRegister, rightRegister,
+                                                n->right->primitiveType);
+        default:
+            logFatald("can't assign (A_ASSIGN) to this AST node type: ", n->op);
+        }
     case A_WIDENTYPE:
         // Widen the child node's primitive type to the parent node's type
         return CG->widenPrimitiveType(leftRegister, n->left->primitiveType,
@@ -284,7 +290,11 @@ int codegenAST(struct ASTnode *n, int reg, int parentASTop) {
     case A_ADDRESSOF:
         return CG->addressOfGlobalSymbol(n->v.identifierIndex);
     case A_DEREFERENCE:
-        return CG->dereferencePointer(leftRegister, n->left->primitiveType);
+        if (n->isRvalue) {
+            return CG->dereferencePointer(leftRegister, n->left->primitiveType);
+        } else {
+            return leftRegister; // Lvalue: return address in leftRegister;
+        }
     case A_SCALETYPE:
         // Small optimization:
         // use shift if the scale value is a known power of 2

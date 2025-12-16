@@ -9,7 +9,7 @@
  *
  * @param s The string to search
  * @param c The character to find
- * 
+ *
  * @return The position of character c in string s, or -1 if not found
  */
 static int chrpos(char *s, int c) {
@@ -67,7 +67,7 @@ static int skip(void) {
  * scanInteger - scan an integer literal from input
  *
  * @param c The first character of the integer literal
- * 
+ *
  * @return The integer value of the scanned integer literal
  */
 static int scanInteger(int c) {
@@ -156,11 +156,6 @@ static int keyword(char *s) {
     case 'l':
         if (!strcmp(s, "long")) {
             return T_LONG;
-        }
-        break;
-    case 'p':
-        if (!strcmp(s, "print")) {
-            return T_PRINT;
         }
         break;
     case 'r':

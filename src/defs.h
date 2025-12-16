@@ -8,6 +8,7 @@
  * so don't delete the include statements here.
  */
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +30,7 @@ enum {
 enum {
     // Single-character tokens
     T_EOF,        // end of file
+    T_ASSIGN,     // =
     T_PLUS,       // +
     T_MINUS,      // -
     T_STAR,       // *
@@ -42,7 +44,6 @@ enum {
     T_INTLIT,     // integer literal
                   // (decimal whole number which have 1 or more digits of 0-9)
     T_SEMICOLON,  // ;
-    T_ASSIGN,     // =
     T_IDENTIFIER, // variable names
     T_LBRACE,     // {
     T_RBRACE,     // }
@@ -52,7 +53,6 @@ enum {
     T_LOGAND,     // &&
 
     // Keywords
-    T_PRINT,  // "print"
     T_IF,     // "if"
     T_ELSE,   // "else"
     T_WHILE,  // "while"
@@ -74,32 +74,30 @@ struct token {
 
 // AST node types
 enum {
-    A_NOTHING = 0,      // No operation
-    A_ADD = 1,          // Addition
-    A_SUBTRACT,         // Subtraction
-    A_MULTIPLY,         // Multiplication
-    A_DIVIDE,           // Division
-    A_EQ,               // Equality comparison (==)
-    A_NE,               // Inequality comparison (!=)
-    A_LT,               // Less than comparison (<)
-    A_GT,               // Greater than comparison (>)
-    A_LE,               // Less than or equal comparison (<=)
-    A_GE,               // Greater than or equal comparison (>=)
-    A_INTLIT,           // Integer literal
-    A_IDENTIFIER,       // Identifier (variable)
-    A_LVALUEIDENTIFIER, // L-value Identifier
-    A_ASSIGN,           // Assignment
-    A_PRINT,            // Print statement
-    A_GLUE,             // Statement glue (for sequencing statements)
-    A_IF,               // If statement
-    A_WHILE,            // While loop
-    A_FUNCTION,         // Function definition
-    A_WIDENTYPE,        // Widen data type (usually integer)
-    A_RETURN,           // Return statement
-    A_FUNCTIONCALL,     // Function call
-    A_DEREFERENCE,      // Pointer dereference
-    A_ADDRESSOF,        // Address-of operator
-    A_SCALETYPE,        // Scale pointer arithmetic
+    A_NOTHING = 0,  // No operation
+    A_ASSIGN = 1,   // Assignment
+    A_ADD,          // Addition
+    A_SUBTRACT,     // Subtraction
+    A_MULTIPLY,     // Multiplication
+    A_DIVIDE,       // Division
+    A_EQ,           // Equality comparison (==)
+    A_NE,           // Inequality comparison (!=)
+    A_LT,           // Less than comparison (<)
+    A_GT,           // Greater than comparison (>)
+    A_LE,           // Less than or equal comparison (<=)
+    A_GE,           // Greater than or equal comparison (>=)
+    A_INTLIT,       // Integer literal
+    A_IDENTIFIER,   // Identifier (variable)
+    A_GLUE,         // Statement glue (for sequencing statements)
+    A_IF,           // If statement
+    A_WHILE,        // While loop
+    A_FUNCTION,     // Function definition
+    A_WIDENTYPE,    // Widen data type (usually integer)
+    A_RETURN,       // Return statement
+    A_FUNCTIONCALL, // Function call
+    A_DEREFERENCE,  // Pointer dereference
+    A_ADDRESSOF,    // Address-of operator
+    A_SCALETYPE,    // Scale pointer arithmetic
 };
 
 // Primitive types
@@ -128,6 +126,7 @@ struct ASTnode {
     int op;                 // operation to be performed on this tree
                             // (e.g., A_ADD, A_INTLIT)
     int primitiveType;      // primitive type (e.g., P_INT, P_CHAR)
+    bool isRvalue;          // is this node an r-value?
     struct ASTnode *left;   // left subtree
     struct ASTnode *middle; // middle subtree (for if-else statements)
     struct ASTnode *right;  // right subtree
@@ -150,6 +149,11 @@ struct ASTnode {
 // Use NOREG when AST generation;
 // functions have no register to return
 #define NOREG -1
+
+// NOTE:
+// Use NOLABEL when we have no label (to jump)
+// to pass to codegenAST() function
+#define NOLABEL 0
 
 // Structural types
 enum {

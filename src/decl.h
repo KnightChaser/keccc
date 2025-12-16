@@ -71,6 +71,8 @@ int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
 int nasmGetPrimitiveTypeSize(int primitiveType);
 int nasmAddressOfGlobalSymbol(int id);
 int nasmDereferencePointer(int pointerReg, int primitiveType);
+int nasmStoreDereferencedPointer(int valueReg, int pointerReg,
+                                 int primitiveType);
 
 // aarch64 AArch64 backend
 void aarch64ResetRegisterPool(void);
@@ -99,6 +101,8 @@ int aarch64WidenPrimitiveType(int r, int oldPrimitiveType,
 int aarch64GetPrimitiveTypeSize(int primitiveType);
 int aarch64AddressOfGlobalSymbol(int id);
 int aarch64DereferencePointer(int pointerReg, int primitiveType);
+int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
+                                    int primitiveType);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);

@@ -64,7 +64,7 @@ int aarch64LoadImmediateInt(int value, int primitiveType) {
  * aarch64LoadGlobalAddressIntoX0 - Generates code to load the address of a
  * global symbol into register x0. (helper function)
  *
- * 
+ *
  * @param name The name of the global symbol.
  */
 static void aarch64LoadGlobalAddressIntoX0(const char *name) {
@@ -385,6 +385,15 @@ int aarch64AddressOfGlobalSymbol(int id) {
     return r;
 }
 
+/**
+ * aarch64DereferencePointer - Generates code to dereference a pointer in a
+ * register and load the value into the same register.
+ *
+ * @param pointerReg Index of the register containing the pointer.
+ * @param primitiveType The primitive type of the value being loaded.
+ *
+ * @return Index of the register containing the loaded value.
+ */
 int aarch64DereferencePointer(int pointerReg, int primitiveType) {
     const char *x = aarch64QwordRegisterList[pointerReg];
     const char *w = aarch64DwordRegisterList[pointerReg];
@@ -402,7 +411,62 @@ int aarch64DereferencePointer(int pointerReg, int primitiveType) {
         // loads 64-bit into xN
         fprintf(Outfile, "\tldr\t%s, [%s]\n", x, x);
         break;
+    default:
+        fprintf(stderr,
+                "Error: Unsupported primitive type %d in "
+                "aarch64DereferencePointer\n",
+                primitiveType);
+        exit(1);
     }
 
     return pointerReg;
+}
+
+/**
+ * aarch64StoreDereferencedPointer - Generates code to store a value from a
+ * register into a memory location pointed to by another register.
+ *
+ * @param valueReg Index of the register containing the value to store.
+ * @param pointerReg Index of the register containing the pointer (address).
+ * @param primitiveType The primitive type of the value being stored.
+ *
+ * @return Index of the register that was stored.
+ */
+int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
+                                    int primitiveType) {
+    switch (primitiveType) {
+    case P_CHAR:
+        // Store 1 byte: uses W register, low 8 bits written.
+        fprintf(Outfile, "\tstrb\t%s, [%s]\n",
+                aarch64DwordRegisterList[valueReg],  // source (wN)
+                aarch64QwordRegisterList[pointerReg] // address (xM)
+        );
+        break;
+
+    case P_INT:
+        // Store 4 bytes: STR Wt, [Xn]
+        fprintf(Outfile, "\tstr\t%s, [%s]\n",
+                aarch64DwordRegisterList[valueReg],  // source (wN)
+                aarch64QwordRegisterList[pointerReg] // address (xM)
+        );
+        break;
+
+    case P_VOID:
+    case P_LONG:
+        // Store 8 bytes: STR Xt, [Xn]
+        fprintf(Outfile, "\tstr\t%s, [%s]\n",
+                aarch64DwordRegisterList[valueReg],  // source (xN)
+                aarch64QwordRegisterList[pointerReg] // address (xM)
+        );
+        break;
+
+    default:
+        fprintf(stderr,
+                "Error: Unsupported primitive type %d in "
+                "aarch64StoreDereferencedPointer\n",
+                primitiveType);
+        exit(1);
+    }
+
+    return valueReg;
 }

@@ -38,4 +38,5 @@ const struct CodegenOps aarch64Ops = {
 
     .addressOfGlobalSymbol = aarch64AddressOfGlobalSymbol,
     .dereferencePointer = aarch64DereferencePointer,
+    .storeDereferencedPointer = aarch64StoreDereferencedPointer,
 };

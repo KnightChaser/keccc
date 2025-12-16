@@ -39,4 +39,5 @@ const struct CodegenOps nasmOps = {
 
     .addressOfGlobalSymbol = nasmAddressOfGlobalSymbol,
     .dereferencePointer = nasmDereferencePointer,
+    .storeDereferencedPointer = nasmStoreDereferencedPointer,
 };
