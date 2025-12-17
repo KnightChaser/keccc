@@ -138,6 +138,9 @@ void globalDeclaration(void) {
             // parse the function declaration and generate the assembly code for
             // it
             treeNode = functionDeclaration(type);
+            if (Option_dumpAST) {
+                dumpASTTree(treeNode);
+            }
             codegenAST(treeNode, NOREG, NOREG);
         } else {
             // Assume

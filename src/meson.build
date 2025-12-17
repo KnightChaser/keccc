@@ -19,6 +19,7 @@ executable('keccc', [
     'stmt.c',
     'symbol.c',
     'tree.c',
+    'treedump.c',
     'types.c'
   ],
   install: true

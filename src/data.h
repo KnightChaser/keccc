@@ -7,8 +7,19 @@
 #include "defs.h"
 #include <stdio.h> // Just for FILE
 
+/**
+ * NOTE:
+ * Compiler configuration options
+ */
 // Selected code generation target (see defs.h TARGET_*)
 extern_ int CurrentTarget;
+// Print the dump of the AST to stdout during compilation
+extern_ bool Option_dumpAST;
+
+/**
+ * NOTE:
+ * Compiler-wide global data or state
+ */
 
 // Current Line number
 extern_ int Line;

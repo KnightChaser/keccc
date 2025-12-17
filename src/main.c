@@ -33,6 +33,7 @@ static void dieUsage(const char *program) {
     fprintf(stderr,
             "Usage: %s [--output outfile | -o outfile]"
             "[--target [nasm|aarch64]|-t [nasm|aarch64]]"
+            "[--dump-ast|-a]"
             "infile\n",
             program);
     exit(1);
@@ -82,17 +83,21 @@ static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
     static struct option longopts[] = {
         {"target", required_argument, 0, 't'},
         {"output", required_argument, 0, 'o'},
+        {"dump-ast", no_argument, 0, 'a'},
         {0, 0, 0, 0},
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "t:o:", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "t:o:a", longopts, NULL)) != -1) {
         switch (opt) {
         case 't':
             targetName = optarg;
             break;
         case 'o':
             outfilePath = optarg;
+            break;
+        case 'a':
+            Option_dumpAST = true;
             break;
         default:
             dieUsage(argv[0]);
@@ -146,6 +151,9 @@ int main(int argc, char **argv) {
     const char *targetName = NULL;
     const char *infilePath = NULL;
     const char *outfilePath = NULL;
+
+    // Defaults (may be overridden by CLI flags)
+    Option_dumpAST = false;
 
     parseArgsOrDie(argc, argv, &targetName, &infilePath, &outfilePath);
 
