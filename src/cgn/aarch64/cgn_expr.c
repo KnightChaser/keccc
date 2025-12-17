@@ -11,6 +11,8 @@
 #include "decl.h"
 #include "defs.h"
 
+#include <limits.h>
+
 static int aarch64PrimitiveSizeInBytes[] = {
     0, // P_NONE
     0, // P_VOID
@@ -203,6 +205,11 @@ void aarch64DeclareGlobalSymbol(int id) {
     int count = 1;
     if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
         count = GlobalSymbolTable[id].size;
+    }
+    if (elementSize > LLONG_MAX / count) {
+        fprintf(stderr, "Error: total size overflow for symbol %s\n",
+                GlobalSymbolTable[id].name);
+        exit(1);
     }
 
     long long totalBytesRequired = (long long)elementSize * (long long)count;
