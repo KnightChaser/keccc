@@ -207,7 +207,13 @@ void nasmDeclareGlobalSymbol(int id) {
     int count = 1;
     if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
         count = GlobalSymbolTable[id].size;
+        if (count <= 0 || count > INT_MAX / elementSize) {
+            fprintf(stderr, "Error: bad array count %d for symbol %s\n", count,
+                    GlobalSymbolTable[id].name);
+            exit(1);
+        }
     }
+
     if (elementSize > LLONG_MAX / count) {
         fprintf(stderr, "Error: total size overflow for symbol %s\n",
                 GlobalSymbolTable[id].name);
@@ -215,11 +221,6 @@ void nasmDeclareGlobalSymbol(int id) {
     }
 
     long long totalBytesRequired = (long long)elementSize * (long long)count;
-    if (totalBytesRequired <= 0) {
-        fprintf(stderr, "Error: totalBytesRequired overflow for symbol %s\n",
-                GlobalSymbolTable[id].name);
-        exit(1);
-    }
 
     int alignment = nasmAlignPow2(elementSize);
 
@@ -230,8 +231,8 @@ void nasmDeclareGlobalSymbol(int id) {
     fprintf(Outfile, "%s:\n", GlobalSymbolTable[id].name);
 
     // Reserve storage: choose the directive that matches element width.
-    // This emits ONE directive with a COUNT (e.g., resd 5), which is exactly
-    // what you want.
+    // This emits ONE directive with a COUNT (e.g., resd 5), which is
+    // exactly what you want.
     switch (elementSize) {
     case 1:
         fprintf(Outfile, "\tresb\t%d\n", count);
@@ -333,8 +334,8 @@ int nasmShiftLeftConst(int reg, int shiftAmount) {
 }
 
 /**
- * nasmCompareAndSet - Generates code to compare two registers and set a third
- * register based on the comparison result.
+ * nasmCompareAndSet - Generates code to compare two registers and set a
+ * third register based on the comparison result.
  *
  * @param ASTop The AST operation code representing the comparison.
  * @param r1 Index of the first register.
@@ -413,7 +414,8 @@ int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType) {
  *
  * @param id The ID of the global symbol in the symbol table.
  *
- * @return Index of the register containing the address of the global symbol.
+ * @return Index of the register containing the address of the global
+ * symbol.
  */
 int nasmAddressOfGlobalSymbol(int id) {
     int r = allocateRegister();
@@ -426,8 +428,8 @@ int nasmAddressOfGlobalSymbol(int id) {
 }
 
 /**
- * nasmDereferencePointer - Generates code to dereference a pointer stored in
- * a register.
+ * nasmDereferencePointer - Generates code to dereference a pointer stored
+ * in a register.
  *
  * @param pointerReg Index of the register containing the pointer.
  * @param primitiveType The primitive type of the value being pointed to.

@@ -205,7 +205,13 @@ void aarch64DeclareGlobalSymbol(int id) {
     int count = 1;
     if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
         count = GlobalSymbolTable[id].size;
+        if (count <= 0 || count > INT_MAX / elementSize) {
+            fprintf(stderr, "Error: bad array count %d for symbol %s\n", count,
+                    GlobalSymbolTable[id].name);
+            exit(1);
+        }
     }
+
     if (elementSize > LLONG_MAX / count) {
         fprintf(stderr, "Error: total size overflow for symbol %s\n",
                 GlobalSymbolTable[id].name);
@@ -213,11 +219,6 @@ void aarch64DeclareGlobalSymbol(int id) {
     }
 
     long long totalBytesRequired = (long long)elementSize * (long long)count;
-    if (totalBytesRequired <= 0) {
-        fprintf(stderr, "Error: totalBytesRequired overflow for symbol %s\n",
-                GlobalSymbolTable[id].name);
-        exit(1);
-    }
 
     int alignment = (elementSize >= 8)   ? 8
                     : (elementSize >= 4) ? 4
