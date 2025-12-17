@@ -262,6 +262,13 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     case A_INTLIT:
         return CG->loadImmediateInt(n->v.intvalue, n->primitiveType);
     case A_IDENTIFIER:
+        // Arrays are not scalar variables holding a pointer value.
+        // In expressions, an array name evaluates to the address of its first
+        // element ("array-to-pointer decay").
+        if (GlobalSymbolTable[n->v.identifierIndex].structuralType == S_ARRAY) {
+            return CG->addressOfGlobalSymbol(n->v.identifierIndex);
+        }
+
         if (n->isRvalue || parentASTop == A_DEREFERENCE) {
             return CG->loadGlobalSymbol(n->v.identifierIndex);
         } else {
