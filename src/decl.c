@@ -64,6 +64,12 @@ void variableDeclaration(int type) {
         // Check we have an array size?
         if (Token.token == T_INTLIT) {
             // Add this as a known array and generate its space in assembly code
+
+            // WARNING:
+            // In C terms, an array is not “a pointer type with a size
+            // attached.” It’s an array type of element type T and length N.
+            // (Just leave for now as I follow the original design of the
+            // lecture...)
             id = addGlobalSymbol(Text, primitiveTypeToPointerType(type),
                                  S_ARRAY, 0, Token.intvalue);
             codegenDeclareGlobalSymbol(id);
