@@ -49,6 +49,8 @@ enum {
     T_RBRACE,     // }
     T_LPAREN,     // (
     T_RPAREN,     // )
+    T_LBRACKET,   // [
+    T_RBRACKET,   // ]
     T_AMPERSAND,  // &
     T_LOGAND,     // &&
 
@@ -159,6 +161,7 @@ struct ASTnode {
 enum {
     S_VARIABLE,
     S_FUNCTION,
+    S_ARRAY,
 };
 
 // Symbol table structure
@@ -166,7 +169,8 @@ struct symbolTable {
     char *name;         // Name of a symbol
     int primitiveType;  // Primitive type for the symbol (e.g., P_INT)
     int structuralType; // Structural type (e.g., S_VARIABLE)
-    int endLabel;       // NOTE: For S_FUNCTION, the end label
+    int endLabel;       // For S_FUNCTION, the end label
+    int size;           // Size (number of elements for arrays, etc.)
 };
 
 #endif

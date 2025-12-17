@@ -335,13 +335,6 @@ void codegenPostamble() { CG->postamble(); }
 void codegenResetRegisters() { CG->resetRegisters(); }
 
 /**
- * codegenPrintInt - Wraps CPU-specific integer printing.
- *
- * @reg: The register index containing the integer to print.
- */
-void codegenPrintInt(int reg) { CG->printIntFromReg(reg); }
-
-/**
  * codegenDeclareGlobalSymbol - Wraps CPU-specific global symbol generation.
  *
  * @id: The index of the global symbol to declare.

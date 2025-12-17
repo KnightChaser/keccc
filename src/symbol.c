@@ -44,12 +44,13 @@ static int getNewGlobalSymbolIndex(void) {
  * @param primitiveType  The primitive data type of the symbol.
  * @param structuralType The structural data type of the symbol.
  * @param endLabel       The end label for the symbol (if applicable).
+ * @param size           The number of elements (for arrays, etc.).
  *
  * @return The index of the added symbol in the symbol table.
  *         If the symbol already exists, returns its existing index.
  */
 int addGlobalSymbol(char *name, int primitiveType, int structuralType,
-                    int endLabel) {
+                    int endLabel, int size) {
     int symbolIndex;
 
     // If this is already in the symbol table,
@@ -66,6 +67,7 @@ int addGlobalSymbol(char *name, int primitiveType, int structuralType,
     GlobalSymbolTable[symbolIndex].primitiveType = primitiveType;
     GlobalSymbolTable[symbolIndex].structuralType = structuralType;
     GlobalSymbolTable[symbolIndex].endLabel = endLabel;
+    GlobalSymbolTable[symbolIndex].size = size;
 
     return symbolIndex;
 }

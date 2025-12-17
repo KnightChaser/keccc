@@ -249,6 +249,12 @@ bool scan(struct token *t) {
     case ')':
         t->token = T_RPAREN;
         break;
+    case '[':
+        t->token = T_LBRACKET;
+        break;
+    case ']':
+        t->token = T_RBRACKET;
+        break;
     case '=':
         if ((c = next()) == '=') {
             // "=="

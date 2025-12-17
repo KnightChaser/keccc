@@ -10,12 +10,13 @@
  *
  * @return ASTnode* The AST node representing the function call.
  */
-struct ASTnode *functionCall(void) {
+static struct ASTnode *functionCall(void) {
     struct ASTnode *treeNode = NULL;
     int id;
 
     // Identifier
-    if ((id = findGlobalSymbol(Text)) == -1) {
+    if ((id = findGlobalSymbol(Text)) == -1 ||
+        GlobalSymbolTable[id].structuralType != S_FUNCTION) {
         logFatals("Undeclared function: ", Text);
     }
 
@@ -35,6 +36,57 @@ struct ASTnode *functionCall(void) {
     matchRightParenthesisToken();
 
     return treeNode;
+}
+
+/**
+ * arrayAccess - Parse an array access expression.
+ * e.g., arr[5];
+ *
+ * @return ASTnode* The AST node representing the array access.
+ */
+static struct ASTnode *arrayAccess(void) {
+    struct ASTnode *leftNode = NULL;
+    struct ASTnode *rightNode = NULL;
+    int id;
+
+    // NOTE:
+    // Check that the identifier has been defined as an array,
+    // then make a leaf node for it that points at the base.
+    if ((id = findGlobalSymbol(Text)) == -1 ||
+        GlobalSymbolTable[id].structuralType != S_ARRAY) {
+        logFatals("Undeclared array: ", Text);
+    }
+    leftNode =
+        makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
+
+    // '['
+    scan(&Token);
+
+    // Parse the following expression
+    rightNode = binexpr(0);
+
+    // ']'
+    match(T_RBRACKET, "]");
+
+    // Ensure the array index is an integer type
+    if (!isIntegerType(rightNode->primitiveType)) {
+        logFatal("Array index must be an integer type");
+    }
+
+    // Scale the index by the size of the element's type
+    rightNode = modifyASTType(rightNode, leftNode->primitiveType, A_ADD);
+
+    // NOTE:
+    // Return an AST tree where the array's base has the offset
+    // added to it, and dereference the element. Still an lvalue
+    // at this point.
+    leftNode = makeASTNode(A_ADD, GlobalSymbolTable[id].primitiveType, leftNode,
+                           NULL, rightNode, 0);
+    leftNode = makeASTUnary(A_DEREFERENCE,
+                            pointerToPrimitiveType(leftNode->primitiveType),
+                            leftNode, 0);
+
+    return leftNode;
 }
 
 /**
@@ -72,22 +124,41 @@ static struct ASTnode *primary(void) {
         // Scan in the next token to find out. (LL(1))
         scan(&Token);
 
+        // It's a '(', so a function call
         if (Token.token == T_LPAREN) {
             return functionCall();
         }
 
-        // Not a function call, so reject the new token
+        // It's a '[', so an array access
+        if (Token.token == T_LBRACKET) {
+            return arrayAccess();
+        }
+
+        // Not a function call nor an array, so reject the new token
         rejectToken(&Token);
 
         // Check if the variable exists
         id = findGlobalSymbol(Text);
-        if (id == -1) {
+        if (id == -1 || GlobalSymbolTable[id].structuralType != S_VARIABLE) {
             logFatals("Undeclared variable: ", Text);
         }
 
         // Create a leaf AST node for the variable
         n = makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
         break;
+
+    case T_LPAREN:
+        // Beginning of a parenthesised expression, skip the '('.
+        // Scan in the expression and the right parenthesis
+        // It expects expression "( ... )", like "(a + b)".
+        scan(&Token);
+        n = binexpr(0);
+        matchRightParenthesisToken();
+        
+        // matchRightParenthesisToken() already scanned the token after ')'.
+        // Do not scan again at the end of primary(), or we will skip the
+        // operator/token that follows the parenthesized expression.
+        return n;
 
     default:
         logFatald("Syntax error: unexpected token ", Token.token);
@@ -163,6 +234,9 @@ static bool isTokenRightAssociative(int tokentype) {
 /**
  * operatorPrecedence - Get the precedence of a given operator token.
  *
+ * WARNING:
+ * Doesn't accept unexpected token types: T_VOID, T_CHAR, T_INT, T_LONG.
+ *
  *  NOTE:
  *  Based on the C language operator precedence:
  *  https://en.cppreference.com/w/c/language/operator_precedence.html
@@ -192,7 +266,13 @@ static int operatorPrecedence(int tokentype) {
     case T_GE:     // Greater Than or Equal (>=)
         return 50; //
     default:       //
-        return 0;  // e.g. T_SEMICOLON, T_RPAREN, etc.
+        if ((tokentype == T_VOID) || (tokentype == T_CHAR) ||
+            (tokentype == T_INT) || (tokentype == T_LONG)) {
+            // Unexpected token types
+            logFatald("Unexpected token in expression: ", tokentype);
+            logFatal("operatorPrecedence doesn't handle this token");
+        }
+        return 0; // e.g. T_SEMICOLON, T_RPAREN, etc.
     }
 }
 
@@ -246,8 +326,8 @@ struct ASTnode *prefix(void) {
         tree = prefix();
 
         if (tree->op != A_IDENTIFIER && tree->op != A_DEREFERENCE) {
-            logFatal(
-                "Dereference operator '*' must be applied to a pointer (*)");
+            logFatal("Dereference operator '*' must be applied to a "
+                     "pointer (*)");
         }
 
         // Prepend an A_DEREF operation to the tree
@@ -255,6 +335,7 @@ struct ASTnode *prefix(void) {
             makeASTUnary(A_DEREFERENCE,
                          pointerToPrimitiveType(tree->primitiveType), tree, 0);
         break;
+
     default:
         // Otherwise, parse as a primary expression
         tree = primary();
@@ -282,11 +363,12 @@ struct ASTnode *binexpr(int ptp) {
     // And, fetch the next token at the same time
     left = prefix();
 
-    // If we hit a semicolon(";") or right parenthesis(")"),
-    // it means it's end of the expression,
-    // so we return just the left node. OvO
+    // If we hit a semicolon(";"), right parenthesis(")"), or right
+    // bracket("]"), it means it's end of the expression, so we return just the
+    // left node. OvO
     tokentype = Token.token;
-    if (tokentype == T_SEMICOLON || tokentype == T_RPAREN) {
+    if (tokentype == T_SEMICOLON || tokentype == T_RPAREN ||
+        tokentype == T_RBRACKET) {
         left->isRvalue = true; // Means this node is an r-value
         return left;
     }
@@ -323,8 +405,8 @@ struct ASTnode *binexpr(int ptp) {
 
             // Make an assignment AST tree.
             // However, switch left and right around,
-            // so that the right expression's code will be generated before the
-            // left expression.
+            // so that the right expression's code will be generated before
+            // the left expression.
             leftTemp = left;
             left = right;
             right = leftTemp;
@@ -336,13 +418,14 @@ struct ASTnode *binexpr(int ptp) {
             }
         } else {
             // Normal arithmetic operations or comparisons
-            // We are not doing an assignment, so both trees should be rvalues
-            // Convert both trees into rvalues if they are lvalue trees
+            // We are not doing an assignment, so both trees should be
+            // rvalues Convert both trees into rvalues if they are lvalue
+            // trees
             left->isRvalue = true;
             right->isRvalue = true;
 
-            // Ensure the two types are compatible by trying to modify each tree
-            // to match the other's type
+            // Ensure the two types are compatible by trying to modify each
+            // tree to match the other's type
             leftTemp = modifyASTType(left, right->primitiveType, ASToperation);
             rightTemp = modifyASTType(right, left->primitiveType, ASToperation);
 
@@ -350,7 +433,8 @@ struct ASTnode *binexpr(int ptp) {
                 logFatal("Incompatible types in binary expression");
             }
 
-            // If one side could be converted, use that side's converted tree
+            // If one side could be converted, use that side's converted
+            // tree
             if (leftTemp != NULL) {
                 left = leftTemp;
             }
@@ -365,11 +449,12 @@ struct ASTnode *binexpr(int ptp) {
                         left, NULL, right, 0);
 
         // Update the details of the current token.
-        // If we hit a semicolon, or right parenthesis,
-        // it means it's end of the sentence,
-        // so we return just the left node. OvO
+        // If we hit a semicolon(";"), right parenthesis(")"), or right
+        // bracket("]"), it means it's end of the sentence, so we return just
+        // the left node. OvO
         tokentype = Token.token;
-        if (tokentype == T_SEMICOLON || tokentype == T_RPAREN) {
+        if (tokentype == T_SEMICOLON || tokentype == T_RPAREN ||
+            tokentype == T_RBRACKET) {
             left->isRvalue = true; // Means this node is an r-value
             return left;
         }

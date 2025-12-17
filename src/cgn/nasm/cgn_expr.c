@@ -167,34 +167,81 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
 }
 
 /**
- * nasmDeclareGlobalSymbol - Generates code to declare a global symbol.
+ * nasmAlignPow2 - Returns the largest power-of-two alignment <= n, capped at 8.
+ * (e.g. 1->1, 2->2, 3->2, 4->4, 5->4, 8->8, 16->8, etc.)
+ *
+ * @param n The requested alignment in bytes.
+ *
+ * @return The aligned power-of-two value.
+ */
+static int nasmAlignPow2(int n) {
+    if (n >= 8) {
+        return 8;
+    } else if (n >= 4) {
+        return 4;
+    } else if (n >= 2) {
+        return 2;
+    }
+
+    return 1;
+}
+
+/**
+ * nasmDeclareGlobalSymbol - Generates code to declare a global symbol and
+ * reserve storage for it.
  *
  * @param id The ID of the global symbol in the symbol table.
  */
 void nasmDeclareGlobalSymbol(int id) {
-    // TODO: Use .bss section later
-
     int primitiveType = GlobalSymbolTable[id].primitiveType;
-    int typeSize = nasmGetPrimitiveTypeSize(primitiveType);
 
-    fprintf(Outfile, "\tsection\t.data\n");
-    fprintf(Outfile, "\tglobal\t%s\n",
-            GlobalSymbolTable[id].name // symbol name
-    );
-    switch (typeSize) {
+    int elementSize = nasmGetPrimitiveTypeSize(primitiveType);
+    if (elementSize <= 0) {
+        fprintf(stderr, "Error: bad elemSize %d for symbol %s\n", elementSize,
+                GlobalSymbolTable[id].name);
+        exit(1);
+    }
+
+    int count = 1;
+    if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
+        count = GlobalSymbolTable[id].size;
+    }
+
+    long long totalBytesRequired = (long long)elementSize * (long long)count;
+    if (totalBytesRequired <= 0) {
+        fprintf(stderr, "Error: totalBytesRequired overflow for symbol %s\n",
+                GlobalSymbolTable[id].name);
+        exit(1);
+    }
+
+    int alignment = nasmAlignPow2(elementSize);
+
+    // Prefer BSS for zero-initialized storage
+    fprintf(Outfile, "\tsection\t.bss\n");
+    fprintf(Outfile, "\talign\t%d\n", alignment);
+    fprintf(Outfile, "\tglobal\t%s\n", GlobalSymbolTable[id].name);
+    fprintf(Outfile, "%s:\n", GlobalSymbolTable[id].name);
+
+    // Reserve storage: choose the directive that matches element width.
+    // This emits ONE directive with a COUNT (e.g., resd 5), which is exactly
+    // what you want.
+    switch (elementSize) {
     case 1:
-        fprintf(Outfile, "%s:\tdb\t0\n", GlobalSymbolTable[id].name);
+        fprintf(Outfile, "\tresb\t%d\n", count);
+        break;
+    case 2:
+        fprintf(Outfile, "\tresw\t%d\n", count);
         break;
     case 4:
-        fprintf(Outfile, "%s:\tdd\t0\n", GlobalSymbolTable[id].name);
+        fprintf(Outfile, "\tresd\t%d\n", count); // 5 => 20 bytes total
         break;
     case 8:
-        fprintf(Outfile, "%s:\tdq\t0\n", GlobalSymbolTable[id].name);
+        fprintf(Outfile, "\tresq\t%d\n", count);
         break;
     default:
-        fprintf(stderr,
-                "Error: Unsupported type size %d in nasmDeclareGlobalSymbol\n",
-                typeSize);
+        // Fallback: reserve raw bytes (still correct)
+        fprintf(Outfile, "\tresb\t%lld\n", totalBytesRequired);
+        break;
     }
 }
 

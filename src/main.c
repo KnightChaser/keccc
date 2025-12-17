@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
     // Ensure runtime-provided function is known to the compiler.
     // Prefer the correct type for future typechecking.
     // If your language only has int right now: use P_INT.
-    addGlobalSymbol("printint", P_INT, S_FUNCTION, 0);
+    addGlobalSymbol("printint", P_CHAR, S_FUNCTION, 0, 0);
 
     scan(&Token);      // Prime first token
     codegenPreamble(); // Emit target preamble

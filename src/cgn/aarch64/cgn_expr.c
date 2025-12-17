@@ -159,43 +159,76 @@ int aarch64StoreGlobalSymbol(int r, int id) {
 }
 
 /**
+ * aarch64P2AlignFor - Returns the log2 of the alignment in bytes for .p2align.
+ *
+ * @param alignmentBytes The requested alignment in bytes.
+ *
+ * @return log2(alignmentBytes) for .p2align, or -1 if not power-of-two.
+ */
+static int aarch64P2AlignFor(int alignmentBytes) {
+    // returns log2(alignmentBytes) for .p2align
+    // clamp to 0..4-ish if you want, but 0..3 is enough for 1/2/4/8
+    switch (alignmentBytes) {
+    case 8:
+        return 3;
+    case 4:
+        return 2;
+    case 2:
+        return 1;
+    case 1:
+        return 0;
+    default:
+        // if it's not power-of-two, fall back to 0 (no alignment directive)
+        return -1;
+    }
+}
+
+/**
  * aarch64DeclareGlobalSymbol - Generates code to declare a global symbol.
  *
  * @param id The ID of the global symbol in the symbol table.
  */
 void aarch64DeclareGlobalSymbol(int id) {
     int primitiveType = GlobalSymbolTable[id].primitiveType;
-    int typeSize = aarch64GetPrimitiveTypeSize(primitiveType);
 
-    fprintf(Outfile, "\t.data\n");
+    int elementSize = aarch64GetPrimitiveTypeSize(primitiveType);
+    if (elementSize <= 0) {
+        fprintf(stderr,
+                "Error: Invalid element size %d for symbol %s in "
+                "aarch64DeclareGlobalSymbol\n",
+                elementSize, GlobalSymbolTable[id].name);
+        exit(1);
+    }
+
+    int count = 1;
+    if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
+        count = GlobalSymbolTable[id].size;
+    }
+
+    long long totalBytesRequired = (long long)elementSize * (long long)count;
+    if (totalBytesRequired <= 0) {
+        fprintf(stderr, "Error: totalBytesRequired overflow for symbol %s\n",
+                GlobalSymbolTable[id].name);
+        exit(1);
+    }
+
+    int alignment = (elementSize >= 8)   ? 8
+                    : (elementSize >= 4) ? 4
+                    : (elementSize >= 2) ? 2
+                                         : 1;
+    int p2 = aarch64P2AlignFor(alignment);
+
+    // Prefer BSS for zero-initialized storage
+    fprintf(Outfile, "\t.section\t.bss\n");
     fprintf(Outfile, "\t.globl\t%s\n", GlobalSymbolTable[id].name);
-
-    // Optional but recommended: alignment
-    // 1->no alignment needed, 4->2^2, 8->2^3
-    if (typeSize == 4)
-        fprintf(Outfile, "\t.p2align\t2\n");
-    if (typeSize == 8)
-        fprintf(Outfile, "\t.p2align\t3\n");
+    if (p2 >= 0) {
+        fprintf(Outfile, "\t.p2align\t%d\n", p2);
+    }
 
     fprintf(Outfile, "%s:\n", GlobalSymbolTable[id].name);
 
-    switch (typeSize) {
-    case 1:
-        fprintf(Outfile, "\t.byte\t0\n");
-        break;
-    case 4:
-        fprintf(Outfile, "\t.word\t0\n");
-        break;
-    case 8:
-        fprintf(Outfile, "\t.quad\t0\n"); // or "\t.xword\t0\n"
-        break;
-    default:
-        fprintf(
-            stderr,
-            "Error: Unsupported type size %d in aarch64DeclareGlobalSymbol\n",
-            typeSize);
-        break;
-    }
+    // Reserve zeroed bytes
+    fprintf(Outfile, "\t.zero\t%lld\n", totalBytesRequired);
 }
 
 /**

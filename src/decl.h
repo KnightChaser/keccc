@@ -41,7 +41,6 @@ int codegenGetLabelNumber(void);
 void codegenPreamble();
 void codegenPostamble();
 void codegenResetRegisters();
-void codegenPrintInt(int reg);
 void codegenDeclareGlobalSymbol(int id);
 int codegenGetPrimitiveTypeSize(int primitiveType);
 void codegenReturnFromFunction(int reg, int id);
@@ -111,7 +110,6 @@ int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
-struct ASTnode *functionCall(void);
 
 // NOTE: stmt.c
 // void statements(void);
@@ -133,7 +131,7 @@ void logFatalc(char *s, int c);
 // NOTE: symbol.c
 int findGlobalSymbol(char *s);
 int addGlobalSymbol(char *name, int primitiveType, int structuralType,
-                    int endLabel);
+                    int endLabel, int size);
 
 // NOTE: decl.c
 int parsePrimitiveType(void);
@@ -142,6 +140,8 @@ struct ASTnode *functionDeclaration(int type);
 void globalDeclaration(void);
 
 // NOTE: types.c
+bool isIntegerType(int primitiveType);
+bool isPointerType(int primitiveType);
 int primitiveTypeToPointerType(int primitiveType);
 int pointerToPrimitiveType(int primitiveType);
 struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,

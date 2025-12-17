@@ -44,23 +44,43 @@ int parsePrimitiveType(void) {
 }
 
 /**
- * variableDeclaration - Parse the declaration of a variable
+ * variableDeclaration - Parse the declaration
+ * of a scalar variable or an array
  *
  * NOTE:
- * variable_declaration: type identifier ";" ;
+ * variable_declaration: type identifier ';'    // scalar
+ *        | type identifier '[' INTLIT ']' ';'  // array
+ *        ;
  *
  * @param type The primitive type of the variable.
  */
 void variableDeclaration(int type) {
     int id;
 
-    // Text now has the identifier's name.
-    // Add it as a known identifier,
-    // and generate its space in assembly
-    id = addGlobalSymbol(Text, type, S_VARIABLE, 0);
-    codegenDeclareGlobalSymbol(id);
+    if (Token.token == T_LBRACKET) {
+        // Skip past the '['
+        scan(&Token);
 
-    // Match the semicolon
+        // Check we have an array size?
+        if (Token.token == T_INTLIT) {
+            // Add this as a known array and generate its space in assembly code
+            id = addGlobalSymbol(Text, primitiveTypeToPointerType(type),
+                                 S_ARRAY, 0, Token.intvalue);
+            codegenDeclareGlobalSymbol(id);
+        }
+
+        // Ensure we have a following ']'
+        scan(&Token);
+        match(T_RBRACKET, "]");
+    } else {
+        // Add this as a known scalar variable
+        id = addGlobalSymbol(
+            Text, type, S_VARIABLE, 0,
+            1); // Even a scalar variable has its element size of 1
+        codegenDeclareGlobalSymbol(id);
+    }
+
+    // Get the terminating semicolon
     matchSemicolonToken();
 }
 
@@ -86,7 +106,9 @@ struct ASTnode *functionDeclaration(int type) {
     // add the function to the symbol table as declared,
     // and set the CurrentFunctionSymbolID to the function's symbol ID
     endLabel = codegenGetLabelNumber();
-    functionNameIndex = addGlobalSymbol(Text, type, S_FUNCTION, endLabel);
+    functionNameIndex =
+        addGlobalSymbol(Text, type, S_FUNCTION, endLabel,
+                        0); // Function doesn't have a size (number of elements)
     CurrentFunctionSymbolID = functionNameIndex;
 
     // Scan the parenthesis
