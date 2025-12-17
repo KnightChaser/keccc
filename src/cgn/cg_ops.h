@@ -42,9 +42,6 @@ struct CodegenOps {
     int (*widenPrimitiveType)(int r, int oldType, int newType);
     int (*getPrimitiveTypeSize)(int primitiveType);
 
-    // Builtins
-    void (*printIntFromReg)(int reg);
-
     // Pointers
     int (*addressOfGlobalSymbol)(int symId);
     int (*dereferencePointer)(int pointerReg, int primitiveType);

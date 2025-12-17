@@ -111,18 +111,6 @@ void aarch64FunctionPostamble(int id) {
 }
 
 /**
- * aarch64PrintIntFromReg - Generates code to print an integer value from a
- * register.
- *
- * @param r Index of the register containing the integer to print.
- */
-void aarch64PrintIntFromReg(int r) {
-    fprintf(Outfile, "\tmov\tx0, %s\n", aarch64QwordRegisterList[r]);
-    fprintf(Outfile, "\tbl\tprintint\n");
-    aarch64FreeRegister(r);
-}
-
-/**
  * aarch64Label - Outputs a label in the assembly code.
  *
  * @param label The label number to output.

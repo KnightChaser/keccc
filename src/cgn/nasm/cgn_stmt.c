@@ -116,18 +116,6 @@ void nasmPostamble() {
 }
 
 /**
- * nasmPrintIntFromReg - Generates code to print an integer value from a
- * register.
- *
- * @param r Index of the register containing the integer to print.
- */
-void nasmPrintIntFromReg(int r) {
-    fprintf(Outfile, "\tmov\trdi, %s\n", qwordRegisterList[r]);
-    fprintf(Outfile, "\tcall\tprintint\n");
-    freeRegister(r);
-}
-
-/**
  * nasmLabel - Outputs a label in the assembly code.
  *
  * @param label The label number to output.
