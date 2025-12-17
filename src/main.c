@@ -34,6 +34,7 @@ static void dieUsage(const char *program) {
             "Usage: %s [--output outfile | -o outfile]"
             "[--target [nasm|aarch64]|-t [nasm|aarch64]]"
             "[--dump-ast|-a]"
+            "[--dump-ast-compacted|-A]"
             "infile\n",
             program);
     exit(1);
@@ -84,11 +85,12 @@ static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
         {"target", required_argument, 0, 't'},
         {"output", required_argument, 0, 'o'},
         {"dump-ast", no_argument, 0, 'a'},
+        {"dump-ast-compacted", no_argument, 0, 'A'},
         {0, 0, 0, 0},
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "t:o:a", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "t:o:aA", longopts, NULL)) != -1) {
         switch (opt) {
         case 't':
             targetName = optarg;
@@ -98,6 +100,11 @@ static void parseArgsOrDie(int argc, char **argv, const char **outTargetName,
             break;
         case 'a':
             Option_dumpAST = true;
+            Option_dumpASTCompacted = false;
+            break;
+        case 'A':
+            Option_dumpAST = true;
+            Option_dumpASTCompacted = true;
             break;
         default:
             dieUsage(argv[0]);
@@ -154,6 +161,7 @@ int main(int argc, char **argv) {
 
     // Defaults (may be overridden by CLI flags)
     Option_dumpAST = false;
+    Option_dumpASTCompacted = false;
 
     parseArgsOrDie(argc, argv, &targetName, &infilePath, &outfilePath);
 

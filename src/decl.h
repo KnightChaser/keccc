@@ -33,6 +33,7 @@ struct ASTnode *makeASTUnary(int op,               // AST operation code
 // NOTE: treedump.c (AST dump)
 void dumpAST(struct ASTnode *n, int label, int level);
 void dumpASTTree(struct ASTnode *n);
+void dumpASTTreeCompacted(struct ASTnode *n);
 
 // NOTE: gen.c (target-agnostic code generation)
 int codegenAST(struct ASTnode *n, int reg, int parentASTop);

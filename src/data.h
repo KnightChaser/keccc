@@ -15,6 +15,8 @@
 extern_ int CurrentTarget;
 // Print the dump of the AST to stdout during compilation
 extern_ bool Option_dumpAST;
+// If true, dump a compacted AST (flattens A_GLUE chains)
+extern_ bool Option_dumpASTCompacted;
 
 /**
  * NOTE:

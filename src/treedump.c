@@ -1,27 +1,43 @@
-// src/treedump.c
+// src/dumptree.c
+//
+// Functions to dump the AST tree for debugging purposes.
+// Supports both full dump and compacted dump (flatten A_GLUE chains).
 
-/**
- * Functions to dump the AST tree for debugging purposes.
- */
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "data.h"
 #include "decl.h"
 #include "defs.h"
 
-/**
- * gendumpLabel - Generate a unique label number for AST dump
- *
- * @return Unique label number
- */
-static int gendumpLabel(void) {
-    static int id = 1;
-    return (id++);
-}
+// ------------------------------------------------------------
+// Label generator
+// ------------------------------------------------------------
+
+static int DumpLabelId = 1;
 
 /**
- * dumpIndent - Print indentation for AST dump
+ * gendumpLabel - Generate a new unique label ID for AST nodes.
  *
- * @param level Indentation level
+ * @return New label ID.
+ */
+static int gendumpLabel(void) { return DumpLabelId++; }
+
+/**
+ * resetDumpLabel - Reset the label ID counter to 1.
+ */
+static void resetDumpLabel(void) { DumpLabelId = 1; }
+
+// ------------------------------------------------------------
+// Pretty printing helpers
+// ------------------------------------------------------------
+
+/**
+ * dumpIndent - Print indentation for the given level.
+ *
+ * @param level Indentation level.
  */
 static void dumpIndent(int level) {
     for (int i = 0; i < level; i++) {
@@ -30,11 +46,11 @@ static void dumpIndent(int level) {
 }
 
 /**
- * astOpToString - Convert AST operation code to string
+ * astOpToString - Convert AST operation code to string.
  *
- * @param op AST operation code
+ * @param op AST operation code.
  *
- * @return String representation of the AST operation code
+ * @return String representation of the operation.
  */
 static const char *astOpToString(int op) {
     switch (op) {
@@ -92,11 +108,11 @@ static const char *astOpToString(int op) {
 }
 
 /**
- * primitiveTypeToString - Convert primitive type code to string
+ * primitiveTypeToString - Convert primitive type code to string.
  *
- * @param primitiveType Primitive type code
+ * @param primitiveType Primitive type code.
  *
- * @return String representation of the primitive type code
+ * @return String representation of the primitive type.
  */
 static const char *primitiveTypeToString(int primitiveType) {
     switch (primitiveType) {
@@ -124,16 +140,17 @@ static const char *primitiveTypeToString(int primitiveType) {
 }
 
 /**
- * dumpASTNodeHeader - Print the header information of an AST node
+ * dumpASTNodeHeader - Dump the header information of an AST node.
  *
- * @param n     AST node
- * @param label Label number for the AST node
- * @param level Indentation level
+ * @param n     AST node to dump.
+ * @param label Label ID for the node.
+ * @param level Indentation level.
  */
 static void dumpASTNodeHeader(struct ASTnode *n, int label, int level) {
     dumpIndent(level);
     printf("L%03d: %s", label, astOpToString(n->op));
     printf(" (%s)", primitiveTypeToString(n->primitiveType));
+
     if (n->isRvalue) {
         printf(" rvalue");
     }
@@ -158,16 +175,104 @@ static void dumpASTNodeHeader(struct ASTnode *n, int label, int level) {
     printf("\n");
 }
 
+// ------------------------------------------------------------
+// Internal dumping
+// ------------------------------------------------------------
+
+// Forward declaration
+static void dumpASTInternal(struct ASTnode *n, int label, int level,
+                            bool compacted);
+
+// Dynamic array for AST nodes
+typedef struct NodeVec {
+    struct ASTnode **items;
+    size_t len;
+    size_t capacity;
+} NodeVec;
+
 /**
- * dumpAST - Recursively dump the AST nodes
- * Given an AST tree, print it out and follow the
- * traversal of the tree that codegenAST() follows
+ * nodeVecFree - Free the resources of a NodeVec.
  *
- * @param n     AST node
- * @param label Label number for the AST node
- * @param level Indentation level
+ * @param v NodeVec to free.
  */
-void dumpAST(struct ASTnode *n, int label, int level) {
+static void nodeVecFree(NodeVec *v) {
+    free(v->items);
+    v->items = NULL;
+    v->len = 0;
+    v->capacity = 0;
+}
+
+/**
+ * nodeVecPush - Push an AST node onto a NodeVec, resizing if necessary.
+ * It works like a dynamic array. (vector in C++)
+ *
+ * @param v    NodeVec to push onto.
+ * @param node AST node to add.
+ */
+static void nodeVecPush(NodeVec *v, struct ASTnode *node) {
+    if (v->len == v->capacity) {
+        size_t newCap = (v->capacity == 0) ? 8 : v->capacity * 2;
+        void *p = realloc(v->items, newCap * sizeof(v->items[0]));
+        if (!p) {
+            fprintf(stderr, "out of memory while dumping AST\n");
+            exit(1);
+        }
+        v->items = (struct ASTnode **)p;
+        v->capacity = newCap;
+    }
+    v->items[v->len++] = node;
+}
+
+/**
+ * dumpGlueStatements - Dump a left-heavy A_GLUE chain as a flat list.
+ *
+ * We expect glue nodes shaped like:
+ *   GLUE(left = previous_chain, right = next_statement)
+ *
+ * To preserve source order, we:
+ *  - Walk left through the glue ladder collecting the "right" statements
+ *  - Dump the left-most statement
+ *  - Dump collected rights in reverse
+ *
+ * @param n        AST node (A_GLUE) to start from.
+ * @param level    Indentation level.
+ * @param compacted Whether we are in compacted mode.
+ */
+static void dumpGlueStatements(struct ASTnode *n, int level, bool compacted) {
+    struct ASTnode *current = n;
+    NodeVec rights = {0};
+
+    while (current && current->op == A_GLUE) {
+        if (current->right) {
+            nodeVecPush(&rights, current->right);
+        }
+        current = current->left;
+    }
+
+    // Dump the left-most (oldest) statement first
+    if (current) {
+        dumpASTInternal(current, gendumpLabel(), level, compacted);
+    }
+
+    // Then dump the stored rights in reverse to restore source order
+    // (Dump the stored node; newest-to-older as this walks)
+    for (size_t i = rights.len; i > 0; i--) {
+        dumpASTInternal(rights.items[i - 1], gendumpLabel(), level, compacted);
+    }
+
+    nodeVecFree(&rights);
+}
+
+/**
+ * dumpASTInternal - Internal recursive function to dump the AST.
+ *
+ * @param n        AST node to dump.
+ * @param label    Label ID for the node.
+ * @param level    Indentation level.
+ * @param compacted Whether to use compacted mode (flatten A_GLUE chains).
+ */
+static void dumpASTInternal(struct ASTnode *n, int label, int level,
+                            bool compacted) {
     int leftLabel, middleLabel, rightLabel;
 
     if (n == NULL) {
@@ -181,20 +286,20 @@ void dumpAST(struct ASTnode *n, int label, int level) {
         if (n->left) {
             leftLabel = gendumpLabel();
             dumpIndent(level + 1);
-            printf("cond -> L%d\n", leftLabel);
-            dumpAST(n->left, leftLabel, level + 2);
+            printf("cond -> L%03d\n", leftLabel);
+            dumpASTInternal(n->left, leftLabel, level + 2, compacted);
         }
         if (n->middle) {
             middleLabel = gendumpLabel();
             dumpIndent(level + 1);
-            printf("then -> L%d\n", middleLabel);
-            dumpAST(n->middle, middleLabel, level + 2);
+            printf("then -> L%03d\n", middleLabel);
+            dumpASTInternal(n->middle, middleLabel, level + 2, compacted);
         }
         if (n->right) {
             rightLabel = gendumpLabel();
             dumpIndent(level + 1);
-            printf("else -> L%d\n", rightLabel);
-            dumpAST(n->right, rightLabel, level + 2);
+            printf("else -> L%03d\n", rightLabel);
+            dumpASTInternal(n->right, rightLabel, level + 2, compacted);
         }
         return;
 
@@ -202,32 +307,38 @@ void dumpAST(struct ASTnode *n, int label, int level) {
         if (n->left) {
             leftLabel = gendumpLabel();
             dumpIndent(level + 1);
-            printf("cond -> L%d\n", leftLabel);
-            dumpAST(n->left, leftLabel, level + 2);
+            printf("cond -> L%03d\n", leftLabel);
+            dumpASTInternal(n->left, leftLabel, level + 2, compacted);
         }
         if (n->right) {
             rightLabel = gendumpLabel();
             dumpIndent(level + 1);
-            printf("body -> L%d\n", rightLabel);
-            dumpAST(n->right, rightLabel, level + 2);
+            printf("body -> L%03d\n", rightLabel);
+            dumpASTInternal(n->right, rightLabel, level + 2, compacted);
         }
         return;
 
     case A_GLUE:
-        if (n->left) {
-            leftLabel = gendumpLabel();
-            dumpAST(n->left, leftLabel, level + 1);
-        }
-        if (n->right) {
-            rightLabel = gendumpLabel();
-            dumpAST(n->right, rightLabel, level + 1);
+        if (compacted) {
+            // Flatten the entire glue ladder under this node
+            dumpGlueStatements(n, level + 1, compacted);
+        } else {
+            if (n->left) {
+                leftLabel = gendumpLabel();
+                dumpASTInternal(n->left, leftLabel, level + 1, compacted);
+            }
+            if (n->right) {
+                rightLabel = gendumpLabel();
+                dumpASTInternal(n->right, rightLabel, level + 1, compacted);
+            }
         }
         return;
 
     case A_FUNCTION:
+        // Typical layout: FUNCTION(left=body)
         if (n->left) {
             leftLabel = gendumpLabel();
-            dumpAST(n->left, leftLabel, level + 1);
+            dumpASTInternal(n->left, leftLabel, level + 1, compacted);
         }
         return;
 
@@ -235,36 +346,61 @@ void dumpAST(struct ASTnode *n, int label, int level) {
         break;
     }
 
-    // NOTE:
-    // General AST node handling below: dump left then right.
+    // General AST node: dump children (left, middle, right)
     if (n->left) {
         leftLabel = gendumpLabel();
-        dumpAST(n->left, leftLabel, level + 1);
+        dumpASTInternal(n->left, leftLabel, level + 1, compacted);
     }
     if (n->middle) {
         middleLabel = gendumpLabel();
-        dumpAST(n->middle, middleLabel, level + 1);
+        dumpASTInternal(n->middle, middleLabel, level + 1, compacted);
     }
     if (n->right) {
         rightLabel = gendumpLabel();
-        dumpAST(n->right, rightLabel, level + 1);
+        dumpASTInternal(n->right, rightLabel, level + 1, compacted);
     }
 }
 
+// ------------------------------------------------------------
+// Public API
+// ------------------------------------------------------------
+
 /**
- * dumpASTTree - Dump the entire AST tree
+ * dumpASTTree - Dump the entire AST tree in full mode.
+ * (A_GLUE chains are preserved)
  *
- * @param n AST node (root of the AST tree)
+ * @param n AST node to dump.
  */
 void dumpASTTree(struct ASTnode *n) {
-    if (n == NULL) {
+    if (n == NULL)
         return;
-    }
 
-    printf("\n============= AST dump =============\n");
+    resetDumpLabel();
+
+    printf("\n============= AST dump (full) =============\n");
     if (n->op == A_FUNCTION) {
         printf("function: %s\n", GlobalSymbolTable[n->v.identifierIndex].name);
     }
-    dumpAST(n, gendumpLabel(), 0);
+    dumpASTInternal(n, gendumpLabel(), 0, false);
+    printf("============= end AST dump =============\n");
+}
+
+/**
+ * dumpASTTreeCompacted - Dump the entire AST tree in compacted mode.
+ * (A_GLUE chains are flattened)
+ *
+ * @param n AST node to dump.
+ */
+void dumpASTTreeCompacted(struct ASTnode *n) {
+    if (n == NULL)
+        return;
+
+    resetDumpLabel();
+
+    printf("\n============= AST dump (compacted) =============\n");
+    if (n->op == A_FUNCTION) {
+        printf("function: %s\n", GlobalSymbolTable[n->v.identifierIndex].name);
+    }
+    dumpASTInternal(n, gendumpLabel(), 0, true);
     printf("============= end AST dump =============\n");
 }

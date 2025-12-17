@@ -70,7 +70,7 @@ void variableDeclaration(int type) {
  *
  * NOTE:
  * function_declaration: type identifier "(" ")" compound_statement ;
- * 
+ *
  * @param type The primitive type of the function.
  *
  * @return AST node representing the function declaration.
@@ -138,8 +138,13 @@ void globalDeclaration(void) {
             // parse the function declaration and generate the assembly code for
             // it
             treeNode = functionDeclaration(type);
+            // NOTE: Optional) AST dump to stdout
             if (Option_dumpAST) {
-                dumpASTTree(treeNode);
+                if (Option_dumpASTCompacted) {
+                    dumpASTTreeCompacted(treeNode);
+                } else {
+                    dumpASTTree(treeNode);
+                }
             }
             codegenAST(treeNode, NOREG, NOREG);
         } else {
