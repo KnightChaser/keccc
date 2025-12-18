@@ -23,5 +23,5 @@ printchar:
     mov     edx, 1              ; count=1
     syscall
 
-    leave
+    add     rsp, 8
     ret
