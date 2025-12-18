@@ -17,13 +17,13 @@ struct CodegenOps {
 
     // Data
     void (*declareGlobalSymbol)(int symId);
+    void (*declareGlobalString)(int labelIndex, char *stringValue);
 
     // Expressions / loads / stores
     int (*loadImmediateInt)(int value, int primitiveType);
     int (*loadGlobalSymbol)(int symId);
     int (*loadGlobalString)(int symId);
     int (*storeGlobalSymbol)(int reg, int symId);
-    void (*storeGlobalString)(int labelIndex, char *stringValue);
 
     // Arithmetic
     int (*addRegs)(int r1, int r2);

@@ -15,10 +15,10 @@ const struct CodegenOps nasmOps = {
     .functionPostamble = nasmFunctionPostamble,
 
     .declareGlobalSymbol = nasmDeclareGlobalSymbol,
+    .declareGlobalString = nasmDeclareGlobalString,
 
     .loadImmediateInt = nasmLoadImmediateInt,
     .loadGlobalSymbol = nasmLoadGlobalSymbol,
-    .storeGlobalString = nasmStoreGlobalString,
     .storeGlobalSymbol = nasmStoreGlobalSymbol,
     .loadGlobalString = nasmLoadGlobalString,
 

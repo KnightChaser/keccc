@@ -359,9 +359,7 @@ void codegenDeclareGlobalSymbol(int id) { CG->declareGlobalSymbol(id); }
  */
 int codegenDeclareGlobalString(char *stringvalue) {
     int label = codegenGetLabelNumber();
-    CG->declareGlobalSymbol(label);
-    // NOTE: The actual string data emission is backend-specific
-    // and should be handled in the backend's declareGlobalSymbol function.
+    CG->declareGlobalString(label, stringvalue);
     return label;
 }
 

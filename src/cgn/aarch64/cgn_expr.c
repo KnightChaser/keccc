@@ -179,53 +179,6 @@ int aarch64StoreGlobalSymbol(int r, int id) {
     return r;
 }
 
-void aarch64StoreGlobalString(int labelIndex, char *stringValue) {
-    const unsigned char *s = (const unsigned char *)stringValue;
-
-    fprintf(Outfile, "\t.section\t.rodata\n");
-    aarch64Label(labelIndex);
-
-    fprintf(Outfile, "\t.ascii\t\"");
-    fputc('"', Outfile);
-    for (const unsigned char *p = s; *p != '\0'; p++) {
-        unsigned char c = *p;
-
-        switch (c) {
-        case '\\':
-            fputs("\\\\", Outfile);
-            break;
-        case '"':
-            fputs("\\\"", Outfile);
-            break;
-        case '\n':
-            fputs("\\n", Outfile);
-            break;
-        case '\r':
-            fputs("\\r", Outfile);
-            break;
-        case '\t':
-            fputs("\\t", Outfile);
-            break;
-        default:
-            if (c >= 32 && c <= 126) {
-                // Printable
-                fputc((char)c, Outfile);
-            } else {
-                // Non-printable: use octal escape
-                fputs("\" \n\t.byte ", Outfile);
-                fprintf(Outfile, "%u", (unsigned)c);
-                fputs("\n\t.ascii \"", Outfile);
-            }
-            break;
-        }
-    }
-    fputc('"', Outfile); // Closing quote for string
-
-    fputc('\n', Outfile); // Newline after .asciz
-
-    fprintf(Outfile, "\t.byte\t0\n");
-}
-
 /**
  * aarch64P2AlignFor - Returns the log2 of the alignment in bytes for .p2align.
  *
@@ -303,6 +256,60 @@ void aarch64DeclareGlobalSymbol(int id) {
 
     // Reserve zeroed bytes
     fprintf(Outfile, "\t.zero\t%lld\n", totalBytesRequired);
+}
+
+/**
+ * aarch64DeclareGlobalString - Generates code to declare a global string in
+ * the read-only data segment.
+ *
+ * @param labelIndex The label index to assign to the string.
+ * @param stringValue The string value to declare.
+ */
+void aarch64DeclareGlobalString(int labelIndex, char *stringValue) {
+    const unsigned char *s = (const unsigned char *)stringValue;
+
+    fprintf(Outfile, "\t.section\t.rodata\n");
+    aarch64Label(labelIndex);
+
+    fprintf(Outfile, "\t.ascii\t\"");
+    fputc('"', Outfile);
+    for (const unsigned char *p = s; *p != '\0'; p++) {
+        unsigned char c = *p;
+
+        switch (c) {
+        case '\\':
+            fputs("\\\\", Outfile);
+            break;
+        case '"':
+            fputs("\\\"", Outfile);
+            break;
+        case '\n':
+            fputs("\\n", Outfile);
+            break;
+        case '\r':
+            fputs("\\r", Outfile);
+            break;
+        case '\t':
+            fputs("\\t", Outfile);
+            break;
+        default:
+            if (c >= 32 && c <= 126) {
+                // Printable
+                fputc((char)c, Outfile);
+            } else {
+                // Non-printable: use octal escape
+                fputs("\" \n\t.byte ", Outfile);
+                fprintf(Outfile, "%u", (unsigned)c);
+                fputs("\n\t.ascii \"", Outfile);
+            }
+            break;
+        }
+    }
+    fputc('"', Outfile); // Closing quote for string
+
+    fputc('\n', Outfile); // Newline after .asciz
+
+    fprintf(Outfile, "\t.byte\t0\n");
 }
 
 /**
