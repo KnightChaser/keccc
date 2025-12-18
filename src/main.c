@@ -31,10 +31,10 @@ static void initCompilerState(void) {
  */
 static void dieUsage(const char *program) {
     fprintf(stderr,
-            "Usage: %s [--output outfile | -o outfile]"
-            "[--target [nasm|aarch64]|-t [nasm|aarch64]]"
-            "[--dump-ast|-a]"
-            "[--dump-ast-compacted|-A]"
+            "Usage: %s [--output outfile | -o outfile] "
+            "[--target [nasm|aarch64]|-t [nasm|aarch64]] "
+            "[--dump-ast|-a] "
+            "[--dump-ast-compacted|-A] "
             "infile\n",
             program);
     exit(1);
