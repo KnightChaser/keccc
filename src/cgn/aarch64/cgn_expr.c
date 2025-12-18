@@ -270,8 +270,9 @@ void aarch64DeclareGlobalString(int labelIndex, char *stringValue) {
     fprintf(Outfile, "\t.section\t.rodata\n");
     aarch64Label(labelIndex);
 
-    fprintf(Outfile, "\t.ascii\t\"");
-    fputc('"', Outfile);
+    fprintf(Outfile, "\t.ascii\t");
+    fprintf(Outfile, "\"");
+
     for (const unsigned char *p = s; *p != '\0'; p++) {
         unsigned char c = *p;
 
