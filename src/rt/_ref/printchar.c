@@ -2,7 +2,7 @@
 
 /**
  * NOTE:
- * AARCH64 implementation: src/rt/aarch64/printchar.S
+ * AARCH64 implementation: src/rt/aarch64/printchar.s
  * x86_64 implementation: src/rt/x86_64/printchar.asm
  *
  * NOTE:

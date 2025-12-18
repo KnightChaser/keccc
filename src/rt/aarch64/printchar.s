@@ -1,11 +1,11 @@
-// src/rt/aarch64/printint.asm
+// src/rt/aarch64/printchar.s
 
 // Linux aarch64
-// long printint(long x)
+// long printchar(long x)
 // arg:  x0 = x
 
     .text
-    .global printint
+    .global printchar
 
 printchar:
     // Make a tiny stack scratch
