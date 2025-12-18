@@ -131,10 +131,9 @@ int aarch64LoadGlobalSymbol(int id) {
 int aarch64LoadGlobalString(int id) {
     int r = aarch64AllocateRegister();
 
-    fprintf(Outfile, "\tadrp\t%s, %s\n", aarch64QwordRegisterList[r],
-            GlobalSymbolTable[id].name);
-    fprintf(Outfile, "\tadd\t%s, %s, :lo12:%s\n", aarch64QwordRegisterList[r],
-            aarch64QwordRegisterList[r], GlobalSymbolTable[id].name);
+    fprintf(Outfile, "\tadrp\t%s, L%d\n", aarch64QwordRegisterList[r], id);
+    fprintf(Outfile, "\tadd\t%s, %s, :lo12:L%d\n", aarch64QwordRegisterList[r],
+            aarch64QwordRegisterList[r], id);
 
     return r;
 }

@@ -132,9 +132,9 @@ int nasmLoadGlobalSymbol(int id) {
 int nasmLoadGlobalString(int id) {
     int registerIndex = allocateRegister();
 
-    fprintf(Outfile, "\tlea\t%s, [rel %s]\n",
+    fprintf(Outfile, "\tlea\t%s, [rel L%d]\n",
             qwordRegisterList[registerIndex], // destination register
-            GlobalSymbolTable[id].name        // source global symbol
+            id                                // string label
     );
     return registerIndex;
 }
