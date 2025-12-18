@@ -103,7 +103,7 @@ static struct ASTnode *primary(void) {
     // and scan in the next token. Otherwise, a syntax error
     // for any other token type.
     switch (Token.token) {
-    case T_INTLIT:
+    case T_INTEGERLITERAL:
         // If it's an integer literal, create a leaf node.
         // Then scan the next token. It will be used by the caller.
 

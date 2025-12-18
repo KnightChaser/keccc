@@ -62,7 +62,7 @@ void variableDeclaration(int type) {
         scan(&Token);
 
         // Check we have an array size?
-        if (Token.token == T_INTLIT) {
+        if (Token.token == T_INTEGERLITERAL) {
             // Add this as a known array and generate its space in assembly code
 
             // WARNING:

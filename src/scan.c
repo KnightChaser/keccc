@@ -309,7 +309,7 @@ bool scan(struct token *t) {
         if (isdigit(c)) {
             // If it's a digit, scan the literal integer value in
             t->intvalue = scanInteger(c);
-            t->token = T_INTLIT;
+            t->token = T_INTEGERLITERAL;
             break;
         } else if (isalpha(c) || c == '_') {
             // If it's supposed to be a keyword, return that token instead!

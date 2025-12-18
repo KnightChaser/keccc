@@ -29,30 +29,31 @@ enum {
 // Token types
 enum {
     // Single-character tokens
-    T_EOF,        // end of file
-    T_ASSIGN,     // =
-    T_PLUS,       // +
-    T_MINUS,      // -
-    T_STAR,       // *
-    T_SLASH,      // /
-    T_EQ,         // ==
-    T_NE,         // !=
-    T_LT,         // <
-    T_GT,         // >
-    T_LE,         // <=
-    T_GE,         // >=
-    T_INTLIT,     // integer literal
-                  // (decimal whole number which have 1 or more digits of 0-9)
-    T_SEMICOLON,  // ;
-    T_IDENTIFIER, // variable names
-    T_LBRACE,     // {
-    T_RBRACE,     // }
-    T_LPAREN,     // (
-    T_RPAREN,     // )
-    T_LBRACKET,   // [
-    T_RBRACKET,   // ]
-    T_AMPERSAND,  // &
-    T_LOGAND,     // &&
+    T_EOF,            // end of file
+    T_ASSIGN,         // =
+    T_PLUS,           // +
+    T_MINUS,          // -
+    T_STAR,           // *
+    T_SLASH,          // /
+    T_EQ,             // ==
+    T_NE,             // !=
+    T_LT,             // <
+    T_GT,             // >
+    T_LE,             // <=
+    T_GE,             // >=
+    T_INTEGERLITERAL, // integer literal
+                      // (decimal whole number which have 1 or more digits of
+                      // 0-9)
+    T_SEMICOLON,      // ;
+    T_IDENTIFIER,     // variable names
+    T_LBRACE,         // {
+    T_RBRACE,         // }
+    T_LPAREN,         // (
+    T_RPAREN,         // )
+    T_LBRACKET,       // [
+    T_RBRACKET,       // ]
+    T_AMPERSAND,      // &
+    T_LOGAND,         // &&
 
     // Keywords
     T_IF,     // "if"
@@ -71,7 +72,7 @@ enum {
 // Token structure
 struct token {
     int token;    // Token type
-    int intvalue; // Integer value if token is T_INTLIT
+    int intvalue; // Integer value if token is T_INTEGERLITERAL
 };
 
 // AST node types
