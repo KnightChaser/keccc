@@ -290,20 +290,24 @@ void nasmDeclareGlobalString(int labelIndex, char *stringValue) {
         unsigned char c = *p;
 
         switch (c) {
-        case '\\':
-            fputs("\\\\", Outfile);
-            break;
-        case '"':
-            fputs("\\\"", Outfile);
-            break;
         case '\n':
-            fputs("\\n", Outfile);
+            // NASM doesn't interpret C-style escapes in quoted strings.
+            // Emit a real newline byte.
+            fputs("\", 10, \"", Outfile);
             break;
         case '\r':
-            fputs("\\r", Outfile);
+            fputs("\", 13, \"", Outfile);
             break;
         case '\t':
-            fputs("\\t", Outfile);
+            fputs("\", 9, \"", Outfile);
+            break;
+        case '\\':
+            // Emit a literal backslash byte.
+            fputs("\", 92, \"", Outfile);
+            break;
+        case '"':
+            // Emit a literal double-quote byte.
+            fputs("\", 34, \"", Outfile);
             break;
         default:
             if (c >= 32 && c <= 126) {
