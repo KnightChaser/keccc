@@ -195,7 +195,7 @@ static struct ASTnode *returnStatement(void) {
     treeNode = binexpr(0);
 
     // Ensure the two types are compatible
-    treeNode = modifyASTType(
+    treeNode = coerceASTTypeForOp(
         treeNode, GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType,
         A_NOTHING);
     if (treeNode == NULL) {

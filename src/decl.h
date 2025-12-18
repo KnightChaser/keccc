@@ -142,5 +142,5 @@ bool isIntegerType(int primitiveType);
 bool isPointerType(int primitiveType);
 int primitiveTypeToPointerType(int primitiveType);
 int pointerToPrimitiveType(int primitiveType);
-struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,
-                              int operation);
+struct ASTnode *coerceASTTypeForOp(struct ASTnode *node, int contextType,
+                                   int op);

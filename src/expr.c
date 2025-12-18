@@ -74,7 +74,7 @@ static struct ASTnode *arrayAccess(void) {
     }
 
     // Scale the index by the size of the element's type
-    rightNode = modifyASTType(rightNode, leftNode->primitiveType, A_ADD);
+    rightNode = coerceASTTypeForOp(rightNode, leftNode->primitiveType, A_ADD);
 
     // NOTE:
     // Return an AST tree where the array's base has the offset
@@ -396,7 +396,7 @@ struct ASTnode *binexpr(int ptp) {
             right->isRvalue = true;
 
             // Ensure the right's type matches the left.
-            right = modifyASTType(right, left->primitiveType, A_NOTHING);
+            right = coerceASTTypeForOp(right, left->primitiveType, A_NOTHING);
 
             // NOTE: Sure about this?
             if (left == NULL) {
@@ -426,8 +426,10 @@ struct ASTnode *binexpr(int ptp) {
 
             // Ensure the two types are compatible by trying to modify each
             // tree to match the other's type
-            leftTemp = modifyASTType(left, right->primitiveType, ASToperation);
-            rightTemp = modifyASTType(right, left->primitiveType, ASToperation);
+            leftTemp =
+                coerceASTTypeForOp(left, right->primitiveType, ASToperation);
+            rightTemp =
+                coerceASTTypeForOp(right, left->primitiveType, ASToperation);
 
             if (leftTemp == NULL && rightTemp == NULL) {
                 logFatal("Incompatible types in binary expression");

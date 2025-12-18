@@ -94,70 +94,76 @@ int pointerToPrimitiveType(int primitiveType) {
 }
 
 /**
- * modifyASTType - Modify the AST node type to match the right type if possible
+ * coerceASTTypeForOp - Coerce an AST node to be type-compatible in an operator
+ * context.
  *
- * @param treeNode AST node to modify
- * @param rightType Primitive type to match against
- * @param operation Operation being performed (for context)
+ * Depending on the operator context, this may:
+ * - widen integer scalar types (e.g. char -> int/long)
+ * - scale an integer index for pointer arithmetic (e.g. int* + 1 -> +4 bytes)
+ * - accept identical pointer types in a no-op context (assign/return checking)
  *
- * @return Modified AST node if types are compatible, NULL otherwise
+ * @param node AST node to coerce
+ * @param contextType Peer/expected primitive type (depends on op)
+ * @param op AST operator context (e.g. A_NOTHING, A_ADD, A_SUBTRACT)
+ *
+ * @return Coerced AST node if types are compatible, NULL otherwise
  */
-struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,
-                              int operation) {
-    int leftType;
-    int leftSize;
-    int rightSize;
+struct ASTnode *coerceASTTypeForOp(struct ASTnode *node, int contextType,
+                                   int op) {
+    int nodeType;
+    int nodeSizeBytes;
+    int contextSizeBytes;
 
-    leftType = treeNode->primitiveType;
+    nodeType = node->primitiveType;
 
     // Compare scalar integer types
-    if (isIntegerType(leftType) && isIntegerType(rightType)) {
+    if (isIntegerType(nodeType) && isIntegerType(contextType)) {
         // Both types are the same, it's ok
-        if (leftType == rightType) {
-            return treeNode;
+        if (nodeType == contextType) {
+            return node;
         }
 
-        leftSize = codegenGetPrimitiveTypeSize(leftType);
-        rightSize = codegenGetPrimitiveTypeSize(rightType);
+        nodeSizeBytes = codegenGetPrimitiveTypeSize(nodeType);
+        contextSizeBytes = codegenGetPrimitiveTypeSize(contextType);
 
         // Tree's size is too big
-        if (leftSize > rightSize) {
+        if (nodeSizeBytes > contextSizeBytes) {
             return NULL;
         }
 
         // Widen the right size
-        if (rightSize > leftSize) {
-            return makeASTUnary(A_WIDENTYPE, rightType, treeNode, 0);
+        if (contextSizeBytes > nodeSizeBytes) {
+            return makeASTUnary(A_WIDENTYPE, contextType, node, 0);
         }
     }
 
     // Pointer type is on the left
-    if (isPointerType(leftType)) {
+    if (isPointerType(nodeType)) {
         // If it's the same type and right node is doing nothing
-        if (operation == A_NOTHING && leftType == rightType) {
-            return treeNode;
+        if (op == A_NOTHING && nodeType == contextType) {
+            return node;
         }
     }
 
     // NOTE:
     // We can scale only on A_ADD or A_SUBTRACT operation
     // e.g. pointer arithmetic like "ptr + int" or "ptr - int"
-    if (operation == A_ADD || operation == A_SUBTRACT) {
+    if (op == A_ADD || op == A_SUBTRACT) {
         // NOTE:
         // Left is the integer type, and the right is the pointer type and the
         // size of the original type is >1, then scale the left
-        if (isIntegerType(leftType) && isPointerType(rightType)) {
+        if (isIntegerType(nodeType) && isPointerType(contextType)) {
             // Scale by the size of the pointed-to type, not by the pointer
             // size. E.g. int* + 1 => +4 bytes on LP64.
-            rightSize =
-                codegenGetPrimitiveTypeSize(pointerToPrimitiveType(rightType));
-            if (rightSize > 1) {
-                return makeASTUnary(A_SCALETYPE, rightType, treeNode,
-                                    rightSize);
+            contextSizeBytes = codegenGetPrimitiveTypeSize(
+                pointerToPrimitiveType(contextType));
+            if (contextSizeBytes > 1) {
+                return makeASTUnary(A_SCALETYPE, contextType, node,
+                                    contextSizeBytes);
             } else {
                 // If the pointee size is 1 (e.g. "char*"), no scaling needed,
                 // just returns the node unmodified.
-                return treeNode;
+                return node;
             }
         }
     }
