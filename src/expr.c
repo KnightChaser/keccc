@@ -112,9 +112,9 @@ static struct ASTnode *primary(void) {
         // the value is within char range. because we can optimize
         // memory usage later.
         if (Token.intvalue >= 0 && Token.intvalue <= 255) {
-            n = makeASTLeaf(A_INTLIT, P_CHAR, Token.intvalue);
+            n = makeASTLeaf(A_INTEGERLITERAL, P_CHAR, Token.intvalue);
         } else {
-            n = makeASTLeaf(A_INTLIT, P_INT, Token.intvalue);
+            n = makeASTLeaf(A_INTEGERLITERAL, P_INT, Token.intvalue);
         }
 
         break;

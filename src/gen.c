@@ -259,7 +259,7 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
         }
 
     // Leaf nodes
-    case A_INTLIT:
+    case A_INTEGERLITERAL:
         return CG->loadImmediateInt(n->v.intvalue, n->primitiveType);
     case A_IDENTIFIER:
         // Arrays are not scalar variables holding a pointer value.

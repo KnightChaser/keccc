@@ -77,30 +77,30 @@ struct token {
 
 // AST node types
 enum {
-    A_NOTHING = 0,  // No operation
-    A_ASSIGN = 1,   // Assignment
-    A_ADD,          // Addition
-    A_SUBTRACT,     // Subtraction
-    A_MULTIPLY,     // Multiplication
-    A_DIVIDE,       // Division
-    A_EQ,           // Equality comparison (==)
-    A_NE,           // Inequality comparison (!=)
-    A_LT,           // Less than comparison (<)
-    A_GT,           // Greater than comparison (>)
-    A_LE,           // Less than or equal comparison (<=)
-    A_GE,           // Greater than or equal comparison (>=)
-    A_INTLIT,       // Integer literal
-    A_IDENTIFIER,   // Identifier (variable)
-    A_GLUE,         // Statement glue (for sequencing statements)
-    A_IF,           // If statement
-    A_WHILE,        // While loop
-    A_FUNCTION,     // Function definition
-    A_WIDENTYPE,    // Widen data type (usually integer)
-    A_RETURN,       // Return statement
-    A_FUNCTIONCALL, // Function call
-    A_DEREFERENCE,  // Pointer dereference
-    A_ADDRESSOF,    // Address-of operator
-    A_SCALETYPE,    // Scale pointer arithmetic
+    A_NOTHING = 0,    // No operation
+    A_ASSIGN = 1,     // Assignment
+    A_ADD,            // Addition
+    A_SUBTRACT,       // Subtraction
+    A_MULTIPLY,       // Multiplication
+    A_DIVIDE,         // Division
+    A_EQ,             // Equality comparison (==)
+    A_NE,             // Inequality comparison (!=)
+    A_LT,             // Less than comparison (<)
+    A_GT,             // Greater than comparison (>)
+    A_LE,             // Less than or equal comparison (<=)
+    A_GE,             // Greater than or equal comparison (>=)
+    A_INTEGERLITERAL, // Integer literal
+    A_IDENTIFIER,     // Identifier (variable)
+    A_GLUE,           // Statement glue (for sequencing statements)
+    A_IF,             // If statement
+    A_WHILE,          // While loop
+    A_FUNCTION,       // Function definition
+    A_WIDENTYPE,      // Widen data type (usually integer)
+    A_RETURN,         // Return statement
+    A_FUNCTIONCALL,   // Function call
+    A_DEREFERENCE,    // Pointer dereference
+    A_ADDRESSOF,      // Address-of operator
+    A_SCALETYPE,      // Scale pointer arithmetic
 };
 
 // Primitive types
@@ -127,7 +127,7 @@ enum {
 // AST node structure
 struct ASTnode {
     int op;                 // operation to be performed on this tree
-                            // (e.g., A_ADD, A_INTLIT)
+                            // (e.g., A_ADD, A_INTEGERLITERAL)
     int primitiveType;      // primitive type (e.g., P_INT, P_CHAR)
     bool isRvalue;          // is this node an r-value?
     struct ASTnode *left;   // left subtree
@@ -136,7 +136,7 @@ struct ASTnode {
 
     /**
      * NOTE:
-     * For A_INTLIT,       use v.intvalue to store the integer value.
+     * For A_INTEGERLITERAL,       use v.intvalue to store the integer value.
      * For A_IDENTIFIER,   use v.identifierIndex to store the index
      * For A_FUNCTION,     use v.identifierIndex to store the index
      * For A_FUNCTIONCALL, use v.identifierIndex to store the index
