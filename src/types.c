@@ -155,7 +155,8 @@ struct ASTnode *modifyASTType(struct ASTnode *treeNode, int rightType,
                 return makeASTUnary(A_SCALETYPE, rightType, treeNode,
                                     rightSize);
             } else {
-                // Size is 1, no scaling needed
+                // If the pointee size is 1 (e.g. "char*"), no scaling needed,
+                // just returns the node unmodified.
                 return treeNode;
             }
         }
