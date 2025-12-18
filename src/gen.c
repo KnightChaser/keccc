@@ -261,6 +261,8 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     // Leaf nodes
     case A_INTEGERLITERAL:
         return CG->loadImmediateInt(n->v.intvalue, n->primitiveType);
+    case A_STRINGLITERAL:
+        return CG->loadGlobalString(n->v.identifierIndex);
     case A_IDENTIFIER:
         // Arrays are not scalar variables holding a pointer value.
         // In expressions, an array name evaluates to the address of its first
@@ -344,14 +346,29 @@ void codegenResetRegisters() { CG->resetRegisters(); }
 /**
  * codegenDeclareGlobalSymbol - Wraps CPU-specific global symbol generation.
  *
- * @id: The index of the global symbol to declare.
+ * @param id The index of the global symbol to declare.
  */
 void codegenDeclareGlobalSymbol(int id) { CG->declareGlobalSymbol(id); }
 
 /**
+ * codegenDeclareGlobalString - Declares a global string in the data segment.
+ *
+ * @param stringvalue The string value to declare.
+ *
+ * @return int The label number assigned to the string.
+ */
+int codegenDeclareGlobalString(char *stringvalue) {
+    int label = codegenGetLabelNumber();
+    CG->declareGlobalSymbol(label);
+    // NOTE: The actual string data emission is backend-specific
+    // and should be handled in the backend's declareGlobalSymbol function.
+    return label;
+}
+
+/**
  * codegenGetPrimitiveTypeSize - Wraps CPU-specific primitive type size query.
  *
- * @primitiveType: The primitive type to query.
+ * @param primitiveType The primitive type to query.
  *
  * @return int The size of the primitive type in bytes.
  */

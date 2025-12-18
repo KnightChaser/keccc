@@ -29,6 +29,7 @@ Suppose you're at the project root, and the input file is located at `./builddir
 nasm -felf64 ./builddir/out.asm -o ./builddir/out.o
 nasm -felf64 src/rt/x86_64/start.asm -o ./builddir/start.o
 nasm -felf64 src/rt/x86_64/printint.asm -o ./builddir/printint.o
+nasm -felf64 src/rt/x86_64/printchar.asm -o ./builddir/printchar.o
 ld -o ./builddir/out ./builddir/out.o ./builddir/start.o ./builddir/printint.o
 ./builddir/out
 ```
@@ -40,6 +41,7 @@ ld -o ./builddir/out ./builddir/out.o ./builddir/start.o ./builddir/printint.o
 aarch64-linux-gnu-as ./builddir/out.s -o ./builddir/out.o
 aarch64-linux-gnu-as src/rt/aarch64/start.s -o ./builddir/start.o
 aarch64-linux-gnu-as src/rt/aarch64/printint.s -o ./builddir/printint.o
+aarch64-linux-gnu-as src/rt/aarch64/printchar.s -o ./builddir/printchar.o
 aarch64-linux-gnu-ld -o ./builddir/out_arm64 ./builddir/out.o ./builddir/start.o ./builddir/printint.o
 qemu-aarch64 ./builddir/out_arm64
 ```

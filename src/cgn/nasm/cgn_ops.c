@@ -18,7 +18,9 @@ const struct CodegenOps nasmOps = {
 
     .loadImmediateInt = nasmLoadImmediateInt,
     .loadGlobalSymbol = nasmLoadGlobalSymbol,
+    .storeGlobalString = nasmStoreGlobalString,
     .storeGlobalSymbol = nasmStoreGlobalSymbol,
+    .loadGlobalString = nasmLoadGlobalString,
 
     .addRegs = nasmAddRegs,
     .subRegs = nasmSubRegs,

@@ -19,6 +19,7 @@ void aarch64Preamble(void) {
 
     fputs("\t.text\n", Outfile);
     fputs("\t.extern\tprintint\n", Outfile);
+    fputs("\t.extern\tprintchar\n", Outfile);
 }
 
 /**

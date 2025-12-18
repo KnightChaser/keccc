@@ -122,6 +122,24 @@ int nasmLoadGlobalSymbol(int id) {
 }
 
 /**
+ * nasmLoadGlobalString - Generates code to load the address of a global
+ * string into a register.
+ *
+ * @param id The ID of the global string in the symbol table.
+ *
+ * @return Index of the register containing the address of the string.
+ */
+int nasmLoadGlobalString(int id) {
+    int registerIndex = allocateRegister();
+
+    fprintf(Outfile, "\tlea\t%s, [rel %s]\n",
+            qwordRegisterList[registerIndex], // destination register
+            GlobalSymbolTable[id].name        // source global symbol
+    );
+    return registerIndex;
+}
+
+/**
  * nasmStoreGlobalSymbol - Generates code to store a register's value into a
  * global symbol.
  *
@@ -166,6 +184,58 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
     }
 
     return registerIndex;
+}
+
+/**
+ * nasmStoreGlobalString - Generates code to store a string constant as a
+ * global string in the read-only data section.
+ *
+ * @param labelIndex The label index for the global string.
+ * @param stringValue The string constant to store.
+ */
+void nasmStoreGlobalString(int labelIndex, char *stringValue) {
+    const unsigned char *s = (const unsigned char *)stringValue;
+
+    fprintf(Outfile, "\tsection .rodata\n");
+    nasmLabel(labelIndex);
+
+    fprintf(Outfile, "\tdb ");
+    fputc('"', Outfile); // Opening quote for string
+    for (const unsigned char *p = s; *p != '\0'; p++) {
+        unsigned char c = *p;
+
+        switch (c) {
+        case '\\':
+            fputs("\\\\", Outfile);
+            break;
+        case '"':
+            fputs("\\\"", Outfile);
+            break;
+        case '\n':
+            fputs("\\n", Outfile);
+            break;
+        case '\r':
+            fputs("\\r", Outfile);
+            break;
+        case '\t':
+            fputs("\\t", Outfile);
+            break;
+        default:
+            if (c >= 32 && c <= 126) {
+                // Printable
+                fputc((char)c, Outfile);
+            } else {
+                // Non-printable: close string, emit byte, reopen string
+                fputs("\", ", Outfile);
+                fprintf(Outfile, "%u", (unsigned)c);
+                fputs(", \"", Outfile);
+            }
+            break;
+        }
+    }
+    fputc('"', Outfile); // Closing quote for string
+
+    fprintf(Outfile, ", 0\n"); // NUL terminator
 }
 
 /**

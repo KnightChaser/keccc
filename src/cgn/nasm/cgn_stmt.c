@@ -25,6 +25,7 @@ void nasmPreamble() {
 
     // printint is provided by custom runtime object
     fputs("\textern\tprintint\n", Outfile);
+    fputs("\textern\tprintchar\n", Outfile);
 
     fputs("\tsection\t.text\n", Outfile);
 }

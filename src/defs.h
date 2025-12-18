@@ -44,6 +44,7 @@ enum {
     T_INTEGERLITERAL, // integer literal
                       // (decimal whole number which have 1 or more digits of
                       // 0-9)
+    T_STRINGLITERAL,  // string literal
     T_SEMICOLON,      // ;
     T_IDENTIFIER,     // variable names
     T_LBRACE,         // {
@@ -90,6 +91,7 @@ enum {
     A_LE,             // Less than or equal comparison (<=)
     A_GE,             // Greater than or equal comparison (>=)
     A_INTEGERLITERAL, // Integer literal
+    A_STRINGLITERAL,  // String literal
     A_IDENTIFIER,     // Identifier (variable)
     A_GLUE,           // Statement glue (for sequencing statements)
     A_IF,             // If statement

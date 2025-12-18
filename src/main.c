@@ -176,6 +176,7 @@ int main(int argc, char **argv) {
     // Prefer the correct type for future typechecking.
     // If your language only has int right now: use P_INT.
     addGlobalSymbol("printint", P_CHAR, S_FUNCTION, 0, 0);
+    addGlobalSymbol("printchar", P_CHAR, S_FUNCTION, 0, 0);
 
     scan(&Token);      // Prime first token
     codegenPreamble(); // Emit target preamble

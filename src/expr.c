@@ -119,6 +119,13 @@ static struct ASTnode *primary(void) {
 
         break;
 
+    case T_STRINGLITERAL:
+        // For a string literal token, generate the assembly for this,
+        // and then make a leaf AST node for it. "id" is the string's label
+        id = codegenDeclareGlobalString(Text);
+        n = makeASTLeaf(A_STRINGLITERAL, P_CHARPTR, id);
+        break;
+
     case T_IDENTIFIER:
         // This could be a variable name or a function name (to call function).
         // Scan in the next token to find out. (LL(1))
@@ -154,7 +161,7 @@ static struct ASTnode *primary(void) {
         scan(&Token);
         n = binexpr(0);
         matchRightParenthesisToken();
-        
+
         // matchRightParenthesisToken() already scanned the token after ')'.
         // Do not scan again at the end of primary(), or we will skip the
         // operator/token that follows the parenthesized expression.

@@ -64,6 +64,45 @@ static int skip(void) {
 }
 
 /**
+ * scanCharacter - Return the next character from a character or string literal
+ *
+ * @return The character value of the scanned character literal
+ */
+static int scanCharacter(void) {
+    int c;
+
+    c = next();
+    if (c == '\\') {
+        switch (c = next()) {
+        case 'a':
+            return '\a';
+        case 'b':
+            return '\b';
+        case 'f':
+            return '\f';
+        case 'n':
+            return '\n';
+        case 'r':
+            return '\r';
+        case 't':
+            return '\t';
+        case 'v':
+            return '\v';
+        case '\\':
+            return '\\';
+        case '"':
+            return '"';
+        case '\'':
+            return '\'';
+        default:
+            logFatalc("unknown escape sequence", c);
+        }
+    }
+
+    return c; // Just an ordinary old character!
+}
+
+/**
  * scanInteger - scan an integer literal from input
  *
  * @param c The first character of the integer literal
@@ -82,6 +121,35 @@ static int scanInteger(int c) {
     // Hit a non-integer character, put it back for future processing
     putback(c);
     return value;
+}
+
+/**
+ * scanString - Scan a string literal from input, and store it into the buffer.
+ * Return the length of the string
+ *
+ * @param buffer The buffer to store the scanned string
+ *
+ * @return The length of the scanned string
+ */
+static int scanString(char *buffer) {
+    int c;
+
+    for (size_t index = 0; index < TEXTLEN - 1; index++) {
+        if ((c = scanCharacter()) == '"') {
+            buffer[index] = '\0'; // NULL terminate the string
+            return index;
+        }
+        buffer[index] = c;
+    }
+
+    // Ran out of buffer[] space
+    buffer[TEXTLEN - 1] = '\0'; // NULL terminate the string
+    fprintf(stderr,
+            "String literal too long on line %d (Length limit: %d), tried "
+            "to scan: %s\n",
+            Line, TEXTLEN - 1, buffer);
+    exit(1);
+    return 0; // unreachable
 }
 
 /**
@@ -304,6 +372,20 @@ bool scan(struct token *t) {
             putback(c);
             t->token = T_AMPERSAND;
         }
+        break;
+    case '\'':
+        // If this is a single quote, scan in the literal character
+        t->intvalue = scanCharacter();
+        t->token = T_INTEGERLITERAL;
+        if (next() != '\'') {
+            printf("Unterminated character literal on line %d\n", Line);
+            exit(1);
+        }
+        break;
+    case '\"':
+        // If this is a double-quote, scan in the literal string
+        scanString(Text);
+        t->token = T_STRINGLITERAL;
         break;
     default:
         if (isdigit(c)) {

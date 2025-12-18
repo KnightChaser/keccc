@@ -80,6 +80,8 @@ static const char *astOpToString(int op) {
         return "A_GE";
     case A_INTEGERLITERAL:
         return "A_INTEGERLITERAL";
+    case A_STRINGLITERAL:
+        return "A_STRINGLITERAL";
     case A_IDENTIFIER:
         return "A_IDENTIFIER";
     case A_GLUE:
@@ -158,6 +160,9 @@ static void dumpASTNodeHeader(struct ASTnode *n, int label, int level) {
     switch (n->op) {
     case A_INTEGERLITERAL:
         printf(" value=%d", n->v.intvalue);
+        break;
+    case A_STRINGLITERAL:
+        printf(" label=%d", n->v.identifierIndex);
         break;
     case A_IDENTIFIER:
     case A_FUNCTION:

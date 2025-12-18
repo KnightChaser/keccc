@@ -121,6 +121,25 @@ int aarch64LoadGlobalSymbol(int id) {
 }
 
 /**
+ * aarch64LoadGlobalString - Generates code to load the address of a global
+ * string into a register.
+ *
+ * @param id The ID of the global string in the symbol table.
+ *
+ * @return Index of the register containing the address of the string.
+ */
+int aarch64LoadGlobalString(int id) {
+    int r = aarch64AllocateRegister();
+
+    fprintf(Outfile, "\tadrp\t%s, %s\n", aarch64QwordRegisterList[r],
+            GlobalSymbolTable[id].name);
+    fprintf(Outfile, "\tadd\t%s, %s, :lo12:%s\n", aarch64QwordRegisterList[r],
+            aarch64QwordRegisterList[r], GlobalSymbolTable[id].name);
+
+    return r;
+}
+
+/**
  * aarch64StoreGlobalSymbol - Generates code to store a register's value into a
  * global symbol.
  *
@@ -158,6 +177,53 @@ int aarch64StoreGlobalSymbol(int r, int id) {
     }
 
     return r;
+}
+
+void aarch64StoreGlobalString(int labelIndex, char *stringValue) {
+    const unsigned char *s = (const unsigned char *)stringValue;
+
+    fprintf(Outfile, "\t.section\t.rodata\n");
+    aarch64Label(labelIndex);
+
+    fprintf(Outfile, "\t.ascii\t\"");
+    fputc('"', Outfile);
+    for (const unsigned char *p = s; *p != '\0'; p++) {
+        unsigned char c = *p;
+
+        switch (c) {
+        case '\\':
+            fputs("\\\\", Outfile);
+            break;
+        case '"':
+            fputs("\\\"", Outfile);
+            break;
+        case '\n':
+            fputs("\\n", Outfile);
+            break;
+        case '\r':
+            fputs("\\r", Outfile);
+            break;
+        case '\t':
+            fputs("\\t", Outfile);
+            break;
+        default:
+            if (c >= 32 && c <= 126) {
+                // Printable
+                fputc((char)c, Outfile);
+            } else {
+                // Non-printable: use octal escape
+                fputs("\" \n\t.byte ", Outfile);
+                fprintf(Outfile, "%u", (unsigned)c);
+                fputs("\n\t.ascii \"", Outfile);
+            }
+            break;
+        }
+    }
+    fputc('"', Outfile); // Closing quote for string
+
+    fputc('\n', Outfile); // Newline after .asciz
+
+    fprintf(Outfile, "\t.byte\t0\n");
 }
 
 /**

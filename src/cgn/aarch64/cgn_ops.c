@@ -17,7 +17,9 @@ const struct CodegenOps aarch64Ops = {
 
     .loadImmediateInt = aarch64LoadImmediateInt,
     .loadGlobalSymbol = aarch64LoadGlobalSymbol,
+    .loadGlobalString = aarch64LoadGlobalString,
     .storeGlobalSymbol = aarch64StoreGlobalSymbol,
+    .storeGlobalString = aarch64StoreGlobalString,
 
     .addRegs = aarch64AddRegs,
     .subRegs = aarch64SubRegs,
