@@ -30,7 +30,8 @@ nasm -felf64 ./builddir/out.asm -o ./builddir/out.o
 nasm -felf64 src/rt/x86_64/start.asm -o ./builddir/start.o
 nasm -felf64 src/rt/x86_64/printint.asm -o ./builddir/printint.o
 nasm -felf64 src/rt/x86_64/printchar.asm -o ./builddir/printchar.o
-ld -o ./builddir/out ./builddir/out.o ./builddir/start.o ./builddir/printint.o ./builddir/printchar.o
+nasm -felf64 src/rt/x86_64/printstring.asm -o ./builddir/printstring.o
+ld -o ./builddir/out ./builddir/out.o ./builddir/start.o ./builddir/printint.o ./builddir/printchar.o ./builddir/printstring.o 
 ./builddir/out
 ```
 

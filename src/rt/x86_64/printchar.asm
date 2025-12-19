@@ -1,6 +1,6 @@
 ; src/rt/x86_64/printchar.asm
 
-; Linux x86_64          
+; Linux x86_64
 ; long printchar(long x)
 ; arg:  rdi = x
 
