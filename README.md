@@ -9,7 +9,7 @@ NOTE: It uses Meson as the build system.
 
 ```sh
 # Set up the build directory
-meson setup builddir
+meson setup builddir --native-file clang.ini
 
 # Compile the project
 meson compile -C builddir
