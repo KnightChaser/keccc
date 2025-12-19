@@ -132,12 +132,14 @@ def run_single_test_nasm(
     start_o = workdir / "start.o"
     printint_o = workdir / "printint.o"
     printchar_o = workdir / "printchar.o"
+    printstring_o = workdir / "printstring.o"
     out_bin = workdir / "out"
 
     rt_dir = source_root / "src" / "rt" / "x86_64"
     start_asm = rt_dir / "start.asm"
     printint_asm = rt_dir / "printint.asm"
     printchar_asm = rt_dir / "printchar.asm"
+    printstring_asm = rt_dir / "printstring.asm"
 
     # 1) Compile to assembly (keccc writes out.s in cwd)
     ok, _, _ = run_command(
@@ -187,9 +189,17 @@ def run_single_test_nasm(
     if not ok:
         return False, ""
 
+    ok, _, _ = run_command(
+        [nasm, "-felf64", str(printstring_asm), "-o", str(printstring_o)],
+        cwd=workdir,
+        description=f"{test_case.name}: nasm printstring.asm",
+    )
+    if not ok:
+        return False, ""
+
     # 4) Link (no libc)
     ok, _, _ = run_command(
-        [ld, "-o", str(out_bin), str(out_o), str(start_o), str(printint_o), str(printchar_o)],
+        [ld, "-o", str(out_bin), str(out_o), str(start_o), str(printint_o), str(printchar_o), str(printstring_o)],
         cwd=workdir,
         description=f"{test_case.name}: ld",
     )
@@ -225,12 +235,14 @@ def run_single_test_aarch64(
     start_o = workdir / "start.o"
     printint_o = workdir / "printint.o"
     printchar_o = workdir / "printchar.o"
+    printstring_o = workdir / "printstring.o"
     out_bin = workdir / "out_aarch64"
 
     rt_dir = source_root / "src" / "rt" / "aarch64"
     start_s = rt_dir / "start.s"
     printint_s = rt_dir / "printint.s"
     printchar_s = rt_dir / "printchar.s"
+    printstring_s = rt_dir / "printstring.s"
 
     # 1) Compile to assembly (keccc writes out.s in cwd)
     ok, _, _ = run_command(
@@ -279,9 +291,17 @@ def run_single_test_aarch64(
     if not ok:
         return False, ""
 
+    ok, _, _ = run_command(
+        [as_path, str(printstring_s), "-o", str(printstring_o)],
+        cwd=workdir,
+        description=f"{test_case.name}: aarch64 as printstring.s",
+    )
+    if not ok:
+        return False, ""
+
     # 4) Link (no libc)
     ok, _, _ = run_command(
-        [ld_path, "-o", str(out_bin), str(out_o), str(start_o), str(printint_o), str(printchar_o)],
+        [ld_path, "-o", str(out_bin), str(out_o), str(start_o), str(printint_o), str(printchar_o), str(printstring_o)],
         cwd=workdir,
         description=f"{test_case.name}: aarch64 ld",
     )
