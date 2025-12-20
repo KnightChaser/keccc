@@ -401,12 +401,12 @@ struct ASTnode *prefix(void) {
         scan(&Token);
         tree = prefix();
 
-        // Prepend an A_LOGICALNEGATE operation to the tree and make the child an
+        // Prepend an A_ARITHMETICNEGATE operation to the tree and make the child an
         // rvalue. Because character type (T_CHAR) is unsigned, also widen this
         // to int so that it's signed
         tree->isRvalue = true;
         tree = coerceASTTypeForOp(tree, P_INT, 0);
-        tree = makeASTUnary(A_LOGICALNEGATE, P_INT, tree, 0);
+        tree = makeASTUnary(A_ARITHMETICNEGATE, P_INT, tree, 0);
         break;
 
     case T_LOGICALINVERT:

@@ -126,8 +126,8 @@ static const char *astOpToString(int op) {
         return "A_POSTINCREMENT";
     case A_POSTDECREMENT:
         return "A_POSTDECREMENT";
-    case A_LOGICALNEGATE:
-        return "A_LOGICALNEGATE";
+    case A_ARITHMETICNEGATE:
+        return "A_ARITHMETICNEGATE";
     case A_LOGICALINVERT:
         return "A_LOGICALINVERT";
     case A_LOGICALNOT:

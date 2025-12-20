@@ -344,9 +344,9 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     case A_PREDECREMENT:
         // Decrement the variable's value then load it into a register
         return CG->loadGlobalSymbol(n->left->v.identifierIndex, n->op);
-    case A_LOGICALNEGATE:
+    case A_ARITHMETICNEGATE:
         // Arithmetic negation
-        return CG->logicalNegate(leftRegister);
+        return CG->ArithmeticNegate(leftRegister);
     case A_LOGICALINVERT:
         // Bitwise NOT
         return CG->logicalInvert(leftRegister);

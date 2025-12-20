@@ -30,7 +30,7 @@ const struct CodegenOps nasmOps = {
     .shiftLeftRegs = nasmShiftLeftRegs,
     .shiftRightRegs = nasmShiftRightRegs,
 
-    .logicalNegate = nasmLogicalNegate,
+    .ArithmeticNegate = nasmArithmeticNegate,
     .logicalInvert = nasmLogicalInvert,
     .logicalNot = nasmLogicalNot,
     .bitwiseAndRegs = nasmBitwiseAndRegs,

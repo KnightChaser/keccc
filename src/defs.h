@@ -93,47 +93,47 @@ struct token {
 
 // AST node types
 enum {
-    A_NOTHING = 0,    // No operation
-    A_ASSIGN = 1,     // Assignment
-    A_LOGICALOR,      // Logical OR
-    A_LOGICALAND,     // Logical AND
-    A_BITWISEOR,      // Bitwise OR
-    A_BITWISEXOR,     // Bitwise XOR
-    A_BITWISEAND,     // Bitwise AND
-    A_EQ,             // Equality comparison (==)
-    A_NE,             // Inequality comparison (!=)
-    A_LT,             // Less than comparison (<)
-    A_GT,             // Greater than comparison (>)
-    A_LE,             // Less than or equal comparison (<=)
-    A_GE,             // Greater than or equal comparison (>=)
-    A_LSHIFT,         // Left shift operation (<<)
-    A_RSHIFT,         // Right shift operation (>>)
-    A_ADD,            // Addition
-    A_SUBTRACT,       // Subtraction
-    A_MULTIPLY,       // Multiplication
-    A_DIVIDE,         // Division
-    A_INTEGERLITERAL, // Integer literal
-    A_STRINGLITERAL,  // String literal
-    A_IDENTIFIER,     // Identifier (variable)
-    A_GLUE,           // Statement glue (for sequencing statements)
-    A_IF,             // If statement
-    A_WHILE,          // While loop
-    A_FUNCTION,       // Function definition
-    A_WIDENTYPE,      // Widen data type (usually integer)
-    A_RETURN,         // Return statement
-    A_FUNCTIONCALL,   // Function call
-    A_DEREFERENCE,    // Pointer dereference
-    A_ADDRESSOF,      // Address-of operator
-    A_SCALETYPE,      // Scale pointer arithmetic
-    A_PREINCREMENT,   // Pre-increment (++i)
-    A_PREDECREMENT,   // Pre-decrement (--i)
-    A_POSTINCREMENT,  // Post-increment (i++)
-    A_POSTDECREMENT,  // Post-decrement (i--)
-    A_LOGICALNEGATE,  // Negation (-expr)
-    A_LOGICALINVERT,  // Bitwise NOT (~expr)
-    A_LOGICALNOT,     // Logical NOT (!expr)
-    A_TOBOOLEAN,      // Convert to boolean context
-                      // (e.g., in if statement's conditions)
+    A_NOTHING = 0,      // No operation
+    A_ASSIGN = 1,       // Assignment
+    A_LOGICALOR,        // Logical OR
+    A_LOGICALAND,       // Logical AND
+    A_BITWISEOR,        // Bitwise OR
+    A_BITWISEXOR,       // Bitwise XOR
+    A_BITWISEAND,       // Bitwise AND
+    A_EQ,               // Equality comparison (==)
+    A_NE,               // Inequality comparison (!=)
+    A_LT,               // Less than comparison (<)
+    A_GT,               // Greater than comparison (>)
+    A_LE,               // Less than or equal comparison (<=)
+    A_GE,               // Greater than or equal comparison (>=)
+    A_LSHIFT,           // Left shift operation (<<)
+    A_RSHIFT,           // Right shift operation (>>)
+    A_ADD,              // Addition
+    A_SUBTRACT,         // Subtraction
+    A_MULTIPLY,         // Multiplication
+    A_DIVIDE,           // Division
+    A_INTEGERLITERAL,   // Integer literal
+    A_STRINGLITERAL,    // String literal
+    A_IDENTIFIER,       // Identifier (variable)
+    A_GLUE,             // Statement glue (for sequencing statements)
+    A_IF,               // If statement
+    A_WHILE,            // While loop
+    A_FUNCTION,         // Function definition
+    A_WIDENTYPE,        // Widen data type (usually integer)
+    A_RETURN,           // Return statement
+    A_FUNCTIONCALL,     // Function call
+    A_DEREFERENCE,      // Pointer dereference
+    A_ADDRESSOF,        // Address-of operator
+    A_SCALETYPE,        // Scale pointer arithmetic
+    A_PREINCREMENT,     // Pre-increment (++i)
+    A_PREDECREMENT,     // Pre-decrement (--i)
+    A_POSTINCREMENT,    // Post-increment (i++)
+    A_POSTDECREMENT,    // Post-decrement (i--)
+    A_ARITHMETICNEGATE, // Arithmetic negation (-expr)
+    A_LOGICALINVERT,    // Bitwise NOT (~expr)
+    A_LOGICALNOT,       // Logical NOT (!expr)
+    A_TOBOOLEAN,        // Convert to boolean context
+                        // (e.g., in if statement's conditions)
 };
 
 // Primitive types

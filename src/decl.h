@@ -81,7 +81,7 @@ int nasmAddressOfGlobalSymbol(int id);
 int nasmDereferencePointer(int pointerReg, int primitiveType);
 int nasmStoreDereferencedPointer(int valueReg, int pointerReg,
                                  int primitiveType);
-int nasmLogicalNegate(int reg);
+int nasmArithmeticNegate(int reg);
 int nasmLogicalInvert(int reg);
 int nasmLogicalNot(int reg);
 int nasmBitwiseAndRegs(int dstReg, int srcReg);
@@ -121,7 +121,7 @@ int aarch64AddressOfGlobalSymbol(int id);
 int aarch64DereferencePointer(int pointerReg, int primitiveType);
 int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
                                     int primitiveType);
-int aarch64LogicalNegate(int reg);
+int aarch64ArithmeticNegate(int reg);
 int aarch64LogicalInvert(int reg);
 int aarch64LogicalNot(int reg);
 int aarch64ToBoolean(int reg, int op, int label);

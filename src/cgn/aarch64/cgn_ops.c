@@ -30,7 +30,7 @@ const struct CodegenOps aarch64Ops = {
     .shiftLeftRegs = aarch64ShiftLeftRegs,
     .shiftRightRegs = aarch64ShiftRightRegs,
 
-    .logicalNegate = aarch64LogicalNegate,
+    .ArithmeticNegate = aarch64ArithmeticNegate,
     .logicalInvert = aarch64LogicalInvert,
     .logicalNot = aarch64LogicalNot,
     .bitwiseAndRegs = aarch64BitwiseAndRegs,

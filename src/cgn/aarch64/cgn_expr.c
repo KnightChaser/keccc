@@ -521,13 +521,13 @@ int aarch64ShiftRightRegs(int dstReg, int srcReg) {
 }
 
 /**
- * aarch64LogicalNegate - Generates code to arithmetic-negate a register.
+ * aarch64ArithmeticNegate - Generates code to arithmetic-negate a register.
  *
  * @param reg Index of the register to negate.
  *
  * @return Index of the register containing the negated value.
  */
-int aarch64LogicalNegate(int reg) {
+int aarch64ArithmeticNegate(int reg) {
     fprintf(Outfile, "\tneg\t%s, %s\n", aarch64QwordRegisterList[reg],
             aarch64QwordRegisterList[reg]);
     return reg;

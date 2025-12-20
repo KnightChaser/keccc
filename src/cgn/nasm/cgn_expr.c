@@ -467,13 +467,13 @@ int nasmDivRegsSigned(int r1, int r2) {
 }
 
 /**
- * nasmLogicalNegate - Generates code to logically negate a register's value.
+ * nasmArithmeticNegate - Generates code to logically negate a register's value.
  *
  * @param reg Index of the register to negate.
  *
  * @return Index of the register containing the negated value.
  */
-int nasmLogicalNegate(int reg) {
+int nasmArithmeticNegate(int reg) {
     fprintf(Outfile, "\tneg\t%s\n", qwordRegisterList[reg]);
 
     return reg;

@@ -35,7 +35,7 @@ struct CodegenOps {
     int (*shiftRightRegs)(int dstReg, int srcReg);
 
     // Bitwise and logical operations
-    int (*logicalNegate)(int reg);
+    int (*ArithmeticNegate)(int reg);
     int (*logicalInvert)(int reg);
     int (*logicalNot)(int reg);
     int (*bitwiseAndRegs)(int dstReg, int srcReg);
