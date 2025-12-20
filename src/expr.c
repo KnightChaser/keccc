@@ -100,6 +100,9 @@ static struct ASTnode *postfix(void) {
     int id;
 
     // Scan in the next token to see if we have a postfix expression
+    scan(&Token);
+
+    // Scan in the next token to see if we have a postfix expression
     if (Token.token == T_LPAREN) {
         return functionCall();
     }
