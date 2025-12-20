@@ -90,6 +90,56 @@ static struct ASTnode *arrayAccess(void) {
 }
 
 /**
+ * postfix - Parse a postfix expression.
+ * e.g., variable with post-increment/decrement.
+ *
+ * @return ASTnode* The AST node representing the postfix expression.
+ */
+static struct ASTnode *postfix(void) {
+    struct ASTnode *n;
+    int id;
+
+    // Scan in the next token to see if we have a postfix expression
+    if (Token.token == T_LPAREN) {
+        return functionCall();
+    }
+
+    // Or is this an array reference?
+    if (Token.token == T_LBRACKET) {
+        return arrayAccess();
+    }
+
+    // A variable
+    id = findGlobalSymbol(Text);
+    if (id == -1 || GlobalSymbolTable[id].structuralType != S_VARIABLE) {
+        logFatals("Undeclared variable: ", Text);
+    }
+
+    switch (Token.token) {
+    case T_INCREMENT:
+        // Post increment: skip over the token
+        scan(&Token);
+        n = makeASTLeaf(A_POSTINCREMENT, GlobalSymbolTable[id].primitiveType,
+                        id);
+        break;
+
+    case T_DECREMENT:
+        // Post decrement: skip over the token
+        scan(&Token);
+        n = makeASTLeaf(A_POSTDECREMENT, GlobalSymbolTable[id].primitiveType,
+                        id);
+        break;
+
+    default:
+        // Just a variable inference
+        n = makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
+        break;
+    }
+
+    return n;
+}
+
+/**
  * primary - Parse a primary expression.
  * e.g., integer literals.
  *
@@ -127,32 +177,7 @@ static struct ASTnode *primary(void) {
         break;
 
     case T_IDENTIFIER:
-        // This could be a variable name or a function name (to call function).
-        // Scan in the next token to find out. (LL(1))
-        scan(&Token);
-
-        // It's a '(', so a function call
-        if (Token.token == T_LPAREN) {
-            return functionCall();
-        }
-
-        // It's a '[', so an array access
-        if (Token.token == T_LBRACKET) {
-            return arrayAccess();
-        }
-
-        // Not a function call nor an array, so reject the new token
-        rejectToken(&Token);
-
-        // Check if the variable exists
-        id = findGlobalSymbol(Text);
-        if (id == -1 || GlobalSymbolTable[id].structuralType != S_VARIABLE) {
-            logFatals("Undeclared variable: ", Text);
-        }
-
-        // Create a leaf AST node for the variable
-        n = makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
-        break;
+        return postfix();
 
     case T_LPAREN:
         // Beginning of a parenthesised expression, skip the '('.
@@ -187,33 +212,42 @@ static struct ASTnode *primary(void) {
  */
 int tokenToASTOperator(int token) {
     switch (token) {
-    // Assignment
-    case T_ASSIGN:
-        return A_ASSIGN;
-
-    // Arithmetic operators
-    case T_PLUS:
-        return A_ADD;
-    case T_MINUS:
-        return A_SUBTRACT;
-    case T_STAR:
-        return A_MULTIPLY;
-    case T_SLASH:
-        return A_DIVIDE;
-
-    // Comparison operators
-    case T_EQ:
-        return A_EQ;
-    case T_NE:
-        return A_NE;
-    case T_LT:
-        return A_LT;
-    case T_GT:
-        return A_GT;
-    case T_LE:
-        return A_LE;
-    case T_GE:
-        return A_GE;
+    case T_ASSIGN:           // =
+        return A_ASSIGN;     //
+    case T_LOGICALOR:        // ||
+        return A_LOGICALOR;  //
+    case T_LOGICALAND:       // &&
+        return A_LOGICALAND; //
+    case T_BITWISEOR:        // |
+        return A_BITWISEOR;  //
+    case T_BITWISEXOR:       // ^
+        return A_BITWISEXOR; //
+    case T_AMPERSAND:        // & (bitwise AND, address-of operator)
+        return A_BITWISEAND; //
+    case T_EQ:               // ==
+        return A_EQ;         //
+    case T_NE:               // !=
+        return A_NE;         //
+    case T_LT:               // <
+        return A_LT;         //
+    case T_GT:               // >
+        return A_GT;         //
+    case T_LE:               // <=
+        return A_LE;         //
+    case T_GE:               // >=
+        return A_GE;         //
+    case T_LSHIFT:           // <<
+        return A_LSHIFT;     //
+    case T_RSHIFT:           // >>
+        return A_RSHIFT;     //
+    case T_PLUS:             // +
+        return A_ADD;        //
+    case T_MINUS:            // - (subtraction or (unary) negation)
+        return A_SUBTRACT;   //
+    case T_STAR:             // *
+        return A_MULTIPLY;   //
+    case T_SLASH:            // /
+        return A_DIVIDE;     //
 
     default:
         fprintf(stderr, "Unknown arithmetic operator: %d, line: %d\n", token,
@@ -254,25 +288,38 @@ static bool isTokenRightAssociative(int tokentype) {
  */
 static int operatorPrecedence(int tokentype) {
     switch (tokentype) {
-    case T_EOF:    // (end of file)
-        return 0;  //
-    case T_ASSIGN: // Assignment (=)
-        return 10; //
-    case T_PLUS:   // Addition (+)
-    case T_MINUS:  // Subtraction (-)
-        return 20; //
-    case T_STAR:   // Multiplication (*)
-    case T_SLASH:  // Division (/)
-        return 30; //
-    case T_EQ:     // Equal (==)
-    case T_NE:     // Not Equal (!=)
-        return 40; //
-    case T_LT:     // Less Than (<)
-    case T_GT:     // Greater Than (>)
-    case T_LE:     // Less Than or Equal (<=)
-    case T_GE:     // Greater Than or Equal (>=)
-        return 50; //
-    default:       //
+    case T_EOF:
+        return 0;
+    case T_ASSIGN:
+        return 10;
+    case T_LOGICALOR:
+        return 20;
+    case T_LOGICALAND:
+        return 30;
+    case T_BITWISEOR:
+        return 40;
+    case T_BITWISEXOR:
+        return 50;
+    case T_AMPERSAND:
+        return 60;
+    case T_EQ:
+    case T_NE:
+        return 70;
+    case T_LT:
+    case T_GT:
+    case T_LE:
+    case T_GE:
+        return 80;
+    case T_LSHIFT:
+    case T_RSHIFT:
+        return 90;
+    case T_PLUS:
+    case T_MINUS:
+        return 100;
+    case T_STAR:
+    case T_SLASH:
+        return 110;
+    default: //
         if ((tokentype == T_VOID) || (tokentype == T_CHAR) ||
             (tokentype == T_INT) || (tokentype == T_LONG)) {
             // Unexpected token types
@@ -290,6 +337,9 @@ static int operatorPrecedence(int tokentype) {
  * prefix_expression := primary_expression
  *      | '*' prefix_expression
  *      | '&' prefix_expression
+ *      | '-' prefix_expression
+ *      | '++' prefix_expression
+ *      | '--' prefix_expression
  *      ;
  *
  * @return ASTnode* The AST node representing the prefix expression.
@@ -341,6 +391,71 @@ struct ASTnode *prefix(void) {
         tree =
             makeASTUnary(A_DEREFERENCE,
                          pointerToPrimitiveType(tree->primitiveType), tree, 0);
+        break;
+
+    case T_MINUS:
+        // Get the next token and parse it recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        // Prepend an A_LOGICALNEGATE operation to the tree and make the child an
+        // rvalue. Because character type (T_CHAR) is unsigned, also widen this
+        // to int so that it's signed
+        tree->isRvalue = true;
+        tree = coerceASTTypeForOp(tree, P_INT, 0);
+        tree = makeASTUnary(A_LOGICALNEGATE, P_INT, tree, 0);
+        break;
+
+    case T_LOGICALINVERT:
+        // Get the next token and parse it recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        // Prepend an A_INVERT operation to the tree and make the child an
+        // rvalue.
+        tree->isRvalue = true;
+        tree = makeASTUnary(A_LOGICALINVERT, tree->primitiveType, tree, 0);
+        break;
+
+    case T_LOGICALNOT:
+        // Get the next token and parse it recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        // Prepend an A_LOGNOT operation to the tree and make the child an
+        // rvalue
+        tree->isRvalue = 1;
+        tree = makeASTUnary(A_LOGICALNOT, tree->primitiveType, tree, 0);
+        break;
+
+    case T_INCREMENT:
+        // Get the next token and parse it recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        // For now, ensure it's an identifier.
+        if (tree->op != A_IDENTIFIER) {
+            logFatal(
+                "Pre-increment operator '++' must be applied to an identifier");
+        }
+
+        // Prepend an A_PREINCREMENT operation to the tree
+        tree = makeASTUnary(A_PREINCREMENT, tree->primitiveType, tree, 0);
+        break;
+
+    case T_DECREMENT:
+        // Get the next token and parse it recursively as a prefix expression
+        scan(&Token);
+        tree = prefix();
+
+        // For now, ensure it's an identifier.
+        if (tree->op != A_IDENTIFIER) {
+            logFatal(
+                "Pre-decrement operator '--' must be applied to an identifier");
+        }
+
+        // Prepend an A_PREDECREMENT operation to the tree
+        tree = makeASTUnary(A_PREDECREMENT, tree->primitiveType, tree, 0);
         break;
 
     default:

@@ -240,6 +240,17 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     case A_DIVIDE:
         return CG->divRegsSigned(leftRegister, rightRegister);
 
+    case A_BITWISEAND:
+        return CG->bitwiseAndRegs(leftRegister, rightRegister);
+    case A_BITWISEOR:
+        return CG->bitwiseOrRegs(leftRegister, rightRegister);
+    case A_BITWISEXOR:
+        return CG->bitwiseXorRegs(leftRegister, rightRegister);
+    case A_LSHIFT:
+        return CG->shiftLeftConst(leftRegister, rightRegister);
+    case A_RSHIFT:
+        return CG->shiftRightConst(leftRegister, rightRegister);
+
     // Comparison operations
     case A_EQ:
     case A_NE:
@@ -272,7 +283,7 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
         }
 
         if (n->isRvalue || parentASTop == A_DEREFERENCE) {
-            return CG->loadGlobalSymbol(n->v.identifierIndex);
+            return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
         } else {
             return NOREG; // Lvalue: return NOREG to indicate address needed
         }
@@ -320,6 +331,34 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
             rightRegister = CG->loadImmediateInt(n->v.size, P_INT);
             return CG->mulRegs(leftRegister, rightRegister);
         }
+
+    case A_POSTINCREMENT:
+        // Load the variable's value into a register then increment it
+        return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
+    case A_POSTDECREMENT:
+        // Load the variable's value into a register then decrement it
+        return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
+    case A_PREINCREMENT:
+        // Increment the variable's value then load it into a register
+        return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
+    case A_PREDECREMENT:
+        // Decrement the variable's value then load it into a register
+        return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
+    case A_LOGICALNEGATE:
+        // Arithmetic negation
+        return CG->logicalNegate(leftRegister);
+    case A_LOGICALINVERT:
+        // Bitwise NOT
+        return CG->logicalInvert(leftRegister);
+    case A_LOGICALNOT:
+        // Logical NOT
+        return CG->logicalNot(leftRegister);
+    case A_TOBOOLEAN:
+        // If the present AST node is an A_IF or A_WHILE,
+        // generate a compare followed by a jump.
+        // Otherwise, set the register to 0(false) or 1(true) based on it's
+        // zeroeness or non-zeroeness
+        return CG->toBoolean(leftRegister, parentASTop, label);
 
     default:
         // Should not reach here; unsupported operation

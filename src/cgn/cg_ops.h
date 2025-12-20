@@ -21,7 +21,7 @@ struct CodegenOps {
 
     // Expressions / loads / stores
     int (*loadImmediateInt)(int value, int primitiveType);
-    int (*loadGlobalSymbol)(int symId);
+    int (*loadGlobalSymbol)(int symId, int op);
     int (*loadGlobalString)(int symId);
     int (*storeGlobalSymbol)(int reg, int symId);
 
@@ -31,6 +31,16 @@ struct CodegenOps {
     int (*mulRegs)(int r1, int r2);
     int (*divRegsSigned)(int r1, int r2);
     int (*shiftLeftConst)(int reg, int shiftAmount);
+    int (*shiftRightConst)(int reg, int shiftAmount);
+
+    // Bitwise and logical operations
+    int (*logicalNegate)(int reg);
+    int (*logicalInvert)(int reg);
+    int (*logicalNot)(int reg);
+    int (*bitwiseAndRegs)(int dstReg, int srcReg);
+    int (*bitwiseOrRegs)(int dstReg, int srcReg);
+    int (*bitwiseXorRegs)(int dstReg, int srcReg);
+    int (*toBoolean)(int reg, int astOp, int label);
 
     // Comparisons
     int (*compareAndSet)(int astOp, int r1, int r2);

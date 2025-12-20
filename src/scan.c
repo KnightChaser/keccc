@@ -291,10 +291,24 @@ bool scan(struct token *t) {
         t->token = T_EOF;
         return false; // End of file
     case '+':
-        t->token = T_PLUS;
+        if ((c = next()) == '+') {
+            // "++"
+            t->token = T_INCREMENT;
+        } else {
+            // "+"
+            putback(c);
+            t->token = T_PLUS;
+        }
         break;
     case '-':
-        t->token = T_MINUS;
+        if ((c = next()) == '-') {
+            // "--"
+            t->token = T_DECREMENT;
+        } else {
+            // "-"
+            putback(c);
+            t->token = T_MINUS;
+        }
         break;
     case '*':
         t->token = T_STAR;
@@ -323,6 +337,12 @@ bool scan(struct token *t) {
     case ']':
         t->token = T_RBRACKET;
         break;
+    case '~':
+        t->token = T_LOGICALINVERT;
+        break;
+    case '^':
+        t->token = T_BITWISEXOR;
+        break;
     case '=':
         if ((c = next()) == '=') {
             // "=="
@@ -338,15 +358,17 @@ bool scan(struct token *t) {
             // "!="
             t->token = T_NE;
         } else {
-            // Unrecognized token starting with '!'
-            printf("Unrecognized character '!%c' on line %d\n", c, Line);
-            exit(1);
+            putback(c);
+            t->token = T_LOGICALNOT;
         }
         break;
     case '<':
         if ((c = next()) == '=') {
             // "<="
             t->token = T_LE;
+        } else if (c == '<') {
+            // "<<"
+            t->token = T_LSHIFT;
         } else {
             // "<"
             putback(c);
@@ -357,6 +379,9 @@ bool scan(struct token *t) {
         if ((c = next()) == '=') {
             // ">="
             t->token = T_GE;
+        } else if (c == '>') {
+            // ">>"
+            t->token = T_RSHIFT;
         } else {
             // ">"
             putback(c);
@@ -366,11 +391,21 @@ bool scan(struct token *t) {
     case '&':
         if ((c = next()) == '&') {
             // "&&"
-            t->token = T_LOGAND;
+            t->token = T_LOGICALAND;
         } else {
             // "&"
             putback(c);
             t->token = T_AMPERSAND;
+        }
+        break;
+    case '|':
+        if ((c = next()) == '|') {
+            // "||"
+            t->token = T_LOGICALOR;
+        } else {
+            // "|"
+            putback(c);
+            t->token = T_BITWISEOR;
         }
         break;
     case '\'':

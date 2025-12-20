@@ -29,18 +29,48 @@ enum {
 // Token types
 enum {
     // Single-character tokens
-    T_EOF,            // end of file
-    T_ASSIGN,         // =
-    T_PLUS,           // +
-    T_MINUS,          // -
-    T_STAR,           // *
-    T_SLASH,          // /
-    T_EQ,             // ==
-    T_NE,             // !=
-    T_LT,             // <
-    T_GT,             // >
-    T_LE,             // <=
-    T_GE,             // >=
+    T_EOF, // end of file
+
+    // Binary operators
+    T_ASSIGN,     // =
+    T_LOGICALOR,  // ||
+    T_LOGICALAND, // &&
+    T_BITWISEOR,  // |
+    T_BITWISEXOR, // ^
+    T_AMPERSAND,  // & (bitwise AND, address-of operator)
+    T_EQ,         // ==
+    T_NE,         // !=
+    T_LT,         // <
+    T_GT,         // >
+    T_LE,         // <=
+    T_GE,         // >=
+    T_LSHIFT,     // <<
+    T_RSHIFT,     // >>
+    T_PLUS,       // +
+    T_MINUS,      // - (subtraction or (unary) negation)
+    T_STAR,       // *
+    T_SLASH,      // /
+
+    // Unary operators
+    T_INCREMENT,     // ++
+    T_DECREMENT,     // --
+    T_LOGICALINVERT, // ~
+    T_LOGICALNOT,    // !
+
+    // Types
+    T_VOID, // "void"
+    T_CHAR, // "char"
+    T_INT,  // "int"
+    T_LONG, // "long"
+
+    // Keywords
+    T_IF,     // "if"
+    T_ELSE,   // "else"
+    T_WHILE,  // "while"
+    T_FOR,    // "for" (will be converted into while statement)
+    T_RETURN, // "return"
+
+    // Structural tokens
     T_INTEGERLITERAL, // integer literal
                       // (decimal whole number which have 1 or more digits of
                       // 0-9)
@@ -53,21 +83,6 @@ enum {
     T_RPAREN,         // )
     T_LBRACKET,       // [
     T_RBRACKET,       // ]
-    T_AMPERSAND,      // &
-    T_LOGAND,         // &&
-
-    // Keywords
-    T_IF,     // "if"
-    T_ELSE,   // "else"
-    T_WHILE,  // "while"
-    T_FOR,    // "for" (will be converted into while statement)
-    T_RETURN, // "return"
-
-    // Types
-    T_VOID, // "void"
-    T_CHAR, // "char"
-    T_INT,  // "int"
-    T_LONG, // "long"
 };
 
 // Token structure
@@ -80,16 +95,23 @@ struct token {
 enum {
     A_NOTHING = 0,    // No operation
     A_ASSIGN = 1,     // Assignment
-    A_ADD,            // Addition
-    A_SUBTRACT,       // Subtraction
-    A_MULTIPLY,       // Multiplication
-    A_DIVIDE,         // Division
+    A_LOGICALOR,      // Logical OR
+    A_LOGICALAND,     // Logical AND
+    A_BITWISEOR,      // Bitwise OR
+    A_BITWISEXOR,     // Bitwise XOR
+    A_BITWISEAND,     // Bitwise AND
     A_EQ,             // Equality comparison (==)
     A_NE,             // Inequality comparison (!=)
     A_LT,             // Less than comparison (<)
     A_GT,             // Greater than comparison (>)
     A_LE,             // Less than or equal comparison (<=)
     A_GE,             // Greater than or equal comparison (>=)
+    A_LSHIFT,         // Left shift operation (<<)
+    A_RSHIFT,         // Right shift operation (>>)
+    A_ADD,            // Addition
+    A_SUBTRACT,       // Subtraction
+    A_MULTIPLY,       // Multiplication
+    A_DIVIDE,         // Division
     A_INTEGERLITERAL, // Integer literal
     A_STRINGLITERAL,  // String literal
     A_IDENTIFIER,     // Identifier (variable)
@@ -103,6 +125,15 @@ enum {
     A_DEREFERENCE,    // Pointer dereference
     A_ADDRESSOF,      // Address-of operator
     A_SCALETYPE,      // Scale pointer arithmetic
+    A_PREINCREMENT,   // Pre-increment (++i)
+    A_PREDECREMENT,   // Pre-decrement (--i)
+    A_POSTINCREMENT,  // Post-increment (i++)
+    A_POSTDECREMENT,  // Post-decrement (i--)
+    A_LOGICALNEGATE,  // Negation (-expr)
+    A_LOGICALINVERT,  // Bitwise NOT (~expr)
+    A_LOGICALNOT,     // Logical NOT (!expr)
+    A_TOBOOLEAN,      // Convert to boolean context
+                      // (e.g., in if statement's conditions)
 };
 
 // Primitive types

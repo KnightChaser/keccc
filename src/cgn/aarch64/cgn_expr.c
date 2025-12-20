@@ -82,24 +82,78 @@ static void aarch64LoadGlobalAddressIntoX0(const char *name) {
  * a register.
  *
  * @param id The ID of the global symbol in the symbol table.
+ * @param op The AST operation code
  *
  * @return Index of the register containing the loaded value.
  */
-int aarch64LoadGlobalSymbol(int id) {
+int aarch64LoadGlobalSymbol(int id, int op) {
     int r = aarch64AllocateRegister();
     int primitiveType = GlobalSymbolTable[id].primitiveType;
     char *name = GlobalSymbolTable[id].name;
+
+    int tmpReg = -1; // optional temp for post-inc/dec
 
     aarch64LoadGlobalAddressIntoX0(name);
 
     switch (primitiveType) {
     case P_CHAR:
-        // NOTE: zero-extend 8-bit char into w-reg (and thus x-reg)
-        // (Load Register Byte)
+        // Pre-increment/decrement: update memory before load
+        if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
+            fprintf(Outfile, "\tldrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+            if (op == A_PREINCREMENT) {
+                fprintf(Outfile, "\tadd\t%s, %s, #1\n",
+                        aarch64DwordRegisterList[r],
+                        aarch64DwordRegisterList[r]);
+            } else {
+                fprintf(Outfile, "\tsub\t%s, %s, #1\n",
+                        aarch64DwordRegisterList[r],
+                        aarch64DwordRegisterList[r]);
+            }
+            fprintf(Outfile, "\tstrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        }
+
+        // Load (zero-extend byte into w-reg)
         fprintf(Outfile, "\tldrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+
+        // Post-increment/decrement: update memory after load, keep r intact
+        if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
+            tmpReg = aarch64AllocateRegister();
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                (op == A_POSTINCREMENT) ? "add" : "sub",
+                aarch64DwordRegisterList[tmpReg],
+                aarch64DwordRegisterList[r]);
+            fprintf(Outfile, "\tstrb\t%s, [x0]\n",
+                aarch64DwordRegisterList[tmpReg]);
+            aarch64FreeRegister(tmpReg);
+        }
         break;
     case P_INT:
+        if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
+            fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+            if (op == A_PREINCREMENT) {
+                fprintf(Outfile, "\tadd\t%s, %s, #1\n",
+                        aarch64DwordRegisterList[r],
+                        aarch64DwordRegisterList[r]);
+            } else {
+                fprintf(Outfile, "\tsub\t%s, %s, #1\n",
+                        aarch64DwordRegisterList[r],
+                        aarch64DwordRegisterList[r]);
+            }
+            fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        }
+
         fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+
+        if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
+            tmpReg = aarch64AllocateRegister();
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                (op == A_POSTINCREMENT) ? "add" : "sub",
+                aarch64DwordRegisterList[tmpReg],
+                aarch64DwordRegisterList[r]);
+            fprintf(Outfile, "\tstr\t%s, [x0]\n",
+                aarch64DwordRegisterList[tmpReg]);
+            aarch64FreeRegister(tmpReg);
+        }
         break;
     case P_LONG:
     // NOTE:
@@ -107,7 +161,32 @@ int aarch64LoadGlobalSymbol(int id) {
     case P_CHARPTR:
     case P_INTPTR:
     case P_LONGPTR:
+        if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
+            fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+            if (op == A_PREINCREMENT) {
+                fprintf(Outfile, "\tadd\t%s, %s, #1\n",
+                        aarch64QwordRegisterList[r],
+                        aarch64QwordRegisterList[r]);
+            } else {
+                fprintf(Outfile, "\tsub\t%s, %s, #1\n",
+                        aarch64QwordRegisterList[r],
+                        aarch64QwordRegisterList[r]);
+            }
+            fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+        }
+
         fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+
+        if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
+            tmpReg = aarch64AllocateRegister();
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                (op == A_POSTINCREMENT) ? "add" : "sub",
+                aarch64QwordRegisterList[tmpReg],
+                aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\tstr\t%s, [x0]\n",
+                aarch64QwordRegisterList[tmpReg]);
+            aarch64FreeRegister(tmpReg);
+        }
         break;
     default:
         fprintf(
@@ -400,6 +479,112 @@ int aarch64DivRegsSigned(int r1, int r2) {
 int aarch64ShiftLeftConst(int reg, int shiftAmount) {
     fprintf(Outfile, "\tlsl\t%s, %s, #%d\n", aarch64QwordRegisterList[reg],
             aarch64QwordRegisterList[reg], shiftAmount);
+    return reg;
+}
+
+/**
+ * aarch64ShiftRightConst - Generates code to shift a register right by a
+ * constant amount (arithmetic shift).
+ *
+ * @param reg Index of the register to shift.
+ * @param shiftAmount The constant amount to shift right.
+ *
+ * @return Index of the register containing the shifted value.
+ */
+int aarch64ShiftRightConst(int reg, int shiftAmount) {
+    fprintf(Outfile, "\tasr\t%s, %s, #%d\n",
+            aarch64QwordRegisterList[reg], aarch64QwordRegisterList[reg],
+            shiftAmount);
+    return reg;
+}
+
+/**
+ * aarch64LogicalNegate - Generates code to arithmetic-negate a register.
+ *
+ * @param reg Index of the register to negate.
+ *
+ * @return Index of the register containing the negated value.
+ */
+int aarch64LogicalNegate(int reg) {
+    fprintf(Outfile, "\tneg\t%s, %s\n", aarch64QwordRegisterList[reg],
+            aarch64QwordRegisterList[reg]);
+    return reg;
+}
+
+/**
+ * aarch64LogicalInvert - Generates code to bitwise NOT a register.
+ *
+ * @param reg Index of the register to invert.
+ *
+ * @return Index of the register containing the inverted value.
+ */
+int aarch64LogicalInvert(int reg) {
+    fprintf(Outfile, "\tmvn\t%s, %s\n", aarch64QwordRegisterList[reg],
+            aarch64QwordRegisterList[reg]);
+    return reg;
+}
+
+/**
+ * aarch64LogicalNot - Generates code to logical-NOT a register (1 if zero,
+ * else 0).
+ *
+ * @param reg Index of the register to NOT.
+ *
+ * @return Index of the register containing the boolean result.
+ */
+int aarch64LogicalNot(int reg) {
+    fprintf(Outfile, "\tcmp\t%s, #0\n", aarch64QwordRegisterList[reg]);
+    fprintf(Outfile, "\tcset\t%s, eq\n", aarch64DwordRegisterList[reg]);
+    return reg;
+}
+
+/**
+ * aarch64BitwiseAndRegs - Bitwise AND two registers (dst &= src).
+ */
+int aarch64BitwiseAndRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\tand\t%s, %s, %s\n",
+            aarch64QwordRegisterList[dstReg], aarch64QwordRegisterList[dstReg],
+            aarch64QwordRegisterList[srcReg]);
+    aarch64FreeRegister(srcReg);
+    return dstReg;
+}
+
+/**
+ * aarch64BitwiseOrRegs - Bitwise OR two registers (dst |= src).
+ */
+int aarch64BitwiseOrRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\torr\t%s, %s, %s\n",
+            aarch64QwordRegisterList[dstReg], aarch64QwordRegisterList[dstReg],
+            aarch64QwordRegisterList[srcReg]);
+    aarch64FreeRegister(srcReg);
+    return dstReg;
+}
+
+/**
+ * aarch64BitwiseXorRegs - Bitwise XOR two registers (dst ^= src).
+ */
+int aarch64BitwiseXorRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\teor\t%s, %s, %s\n",
+            aarch64QwordRegisterList[dstReg], aarch64QwordRegisterList[dstReg],
+            aarch64QwordRegisterList[srcReg]);
+    aarch64FreeRegister(srcReg);
+    return dstReg;
+}
+
+/**
+ * aarch64ToBoolean - Convert a register to boolean, optionally branching.
+ *
+ * If op is A_IF/A_WHILE, branch to label when zero. Otherwise, set reg to
+ * 0/1 based on non-zeroness.
+ */
+int aarch64ToBoolean(int reg, int op, int label) {
+    fprintf(Outfile, "\tcmp\t%s, #0\n", aarch64QwordRegisterList[reg]);
+    if (op == A_IF || op == A_WHILE) {
+        fprintf(Outfile, "\tbeq\tL%d\n", label);
+    } else {
+        fprintf(Outfile, "\tcset\t%s, ne\n",
+                aarch64DwordRegisterList[reg]);
+    }
     return reg;
 }
 

@@ -59,7 +59,7 @@ void nasmFunctionPreamble(int id);
 void nasmReturnFromFunction(int reg, int id);
 void nasmFunctionPostamble(int id);
 int nasmLoadImmediateInt(int value, int primitiveType);
-int nasmLoadGlobalSymbol(int id);
+int nasmLoadGlobalSymbol(int id, int op);
 int nasmLoadGlobalString(int id);
 int nasmStoreGlobalSymbol(int registerIndex, int id);
 void nasmDeclareGlobalSymbol(int id);
@@ -69,6 +69,7 @@ int nasmSubRegs(int dstReg, int srcReg);
 int nasmMulRegs(int dstReg, int srcReg);
 int nasmDivRegsSigned(int dividendReg, int divisorReg);
 int nasmShiftLeftConst(int reg, int shiftAmount);
+int nasmShiftRightConst(int reg, int shiftAmount);
 int nasmCompareAndSet(int ASTop, int r1, int r2);
 int nasmCompareAndJump(int ASTop, int r1, int r2, int label);
 void nasmLabel(int label);
@@ -79,6 +80,13 @@ int nasmAddressOfGlobalSymbol(int id);
 int nasmDereferencePointer(int pointerReg, int primitiveType);
 int nasmStoreDereferencedPointer(int valueReg, int pointerReg,
                                  int primitiveType);
+int nasmLogicalNegate(int reg);
+int nasmLogicalInvert(int reg);
+int nasmLogicalNot(int reg);
+int nasmBitwiseAndRegs(int dstReg, int srcReg);
+int nasmBitwiseOrRegs(int dstReg, int srcReg);
+int nasmBitwiseXorRegs(int dstReg, int srcReg);
+int nasmToBoolean(int reg, int op, int label);
 
 // aarch64 AArch64 backend
 void aarch64ResetRegisterPool(void);
@@ -89,7 +97,7 @@ void aarch64FunctionPreamble(int id);
 void aarch64ReturnFromFunction(int reg, int id);
 void aarch64FunctionPostamble(int id);
 int aarch64LoadImmediateInt(int value, int primitiveType);
-int aarch64LoadGlobalSymbol(int id);
+int aarch64LoadGlobalSymbol(int id, int op);
 int aarch64LoadGlobalString(int id);
 int aarch64StoreGlobalSymbol(int registerIndex, int id);
 void aarch64DeclareGlobalSymbol(int id);
@@ -99,6 +107,7 @@ int aarch64SubRegs(int dstReg, int srcReg);
 int aarch64MulRegs(int dstReg, int srcReg);
 int aarch64DivRegsSigned(int dividendReg, int divisorReg);
 int aarch64ShiftLeftConst(int reg, int shiftAmount);
+int aarch64ShiftRightConst(int reg, int shiftAmount);
 int aarch64CompareAndSet(int ASTop, int r1, int r2);
 int aarch64CompareAndJump(int ASTop, int r1, int r2, int label);
 void aarch64Label(int label);
@@ -110,6 +119,13 @@ int aarch64AddressOfGlobalSymbol(int id);
 int aarch64DereferencePointer(int pointerReg, int primitiveType);
 int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
                                     int primitiveType);
+int aarch64LogicalNegate(int reg);
+int aarch64LogicalInvert(int reg);
+int aarch64LogicalNot(int reg);
+int aarch64ToBoolean(int reg, int op, int label);
+int aarch64BitwiseAndRegs(int dstReg, int srcReg);
+int aarch64BitwiseOrRegs(int dstReg, int srcReg);
+int aarch64BitwiseXorRegs(int dstReg, int srcReg);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);

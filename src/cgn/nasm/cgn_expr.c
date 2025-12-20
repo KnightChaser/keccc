@@ -77,39 +77,106 @@ int nasmLoadImmediateInt(int value, int primitiveType) {
  *                        register.
  *
  * @param id The ID of the global symbol in the symbol table.
+ * @param op The AST operation code
+ *
+ * If the operation(@param op) is whether pre- or post-
+ * increment/decrement, it performs additional actions.
  *
  * @return Index of the register containing the loaded value.
  */
-int nasmLoadGlobalSymbol(int id) {
+int nasmLoadGlobalSymbol(int id, int op) {
     int registerIndex = allocateRegister();
     int primitiveType = GlobalSymbolTable[id].primitiveType;
 
     switch (primitiveType) {
     case P_CHAR:
+        if (op == A_PREINCREMENT) {
+            // Increase first, then load
+            fprintf(Outfile, "\tinc\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+        }
+        if (op == A_PREDECREMENT) {
+            // Decrease first, then load
+            fprintf(Outfile, "\tdec\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+        }
+
+        // Load
         fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n", // Zero-extend for char
                 qwordRegisterList[registerIndex],    // destination register
                 GlobalSymbolTable[id].name           // source global symbol
         );
+
+        if (op == A_POSTINCREMENT) {
+            // Load first, then increase
+            fprintf(Outfile, "\tinc\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+        }
+        if (op == A_POSTDECREMENT) {
+            // Load first, then decrease
+            fprintf(Outfile, "\tdec\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+        }
+
         break;
+
     case P_INT:
+        if (op == A_PREINCREMENT) {
+            // Increase first, then load
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+        if (op == A_PREDECREMENT) {
+            // Decrease first, then load
+            fprintf(Outfile, "\tdec\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+
+        // Load
         fprintf(Outfile, "\txor\t%s, %s\n", qwordRegisterList[registerIndex],
                 qwordRegisterList[registerIndex]);  // Clear the register first)
         fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n", // Load 4 bytes only
                 dwordRegisterList[registerIndex],   // destination register
                 GlobalSymbolTable[id].name          // source global symbol
         );
+
+        if (op == A_POSTINCREMENT) {
+            // Load first, then increase
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+        if (op == A_POSTDECREMENT) {
+            // Load first, then decrease
+            fprintf(Outfile, "\tdec\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+
         break;
+
     case P_LONG:
     // NOTE:
     // pointer types are treated as long (64 bits) in x86_64
     case P_CHARPTR:
     case P_INTPTR:
     case P_LONGPTR:
+        if (op == A_PREINCREMENT) {
+            // Increase first, then load
+            fprintf(Outfile, "\tinc\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+        if (op == A_PREDECREMENT) {
+            // Decrease first, then load
+            fprintf(Outfile, "\tdec\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+
+        // Load
         fprintf(Outfile, "\tmov\t%s, [%s]\n",
                 qwordRegisterList[registerIndex], // destination register
                 GlobalSymbolTable[id].name        // source global symbol
         );
+
+        if (op == A_POSTINCREMENT) {
+            // Load first, then increase
+            fprintf(Outfile, "\tinc\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+        if (op == A_POSTDECREMENT) {
+            // Load first, then decrease
+            fprintf(Outfile, "\tdec\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+        }
+
         break;
+
     default:
         fprintf(
             stderr,
@@ -394,6 +461,129 @@ int nasmDivRegsSigned(int r1, int r2) {
 }
 
 /**
+ * nasmLogicalNegate - Generates code to logically negate a register's value.
+ *
+ * @param reg Index of the register to negate.
+ *
+ * @return Index of the register containing the negated value.
+ */
+int nasmLogicalNegate(int reg) {
+    fprintf(Outfile, "\tneg\t%s\n", qwordRegisterList[reg]);
+
+    return reg;
+}
+
+/**
+ * nasmLogicalInvert - Generates code to logically invert (bitwise NOT) a
+ * register's value.
+ *
+ * @param reg Index of the register to invert.
+ *
+ * @return Index of the register containing the inverted value.
+ */
+int nasmLogicalInvert(int reg) {
+    fprintf(Outfile, "\tnot\t%s\n", qwordRegisterList[reg]);
+
+    return reg;
+}
+
+/**
+ * nasmLogicalNot - Generates code to logically NOT a register's value.
+ * (i.e., set to 1 if zero, else set to 0)
+ *
+ * @param reg Index of the register to NOT.
+ *
+ * @return Index of the register containing the NOTed value.
+ */
+int nasmLogicalNot(int reg) {
+    fprintf(Outfile, "\ttest\t%s, %s\n", qwordRegisterList[reg],
+            qwordRegisterList[reg]);
+    fprintf(Outfile, "\tsete\t%s\n", byteRegisterList[reg]);
+    fprintf(Outfile, "\tmovzx\t%s, %s\n", qwordRegisterList[reg],
+            byteRegisterList[reg]);
+
+    return reg;
+}
+
+/**
+ * nasmToBoolean - Generates code to convert a register's value to boolean.
+ *
+ * If used in an A_IF or A_WHILE operation, generates a jump to the given
+ * label if the value is zero. Otherwise, sets the register to 0 or 1 based on
+ * its truthiness.
+ *
+ * @param reg Index of the register to convert.
+ * @param op The AST operation code (A_IF, A_WHILE, etc.)
+ * @param label The label to jump to if the value is zero (for A_IF/A_WHILE).
+ *
+ * @return Index of the register containing the boolean value (0 or 1).
+ */
+int nasmToBoolean(int reg, int op, int label) {
+    fprintf(Outfile, "\ttest\t%s, %s\n", qwordRegisterList[reg],
+            qwordRegisterList[reg]);
+    if (op == A_IF || op == A_WHILE) {
+        fprintf(Outfile, "\tje\tL%d\n", label);
+    } else {
+        fprintf(Outfile, "\tsetnz\t%s\n", byteRegisterList[reg]);
+        fprintf(Outfile, "\tmovzx\t%s, %s\n", qwordRegisterList[reg],
+                byteRegisterList[reg]);
+    }
+
+    return reg;
+}
+
+/**
+ * nasmBitwiseAndRegs - Generates code to perform bitwise AND between two
+ * registers.
+ *
+ * @param dstReg Index of the destination register (also holds one operand).
+ * @param srcReg Index of the source register (holds the other operand).
+ *
+ * @return Index of the register containing the result.
+ */
+int nasmBitwiseAndRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\tand\t%s, %s\n", qwordRegisterList[dstReg],
+            qwordRegisterList[srcReg]);
+    freeRegister(srcReg);
+
+    return dstReg;
+}
+
+/**
+ * nasmBitwiseOrRegs - Generates code to perform bitwise OR between two
+ * registers.
+ *
+ * @param dstReg Index of the destination register (also holds one operand).
+ * @param srcReg Index of the source register (holds the other operand).
+ *
+ * @return Index of the register containing the result.
+ */
+int nasmBitwiseOrRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\tor\t%s, %s\n", qwordRegisterList[dstReg],
+            qwordRegisterList[srcReg]);
+    freeRegister(srcReg);
+
+    return dstReg;
+}
+
+/**
+ * nasmBitwiseXorRegs - Generates code to perform bitwise XOR between two
+ * registers.
+ *
+ * @param dstReg Index of the destination register (also holds one operand).
+ * @param srcReg Index of the source register (holds the other operand).
+ *
+ * @return Index of the register containing the result.
+ */
+int nasmBitwiseXorRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\txor\t%s, %s\n", qwordRegisterList[dstReg],
+            qwordRegisterList[srcReg]);
+    freeRegister(srcReg);
+
+    return dstReg;
+}
+
+/**
  * nasmShiftLeftConst - Generates code to shift a register's value left by a
  * constant amount.
  *
@@ -404,6 +594,20 @@ int nasmDivRegsSigned(int r1, int r2) {
  */
 int nasmShiftLeftConst(int reg, int shiftAmount) {
     fprintf(Outfile, "\tshl\t%s, %d\n", qwordRegisterList[reg], shiftAmount);
+    return reg;
+}
+
+/**
+ * nasmShiftRightConst - Generates code to shift a register's value right by
+ * a constant amount.
+ *
+ * @param reg Index of the register to shift.
+ * @param shiftAmount The constant amount to shift right.
+ *
+ * @return Index of the register containing the shifted value.
+ */
+int nasmShiftRightConst(int reg, int shiftAmount) {
+    fprintf(Outfile, "\tshr\t%s, %d\n", qwordRegisterList[reg], shiftAmount);
     return reg;
 }
 

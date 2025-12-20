@@ -58,6 +58,16 @@ static const char *astOpToString(int op) {
         return "A_NOTHING";
     case A_ASSIGN:
         return "A_ASSIGN";
+    case A_LOGICALOR:
+        return "A_LOGICALOR";
+    case A_LOGICALAND:
+        return "A_LOGICALAND";
+    case A_BITWISEOR:
+        return "A_BITWISEOR";
+    case A_BITWISEXOR:
+        return "A_BITWISEXOR";
+    case A_BITWISEAND:
+        return "A_BITWISEAND";
     case A_ADD:
         return "A_ADD";
     case A_SUBTRACT:
@@ -78,6 +88,10 @@ static const char *astOpToString(int op) {
         return "A_LE";
     case A_GE:
         return "A_GE";
+    case A_LSHIFT:
+        return "A_LSHIFT";
+    case A_RSHIFT:
+        return "A_RSHIFT";
     case A_INTEGERLITERAL:
         return "A_INTEGERLITERAL";
     case A_STRINGLITERAL:
@@ -104,6 +118,22 @@ static const char *astOpToString(int op) {
         return "A_ADDRESSOF";
     case A_SCALETYPE:
         return "A_SCALETYPE";
+    case A_PREINCREMENT:
+        return "A_PREINCREMENT";
+    case A_PREDECREMENT:
+        return "A_PREDECREMENT";
+    case A_POSTINCREMENT:
+        return "A_POSTINCREMENT";
+    case A_POSTDECREMENT:
+        return "A_POSTDECREMENT";
+    case A_LOGICALNEGATE:
+        return "A_LOGICALNEGATE";
+    case A_LOGICALINVERT:
+        return "A_LOGICALINVERT";
+    case A_LOGICALNOT:
+        return "A_LOGICALNOT";
+    case A_TOBOOLEAN:
+        return "A_TOBOOLEAN";
     default:
         return "A_?";
     }
@@ -168,10 +198,20 @@ static void dumpASTNodeHeader(struct ASTnode *n, int label, int level) {
     case A_FUNCTION:
     case A_FUNCTIONCALL:
     case A_ADDRESSOF:
+    case A_PREINCREMENT:
+    case A_PREDECREMENT:
+    case A_POSTINCREMENT:
+    case A_POSTDECREMENT:
         printf(" name=%s", GlobalSymbolTable[n->v.identifierIndex].name);
         break;
     case A_SCALETYPE:
         printf(" size=%d", n->v.size);
+        break;
+    case A_WIDENTYPE:
+    case A_TOBOOLEAN:
+        if (n->left) {
+            printf(" from=%s", primitiveTypeToString(n->left->primitiveType));
+        }
         break;
     default:
         break;

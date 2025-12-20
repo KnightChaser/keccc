@@ -1,10 +1,11 @@
-// src/cgn/arm64/cgn_ops.c
+// src/cgn/aarch64/cgn_ops.c
 
 #include "cgn/cg_ops.h"
-#include "decl.h"
+#include "decl.h" // for aarch64* prototypes already declared there
 
 const struct CodegenOps aarch64Ops = {
     .resetRegisters = aarch64ResetRegisterPool,
+
     .preamble = aarch64Preamble,
     .postamble = aarch64Postamble,
 
@@ -18,14 +19,23 @@ const struct CodegenOps aarch64Ops = {
 
     .loadImmediateInt = aarch64LoadImmediateInt,
     .loadGlobalSymbol = aarch64LoadGlobalSymbol,
-    .loadGlobalString = aarch64LoadGlobalString,
     .storeGlobalSymbol = aarch64StoreGlobalSymbol,
+    .loadGlobalString = aarch64LoadGlobalString,
 
     .addRegs = aarch64AddRegs,
     .subRegs = aarch64SubRegs,
     .mulRegs = aarch64MulRegs,
     .divRegsSigned = aarch64DivRegsSigned,
     .shiftLeftConst = aarch64ShiftLeftConst,
+    .shiftRightConst = aarch64ShiftRightConst,
+
+    .logicalNegate = aarch64LogicalNegate,
+    .logicalInvert = aarch64LogicalInvert,
+    .logicalNot = aarch64LogicalNot,
+    .bitwiseAndRegs = aarch64BitwiseAndRegs,
+    .bitwiseOrRegs = aarch64BitwiseOrRegs,
+    .bitwiseXorRegs = aarch64BitwiseXorRegs,
+    .toBoolean = aarch64ToBoolean,
 
     .compareAndSet = aarch64CompareAndSet,
     .compareAndJump = aarch64CompareAndJump,

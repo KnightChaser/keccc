@@ -37,10 +37,11 @@ static struct ASTnode *ifStatement(void) {
     // Ensure the tree's operation is a comparison.
     conditionAST = binexpr(0);
 
+    // For a non-comparison to be boolean
     if (!(conditionAST->op == A_EQ) && !(conditionAST->op == A_NE) &&
         !(conditionAST->op == A_LT) && !(conditionAST->op == A_LE) &&
         !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
-        logFatal("If statement condition is not a comparison");
+        conditionAST = makeASTUnary(A_TOBOOLEAN, P_INT, conditionAST, 0);
     }
     matchRightParenthesisToken();
 
@@ -80,10 +81,11 @@ static struct ASTnode *whileStatement(void) {
     // Parse the following expression and the following ')'
     conditionAST = binexpr(0);
 
+    // Force non-comparisons to be boolean
     if (!(conditionAST->op == A_EQ) && !(conditionAST->op == A_NE) &&
         !(conditionAST->op == A_LT) && !(conditionAST->op == A_LE) &&
         !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
-        logFatal("While statement condition is not a comparison");
+        conditionAST = makeASTUnary(A_TOBOOLEAN, P_INT, conditionAST, 0);
     }
     matchRightParenthesisToken();
 
@@ -138,10 +140,12 @@ static struct ASTnode *forStatement(void) {
 
     // Get the condition and the ';'
     conditionAST = binexpr(0);
+
+    // Force non-comparisons to be boolean
     if (!(conditionAST->op == A_EQ) && !(conditionAST->op == A_NE) &&
         !(conditionAST->op == A_LT) && !(conditionAST->op == A_LE) &&
         !(conditionAST->op == A_GT) && !(conditionAST->op == A_GE)) {
-        logFatal("For statement condition is not a comparison");
+        conditionAST = makeASTUnary(A_TOBOOLEAN, P_INT, conditionAST, 0);
     }
     matchSemicolonToken();
 
