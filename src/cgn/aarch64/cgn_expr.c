@@ -129,27 +129,33 @@ int aarch64LoadGlobalSymbol(int id, int op) {
         break;
     case P_INT:
         if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
-            fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+            // Sign-extend 32-bit int into 64-bit register so subsequent
+            // operations and calls (e.g. printint) observe signed values.
+            fprintf(Outfile, "\tldrsw\t%s, [x0]\n",
+                    aarch64QwordRegisterList[r]);
             if (op == A_PREINCREMENT) {
                 fprintf(Outfile, "\tadd\t%s, %s, #1\n",
-                        aarch64DwordRegisterList[r],
-                        aarch64DwordRegisterList[r]);
+                        aarch64QwordRegisterList[r],
+                        aarch64QwordRegisterList[r]);
             } else {
                 fprintf(Outfile, "\tsub\t%s, %s, #1\n",
-                        aarch64DwordRegisterList[r],
-                        aarch64DwordRegisterList[r]);
+                        aarch64QwordRegisterList[r],
+                        aarch64QwordRegisterList[r]);
             }
+            // Store back as 32-bit int.
             fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
         }
 
-        fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        // Normal load: sign-extend into 64-bit register.
+        fprintf(Outfile, "\tldrsw\t%s, [x0]\n", aarch64QwordRegisterList[r]);
 
         if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
             tmpReg = aarch64AllocateRegister();
             fprintf(Outfile, "\t%s\t%s, %s, #1\n",
                     (op == A_POSTINCREMENT) ? "add" : "sub",
-                    aarch64DwordRegisterList[tmpReg],
-                    aarch64DwordRegisterList[r]);
+                    aarch64QwordRegisterList[tmpReg],
+                    aarch64QwordRegisterList[r]);
+            // Store back as 32-bit int.
             fprintf(Outfile, "\tstr\t%s, [x0]\n",
                     aarch64DwordRegisterList[tmpReg]);
             aarch64FreeRegister(tmpReg);
