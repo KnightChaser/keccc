@@ -127,11 +127,13 @@ int nasmLoadGlobalSymbol(int id, int op) {
         }
 
         // Load
-        fprintf(Outfile, "\txor\t%s, %s\n", qwordRegisterList[registerIndex],
-                qwordRegisterList[registerIndex]);  // Clear the register first)
-        fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n", // Load 4 bytes only
-                dwordRegisterList[registerIndex],   // destination register
-                GlobalSymbolTable[id].name          // source global symbol
+        fprintf(Outfile, "\txor\t%s, %s\n",       // Clear upper 32 bits
+                qwordRegisterList[registerIndex], // destination register
+                qwordRegisterList[registerIndex]  // source register
+        );
+        fprintf(Outfile, "\tmovsxd\t%s, %s\n",
+                qwordRegisterList[registerIndex], // dest
+                dwordRegisterList[registerIndex]  // Sign-extend to 64 bits
         );
 
         if (op == A_POSTINCREMENT) {
