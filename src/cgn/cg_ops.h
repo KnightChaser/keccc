@@ -31,7 +31,8 @@ struct CodegenOps {
     int (*mulRegs)(int r1, int r2);
     int (*divRegsSigned)(int r1, int r2);
     int (*shiftLeftConst)(int reg, int shiftAmount);
-    int (*shiftRightConst)(int reg, int shiftAmount);
+    int (*shiftLeftRegs)(int dstReg, int srcReg);
+    int (*shiftRightRegs)(int dstReg, int srcReg);
 
     // Bitwise and logical operations
     int (*logicalNegate)(int reg);

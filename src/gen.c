@@ -247,9 +247,9 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     case A_BITWISEXOR:
         return CG->bitwiseXorRegs(leftRegister, rightRegister);
     case A_LSHIFT:
-        return CG->shiftLeftConst(leftRegister, rightRegister);
+        return CG->shiftLeftRegs(leftRegister, rightRegister);
     case A_RSHIFT:
-        return CG->shiftRightConst(leftRegister, rightRegister);
+        return CG->shiftRightRegs(leftRegister, rightRegister);
 
     // Comparison operations
     case A_EQ:

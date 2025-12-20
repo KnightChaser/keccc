@@ -604,17 +604,37 @@ int nasmShiftLeftConst(int reg, int shiftAmount) {
 }
 
 /**
- * nasmShiftRightConst - Generates code to shift a register's value right by
- * a constant amount.
+ * nasmShiftLeftRegs - Generates code to shift a register's value left by an
+ * amount specified in another register.
+ *
+ * @param dstReg Index of the register to shift.
+ * @param srcReg Index of the register containing the shift amount.
+ *
+ * @return Index of the register containing the shifted value.
+ */
+int nasmShiftLeftRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\tmov\tcl, %s\n", byteRegisterList[srcReg]);
+    fprintf(Outfile, "\tshl\t%s, cl\n", qwordRegisterList[dstReg]);
+    freeRegister(srcReg);
+
+    return dstReg;
+}
+
+/**
+ * nasmShiftRightConst - Generates code to shift a register's value right by a
+ * constant amount.
  *
  * @param reg Index of the register to shift.
  * @param shiftAmount The constant amount to shift right.
  *
  * @return Index of the register containing the shifted value.
  */
-int nasmShiftRightConst(int reg, int shiftAmount) {
-    fprintf(Outfile, "\tshr\t%s, %d\n", qwordRegisterList[reg], shiftAmount);
-    return reg;
+int nasmShiftRightRegs(int dstReg, int srcReg) {
+    fprintf(Outfile, "\tmov\tcl, %s\n", byteRegisterList[srcReg]);
+    fprintf(Outfile, "\tshr\t%s, cl\n", qwordRegisterList[dstReg]);
+    freeRegister(srcReg);
+
+    return dstReg;
 }
 
 /**

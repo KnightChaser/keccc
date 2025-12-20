@@ -27,7 +27,8 @@ const struct CodegenOps aarch64Ops = {
     .mulRegs = aarch64MulRegs,
     .divRegsSigned = aarch64DivRegsSigned,
     .shiftLeftConst = aarch64ShiftLeftConst,
-    .shiftRightConst = aarch64ShiftRightConst,
+    .shiftLeftRegs = aarch64ShiftLeftRegs,
+    .shiftRightRegs = aarch64ShiftRightRegs,
 
     .logicalNegate = aarch64LogicalNegate,
     .logicalInvert = aarch64LogicalInvert,

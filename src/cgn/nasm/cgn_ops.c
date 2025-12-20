@@ -27,7 +27,8 @@ const struct CodegenOps nasmOps = {
     .mulRegs = nasmMulRegs,
     .divRegsSigned = nasmDivRegsSigned,
     .shiftLeftConst = nasmShiftLeftConst,
-    .shiftRightConst = nasmShiftRightConst,
+    .shiftLeftRegs = nasmShiftLeftRegs,
+    .shiftRightRegs = nasmShiftRightRegs,
 
     .logicalNegate = nasmLogicalNegate,
     .logicalInvert = nasmLogicalInvert,
