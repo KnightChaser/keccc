@@ -131,6 +131,10 @@ int nasmLoadGlobalSymbol(int id, int op) {
                 qwordRegisterList[registerIndex], // destination register
                 qwordRegisterList[registerIndex]  // source register
         );
+        fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n",
+                dwordRegisterList[registerIndex], // lower 32 bits
+                GlobalSymbolTable[id].name        // source global symbol
+        );
         fprintf(Outfile, "\tmovsxd\t%s, %s\n",
                 qwordRegisterList[registerIndex], // dest
                 dwordRegisterList[registerIndex]  // Sign-extend to 64 bits
