@@ -98,7 +98,7 @@ def discover_tests(tests_dir: Path) -> list[TestCase]:
     Returns a list of TestCase objects.
     """
     test_cases: list[TestCase] = []
-    for source_path in sorted(tests_dir.glob("*.kc")):
+    for source_path in sorted(tests_dir.glob("*.c")):
         name = source_path.stem
         expected_path = source_path.with_suffix(".expected")
         test_cases.append(TestCase(name=name, source=source_path, expected=expected_path))
