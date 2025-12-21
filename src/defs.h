@@ -79,8 +79,8 @@ enum {
     T_IDENTIFIER,     // variable names
     T_LBRACE,         // {
     T_RBRACE,         // }
-    T_LPAREN,         // (
-    T_RPAREN,         // )
+    T_LPARENTHESIS,   // (
+    T_RPARENTHESIS,   // )
     T_LBRACKET,       // [
     T_RBRACKET,       // ]
 };

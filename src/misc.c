@@ -45,12 +45,12 @@ void matchRightBraceToken(void) { match(T_RBRACE, "}"); }
 /**
  * matchLeftParenthesisToken - Matches a left parenthesis token.
  */
-void matchLeftParenthesisToken(void) { match(T_LPAREN, "("); }
+void matchLeftParenthesisToken(void) { match(T_LPARENTHESIS, "("); }
 
 /**
  * matchRightParenthesisToken - Matches a right parenthesis token.
  */
-void matchRightParenthesisToken(void) { match(T_RPAREN, ")"); }
+void matchRightParenthesisToken(void) { match(T_RPARENTHESIS, ")"); }
 
 /**
  * logFatal - Logs a fatal error message and exits.

@@ -326,10 +326,10 @@ bool scan(struct token *t) {
         t->token = T_RBRACE;
         break;
     case '(':
-        t->token = T_LPAREN;
+        t->token = T_LPARENTHESIS;
         break;
     case ')':
-        t->token = T_RPAREN;
+        t->token = T_RPARENTHESIS;
         break;
     case '[':
         t->token = T_LBRACKET;

@@ -157,12 +157,12 @@ void globalDeclaration(void) {
 
     while (true) {
         // We have to read past the type and identifier to see
-        // either a '(' (T_LPAREN) for function declaration
+        // either a '(' (T_LPARENTHESIS) for function declaration
         // or a ',' or ';' for a variable declaration
         type = parsePrimitiveType();
         matchIdentifierToken();
 
-        if (Token.token == T_LPAREN) {
+        if (Token.token == T_LPARENTHESIS) {
             // parse the function declaration and generate the assembly code for
             // it
             treeNode = functionDeclaration(type);

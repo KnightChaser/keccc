@@ -103,7 +103,7 @@ static struct ASTnode *postfix(void) {
     scan(&Token);
 
     // Scan in the next token to see if we have a postfix expression
-    if (Token.token == T_LPAREN) {
+    if (Token.token == T_LPARENTHESIS) {
         return functionCall();
     }
 
@@ -182,7 +182,7 @@ static struct ASTnode *primary(void) {
     case T_IDENTIFIER:
         return postfix();
 
-    case T_LPAREN:
+    case T_LPARENTHESIS:
         // Beginning of a parenthesised expression, skip the '('.
         // Scan in the expression and the right parenthesis
         // It expects expression "( ... )", like "(a + b)".
@@ -329,7 +329,7 @@ static int operatorPrecedence(int tokentype) {
             logFatald("Unexpected token in expression: ", tokentype);
             logFatal("operatorPrecedence doesn't handle this token");
         }
-        return 0; // e.g. T_SEMICOLON, T_RPAREN, etc.
+        return 0; // e.g. T_SEMICOLON, T_RPARENTHESIS, etc.
     }
 }
 
@@ -492,7 +492,7 @@ struct ASTnode *binexpr(int ptp) {
     // bracket("]"), it means it's end of the expression, so we return just the
     // left node. OvO
     tokentype = Token.token;
-    if (tokentype == T_SEMICOLON || tokentype == T_RPAREN ||
+    if (tokentype == T_SEMICOLON || tokentype == T_RPARENTHESIS ||
         tokentype == T_RBRACKET) {
         left->isRvalue = true; // Means this node is an r-value
         return left;
@@ -580,7 +580,7 @@ struct ASTnode *binexpr(int ptp) {
         // bracket("]"), it means it's end of the sentence, so we return just
         // the left node. OvO
         tokentype = Token.token;
-        if (tokentype == T_SEMICOLON || tokentype == T_RPAREN ||
+        if (tokentype == T_SEMICOLON || tokentype == T_RPARENTHESIS ||
             tokentype == T_RBRACKET) {
             left->isRvalue = true; // Means this node is an r-value
             return left;
