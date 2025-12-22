@@ -278,20 +278,27 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
         // Arrays are not scalar variables holding a pointer value.
         // In expressions, an array name evaluates to the address of its first
         // element ("array-to-pointer decay").
-        if (GlobalSymbolTable[n->v.identifierIndex].structuralType == S_ARRAY) {
+        if (SymbolTable[n->v.identifierIndex].structuralType == S_ARRAY) {
             return CG->addressOfGlobalSymbol(n->v.identifierIndex);
         }
 
         if (n->isRvalue || parentASTop == A_DEREFERENCE) {
-            return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
+            if (SymbolTable[n->v.identifierIndex].class == C_LOCAL) {
+                return CG->loadLocalSymbol(n->v.identifierIndex, n->op);
+            } else {
+                return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
+            }
         } else {
             return NOREG; // Lvalue: return NOREG to indicate address needed
         }
     case A_ASSIGN:
         switch (n->right->op) {
         case A_IDENTIFIER:
-            return CG->storeGlobalSymbol(leftRegister,
-                                         n->right->v.identifierIndex);
+            if (SymbolTable[n->right->v.identifierIndex].class == C_LOCAL) {
+                return CG->loadLocalSymbol(n->right->v.identifierIndex, n->op);
+            } else {
+                return CG->loadGlobalSymbol(n->right->v.identifierIndex, n->op);
+            }
         case A_DEREFERENCE:
             return CG->storeDereferencedPointer(leftRegister, rightRegister,
                                                 n->right->primitiveType);
@@ -411,4 +418,22 @@ int codegenDeclareGlobalString(char *stringvalue) {
  */
 int codegenGetPrimitiveTypeSize(int primitiveType) {
     return CG->getPrimitiveTypeSize(primitiveType);
+}
+
+/**
+ * codegenResetLocalOffset - Resets the local variable offset for the current
+ * function.
+ */
+void codegenResetLocalOffset(void) { CG->resetLocalOffset(); }
+
+/**
+ * codegenGetLocalOffset - Gets the local variable offset for a given type.
+ *
+ * @param type                 The primitive type of the local variable.
+ * @param isFunctionParameter  True if the variable is a function parameter.
+ *
+ * @return int The local offset for the variable.
+ */
+int codegenGetLocalOffset(int type, bool isFunctionParameter) {
+    return CG->getLocalOffset(type, isFunctionParameter);
 }

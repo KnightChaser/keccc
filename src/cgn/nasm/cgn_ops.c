@@ -19,6 +19,7 @@ const struct CodegenOps nasmOps = {
 
     .loadImmediateInt = nasmLoadImmediateInt,
     .loadGlobalSymbol = nasmLoadGlobalSymbol,
+    .loadLocalSymbol = nasmLoadLocalSymbol,
     .storeGlobalSymbol = nasmStoreGlobalSymbol,
     .loadGlobalString = nasmLoadGlobalString,
 
@@ -50,4 +51,7 @@ const struct CodegenOps nasmOps = {
     .addressOfGlobalSymbol = nasmAddressOfGlobalSymbol,
     .dereferencePointer = nasmDereferencePointer,
     .storeDereferencedPointer = nasmStoreDereferencedPointer,
+
+    .resetLocalOffset = nasmResetLocalOffset,
+    .getLocalOffset = nasmGetLocalOffset,
 };

@@ -45,12 +45,16 @@ void codegenDeclareGlobalSymbol(int id);
 int codegenDeclareGlobalString(char *stringValue);
 int codegenGetPrimitiveTypeSize(int primitiveType);
 void codegenReturnFromFunction(int reg, int id);
+void codegenResetLocalOffset(void);
+int codegenGetLocalOffset(int type, bool isFunctionParameter);
 
 // NOTE: cgn/*/*.c
 // (cgn_expr.c, cgn_stmt.c, cgn_regs.c)
 // Code generation utilities (NASM x86-64)
 
 // NASM x86-64 backend
+void nasmDeclareDataSegment(void);
+void nasmDeclareTextSegment(void);
 void nasmResetRegisterPool(void);
 void nasmPreamble();
 void nasmPostamble();
@@ -60,8 +64,10 @@ void nasmReturnFromFunction(int reg, int id);
 void nasmFunctionPostamble(int id);
 int nasmLoadImmediateInt(int value, int primitiveType);
 int nasmLoadGlobalSymbol(int id, int op);
+int nasmLoadLocalSymbol(int id, int op);
 int nasmLoadGlobalString(int id);
 int nasmStoreGlobalSymbol(int registerIndex, int id);
+int nasmStoreLocalSymbol(int registerIndex, int id);
 void nasmDeclareGlobalSymbol(int id);
 void nasmDeclareGlobalString(int labelIndex, char *stringValue);
 int nasmAddRegs(int dstReg, int srcReg);
@@ -88,8 +94,12 @@ int nasmBitwiseAndRegs(int dstReg, int srcReg);
 int nasmBitwiseOrRegs(int dstReg, int srcReg);
 int nasmBitwiseXorRegs(int dstReg, int srcReg);
 int nasmToBoolean(int reg, int op, int label);
+void nasmResetLocalOffset(void);
+int nasmGetLocalOffset(int type, bool isFunctionParameter);
 
 // aarch64 AArch64 backend
+void aarch64DeclareDataSegment(void);
+void aarch64DeclareTextSegment(void);
 void aarch64ResetRegisterPool(void);
 void aarch64Preamble(void);
 void aarch64Postamble(void);
@@ -99,8 +109,10 @@ void aarch64ReturnFromFunction(int reg, int id);
 void aarch64FunctionPostamble(int id);
 int aarch64LoadImmediateInt(int value, int primitiveType);
 int aarch64LoadGlobalSymbol(int id, int op);
+int aarch64LoadLocalSymbol(int id, int op);
 int aarch64LoadGlobalString(int id);
 int aarch64StoreGlobalSymbol(int registerIndex, int id);
+int aarch64StoreLocalSymbol(int registerIndex, int id);
 void aarch64DeclareGlobalSymbol(int id);
 void aarch64DeclareGlobalString(int registerIndex, char *stringValue);
 int aarch64AddRegs(int dstReg, int srcReg);
@@ -128,6 +140,8 @@ int aarch64ToBoolean(int reg, int op, int label);
 int aarch64BitwiseAndRegs(int dstReg, int srcReg);
 int aarch64BitwiseOrRegs(int dstReg, int srcReg);
 int aarch64BitwiseXorRegs(int dstReg, int srcReg);
+void aarch64ResetLocalOffset(void);
+void aarch64GetLocalOffset(int type, bool isFunctionParameter);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
@@ -151,12 +165,16 @@ void logFatalc(char *s, int c);
 
 // NOTE: symbol.c
 int findGlobalSymbol(char *s);
+int findLocalSymbol(char *s);
+int findSymbol(char *s);
 int addGlobalSymbol(char *name, int primitiveType, int structuralType,
                     int endLabel, int size);
+int addLocalSymbol(char *name, int primitiveType, int structuralType,
+                   int endlabel, int size);
 
 // NOTE: decl.c
 int parsePrimitiveType(void);
-void variableDeclaration(int type);
+void variableDeclaration(int type, bool isLocalVariable);
 struct ASTnode *functionDeclaration(int type);
 void globalDeclaration(void);
 

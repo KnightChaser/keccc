@@ -86,32 +86,32 @@ int nasmLoadImmediateInt(int value, int primitiveType) {
  */
 int nasmLoadGlobalSymbol(int id, int op) {
     int registerIndex = allocateRegister();
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
+    int primitiveType = SymbolTable[id].primitiveType;
 
     switch (primitiveType) {
     case P_CHAR:
         if (op == A_PREINCREMENT) {
             // Increase first, then load
-            fprintf(Outfile, "\tinc\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tBYTE [%s]\n", SymbolTable[id].name);
         }
         if (op == A_PREDECREMENT) {
             // Decrease first, then load
-            fprintf(Outfile, "\tdec\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tBYTE [%s]\n", SymbolTable[id].name);
         }
 
         // Load
         fprintf(Outfile, "\tmovzx\t%s, BYTE [%s]\n", // Zero-extend for char
                 qwordRegisterList[registerIndex],    // destination register
-                GlobalSymbolTable[id].name           // source global symbol
+                SymbolTable[id].name                 // source global symbol
         );
 
         if (op == A_POSTINCREMENT) {
             // Load first, then increase
-            fprintf(Outfile, "\tinc\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tBYTE [%s]\n", SymbolTable[id].name);
         }
         if (op == A_POSTDECREMENT) {
             // Load first, then decrease
-            fprintf(Outfile, "\tdec\tBYTE [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tBYTE [%s]\n", SymbolTable[id].name);
         }
 
         break;
@@ -119,11 +119,11 @@ int nasmLoadGlobalSymbol(int id, int op) {
     case P_INT:
         if (op == A_PREINCREMENT) {
             // Increase first, then load
-            fprintf(Outfile, "\tinc\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
         }
         if (op == A_PREDECREMENT) {
             // Decrease first, then load
-            fprintf(Outfile, "\tdec\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tDWORD [%s]\n", SymbolTable[id].name);
         }
 
         // Load
@@ -133,7 +133,7 @@ int nasmLoadGlobalSymbol(int id, int op) {
         );
         fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n",
                 dwordRegisterList[registerIndex], // lower 32 bits
-                GlobalSymbolTable[id].name        // source global symbol
+                SymbolTable[id].name              // source global symbol
         );
         fprintf(Outfile, "\tmovsxd\t%s, %s\n",
                 qwordRegisterList[registerIndex], // dest
@@ -142,11 +142,11 @@ int nasmLoadGlobalSymbol(int id, int op) {
 
         if (op == A_POSTINCREMENT) {
             // Load first, then increase
-            fprintf(Outfile, "\tinc\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
         }
         if (op == A_POSTDECREMENT) {
             // Load first, then decrease
-            fprintf(Outfile, "\tdec\tDWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tDWORD [%s]\n", SymbolTable[id].name);
         }
 
         break;
@@ -159,26 +159,26 @@ int nasmLoadGlobalSymbol(int id, int op) {
     case P_LONGPTR:
         if (op == A_PREINCREMENT) {
             // Increase first, then load
-            fprintf(Outfile, "\tinc\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tQWORD [%s]\n", SymbolTable[id].name);
         }
         if (op == A_PREDECREMENT) {
             // Decrease first, then load
-            fprintf(Outfile, "\tdec\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tQWORD [%s]\n", SymbolTable[id].name);
         }
 
         // Load
         fprintf(Outfile, "\tmov\t%s, [%s]\n",
                 qwordRegisterList[registerIndex], // destination register
-                GlobalSymbolTable[id].name        // source global symbol
+                SymbolTable[id].name              // source global symbol
         );
 
         if (op == A_POSTINCREMENT) {
             // Load first, then increase
-            fprintf(Outfile, "\tinc\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tQWORD [%s]\n", SymbolTable[id].name);
         }
         if (op == A_POSTDECREMENT) {
             // Load first, then decrease
-            fprintf(Outfile, "\tdec\tQWORD [%s]\n", GlobalSymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tQWORD [%s]\n", SymbolTable[id].name);
         }
 
         break;
@@ -189,6 +189,117 @@ int nasmLoadGlobalSymbol(int id, int op) {
             "Error: Unsupported primitive type %d in nasmLoadGlobalSymbol\n",
             primitiveType);
         exit(1);
+    }
+
+    return registerIndex;
+}
+
+/**
+ * nasmLoadLocalSymbol - Generates code to load a local symbol's value into a
+ * register.
+ *
+ * @param id The ID of the local symbol in the symbol table.
+ * @param op The AST operation code (e.g., pre/post increment/decrement).
+ *
+ * Handles pre/post increment and decrement operations as needed.
+ *
+ * @return Index of the register containing the loaded value.
+ */
+int nasmLoadLocalSymbol(int id, int op) {
+    int registerIndex = allocateRegister();
+
+    switch (SymbolTable[id].primitiveType) {
+    case P_CHAR:
+        if (op == A_PREINCREMENT) {
+            // Increment first, then load the value
+            fprintf(Outfile, "\tinc\tbyte [%s]\n", SymbolTable[id].name);
+        }
+        if (op == A_PREDECREMENT) {
+            // Decrement first, then load the value
+            fprintf(Outfile, "\tdec\tbyte [%s]\n", SymbolTable[id].name);
+        }
+
+        fprintf(Outfile, "\tmovzx\t%s, byte [%s]\n",
+                qwordRegisterList[registerIndex], // destination register
+                SymbolTable[id].name              // source local symbol
+        );
+
+        if (op == A_POSTINCREMENT) {
+            // Load first, then increment
+            fprintf(Outfile, "\tinc\tbyte [%s]\n", SymbolTable[id].name);
+        }
+        if (op == A_POSTDECREMENT) {
+            // Load first, then decrement
+            fprintf(Outfile, "\tdec\tbyte [%s]\n", SymbolTable[id].name);
+        }
+
+        break;
+
+    case P_INT:
+        if (op == A_PREINCREMENT) {
+            // Increment first, then load the value
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
+        }
+        if (op == A_PREDECREMENT) {
+            // Decrement first, then load the value
+            fprintf(Outfile, "\tdec\tDWORD [%s]\n", SymbolTable[id].name);
+        }
+
+        fprintf(Outfile, "\txor\t%s, %s\n",       // Clear upper 32 bits
+                qwordRegisterList[registerIndex], // destination register
+                qwordRegisterList[registerIndex]  // source register
+        );
+        fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n",
+                dwordRegisterList[registerIndex], // lower 32 bits
+                SymbolTable[id].name              // source local symbol
+        );
+        fprintf(Outfile, "\tmovsxd\t%s, %s\n",
+                qwordRegisterList[registerIndex], // dest
+                dwordRegisterList[registerIndex]  // Sign-extend to 64 bits
+        );
+
+        if (op == A_POSTINCREMENT) {
+            // Load first, then increment
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
+        }
+        if (op == A_POSTDECREMENT) {
+            // Load first, then decrement
+            fprintf(Outfile, "\tdec\t [%s]\n", SymbolTable[id].name);
+        }
+
+        break;
+
+    case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
+        if (op == A_PREINCREMENT) {
+            // Increase first, then load
+            fprintf(Outfile, "\tinc\tQWORD [%s]\n", SymbolTable[id].name);
+        }
+        if (op == A_PREDECREMENT) {
+            // Decrease first, then load
+            fprintf(Outfile, "\tout\tQWORD [%s]\n", SymbolTable[id].name);
+        }
+
+        // Load
+        fprintf(Outfile, "\tmov\t%s, QWORD [%s]\n",
+                qwordRegisterList[registerIndex], // destination register
+                SymbolTable[id].name              // source local symbol
+        );
+
+        if (op == A_POSTINCREMENT) {
+            // Load first, then increment
+            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
+        }
+        if (op == A_POSTDECREMENT) {
+            // Load first, then decrement
+            fprintf(Outfile, "\tdec\t [%s]\n", SymbolTable[id].name);
+        }
+
+    default:
+        logFatald("Bad type in nasmLoadLocalSymbol: ",
+                  SymbolTable[id].primitiveType);
     }
 
     return registerIndex;
@@ -222,20 +333,20 @@ int nasmLoadGlobalString(int id) {
  * @return Index of the register that was stored.
  */
 int nasmStoreGlobalSymbol(int registerIndex, int id) {
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
+    int primitiveType = SymbolTable[id].primitiveType;
 
     switch (primitiveType) {
     case P_CHAR:
         fprintf(
             Outfile, "\tmov\t[%s], BYTE %s\n",
-            GlobalSymbolTable[id].name,     // destination global symbol
+            SymbolTable[id].name,           // destination global symbol
             byteRegisterList[registerIndex] // source register (lower 8 bits)
         );
         break;
     case P_INT:
         fprintf(
             Outfile, "\tmov\t[%s], DWORD %s\n",
-            GlobalSymbolTable[id].name,      // destination global symbol
+            SymbolTable[id].name,            // destination global symbol
             dwordRegisterList[registerIndex] // source register (lower 32 bits)
         );
         break;
@@ -244,7 +355,7 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
     case P_INTPTR:
     case P_LONGPTR:
         fprintf(Outfile, "\tmov\t[%s], QWORD %s\n",
-                GlobalSymbolTable[id].name,      // destination global symbol
+                SymbolTable[id].name,            // destination global symbol
                 qwordRegisterList[registerIndex] // source register
         );
         break;
@@ -254,6 +365,40 @@ int nasmStoreGlobalSymbol(int registerIndex, int id) {
             "Error: Unsupported primitive type %d in nasmStoreGlobalSymbol\n",
             primitiveType);
         exit(1);
+    }
+
+    return registerIndex;
+}
+
+/**
+ * nasmStoreLocalSymbol - Generates code to store a register's value into a
+ * local symbol.
+ *
+ * @param registerIndex Index of the register containing the value to store.
+ * @param id The ID of the local symbol in the symbol table.
+ *
+ * @return Index of the register that was stored.
+ */
+int nasmStoreLocalSymbol(int registerIndex, int id) {
+    switch (SymbolTable[id].primitiveType) {
+    case P_CHAR:
+        fprintf(Outfile, "\tmov\tBYTE\t[rbp+%d], %s\n", SymbolTable[id].offset,
+                byteRegisterList[registerIndex]);
+        break;
+    case P_INT:
+        fprintf(Outfile, "\tmov\tDWORD\t[rbp+%d], %s\n", SymbolTable[id].offset,
+                dwordRegisterList[registerIndex]);
+        break;
+    case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
+        fprintf(Outfile, "\tmov\tQWORD\t[rbp+%d], %s\n", SymbolTable[id].offset,
+                qwordRegisterList[registerIndex]);
+        break;
+    default:
+        logFatald("Bad type in nasmStoreLocalSymbol: ",
+                  SymbolTable[id].primitiveType);
     }
 
     return registerIndex;
@@ -283,31 +428,38 @@ static int nasmAlignPow2(int n) {
  * nasmDeclareGlobalSymbol - Generates code to declare a global symbol and
  * reserve storage for it.
  *
+ * NOTE:
+ * It doesn't handle functions
+ *
  * @param id The ID of the global symbol in the symbol table.
  */
 void nasmDeclareGlobalSymbol(int id) {
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
+    if (SymbolTable[id].structuralType == S_FUNCTION) {
+        return;
+    }
+
+    int primitiveType = SymbolTable[id].primitiveType;
 
     int elementSize = nasmGetPrimitiveTypeSize(primitiveType);
     if (elementSize <= 0) {
         fprintf(stderr, "Error: bad elemSize %d for symbol %s\n", elementSize,
-                GlobalSymbolTable[id].name);
+                SymbolTable[id].name);
         exit(1);
     }
 
     int count = 1;
-    if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
-        count = GlobalSymbolTable[id].size;
+    if (SymbolTable[id].structuralType == S_ARRAY) {
+        count = SymbolTable[id].size;
         if (count <= 0 || count > INT_MAX / elementSize) {
             fprintf(stderr, "Error: bad array count %d for symbol %s\n", count,
-                    GlobalSymbolTable[id].name);
+                    SymbolTable[id].name);
             exit(1);
         }
     }
 
     if (elementSize > LLONG_MAX / count) {
         fprintf(stderr, "Error: total size overflow for symbol %s\n",
-                GlobalSymbolTable[id].name);
+                SymbolTable[id].name);
         exit(1);
     }
 
@@ -318,8 +470,8 @@ void nasmDeclareGlobalSymbol(int id) {
     // Prefer BSS for zero-initialized storage
     fprintf(Outfile, "\tsection\t.bss\n");
     fprintf(Outfile, "\talign\t%d\n", alignment);
-    fprintf(Outfile, "\tglobal\t%s\n", GlobalSymbolTable[id].name);
-    fprintf(Outfile, "%s:\n", GlobalSymbolTable[id].name);
+    fprintf(Outfile, "\tglobal\t%s\n", SymbolTable[id].name);
+    fprintf(Outfile, "%s:\n", SymbolTable[id].name);
 
     // Reserve storage: choose the directive that matches element width.
     // This emits ONE directive with a COUNT (e.g., resd 5), which is
@@ -725,8 +877,8 @@ int nasmAddressOfGlobalSymbol(int id) {
     int r = allocateRegister();
 
     fprintf(Outfile, "\tlea\t%s, [rel %s]\n",
-            qwordRegisterList[r],      // destination register
-            GlobalSymbolTable[id].name // source global symbol
+            qwordRegisterList[r], // destination register
+            SymbolTable[id].name  // source global symbol
     );
     return r;
 }

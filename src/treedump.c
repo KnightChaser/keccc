@@ -202,7 +202,7 @@ static void dumpASTNodeHeader(struct ASTnode *n, int label, int level) {
     case A_PREDECREMENT:
     case A_POSTINCREMENT:
     case A_POSTDECREMENT:
-        printf(" name=%s", GlobalSymbolTable[n->v.identifierIndex].name);
+        printf(" name=%s", SymbolTable[n->v.identifierIndex].name);
         break;
     case A_SCALETYPE:
         printf(" size=%d", n->v.size);
@@ -424,7 +424,7 @@ void dumpASTTree(struct ASTnode *n) {
 
     printf("\n============= AST dump (full) =============\n");
     if (n->op == A_FUNCTION) {
-        printf("function: %s\n", GlobalSymbolTable[n->v.identifierIndex].name);
+        printf("function: %s\n", SymbolTable[n->v.identifierIndex].name);
     }
     dumpASTInternal(n, gendumpLabel(), 0, false);
     printf("============= end AST dump =============\n");
@@ -444,7 +444,7 @@ void dumpASTTreeCompacted(struct ASTnode *n) {
 
     printf("\n============= AST dump (compacted) =============\n");
     if (n->op == A_FUNCTION) {
-        printf("function: %s\n", GlobalSymbolTable[n->v.identifierIndex].name);
+        printf("function: %s\n", SymbolTable[n->v.identifierIndex].name);
     }
     dumpASTInternal(n, gendumpLabel(), 0, true);
     printf("============= end AST dump =============\n");

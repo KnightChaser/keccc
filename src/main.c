@@ -20,6 +20,8 @@
 static void initCompilerState(void) {
     Line = 1;
     Putback = '\n';
+    NextGlobalSymbolIndex = 0;           // Grow upward
+    NextLocalSymbolIndex = NSYMBOLS - 1; // Grow downward
 }
 
 /**

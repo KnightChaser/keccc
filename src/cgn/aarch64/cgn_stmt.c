@@ -45,7 +45,7 @@ int aarch64FunctionCall(int r, int functionSymbolId) {
     int out = aarch64AllocateRegister();
 
     fprintf(Outfile, "\tmov\tx0, %s\n", aarch64QwordRegisterList[r]);
-    fprintf(Outfile, "\tbl\t%s\n", GlobalSymbolTable[functionSymbolId].name);
+    fprintf(Outfile, "\tbl\t%s\n", SymbolTable[functionSymbolId].name);
     fprintf(Outfile, "\tmov\t%s, x0\n", aarch64QwordRegisterList[out]);
 
     aarch64FreeRegister(r);
@@ -58,7 +58,7 @@ int aarch64FunctionCall(int r, int functionSymbolId) {
  * @param id The function's symbol table ID.
  */
 void aarch64FunctionPreamble(int id) {
-    char *functionName = GlobalSymbolTable[id].name;
+    char *functionName = SymbolTable[id].name;
 
     fprintf(Outfile, "\t.text\n");
     fprintf(Outfile, "\t.global\t%s\n", functionName);
@@ -74,7 +74,7 @@ void aarch64FunctionPreamble(int id) {
  * @param id The function's symbol table ID.
  */
 void aarch64ReturnFromFunction(int reg, int id) {
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
+    int primitiveType = SymbolTable[id].primitiveType;
 
     switch (primitiveType) {
     case P_CHAR:
@@ -93,7 +93,7 @@ void aarch64ReturnFromFunction(int reg, int id) {
     }
 
     // After moving return value to x0, branch to function end label.
-    fprintf(Outfile, "\tb\tL%d\n", GlobalSymbolTable[id].endLabel);
+    fprintf(Outfile, "\tb\tL%d\n", SymbolTable[id].endLabel);
 }
 
 /**
@@ -104,9 +104,9 @@ void aarch64ReturnFromFunction(int reg, int id) {
 void aarch64FunctionPostamble(int id) {
     (void)id;
     // end label is emitted by aarch64Label from gen.c
-    // (we’ll call aarch64Label(GlobalSymbolTable[id].endLabel) there)
+    // (we’ll call aarch64Label(SymbolTable[id].endLabel) there)
     // and then we output epilogue:
-    aarch64Label(GlobalSymbolTable[id].endLabel);
+    aarch64Label(SymbolTable[id].endLabel);
     fputs("\tldp\tx29, x30, [sp], 16\n"
           "\tret\n",
           Outfile);

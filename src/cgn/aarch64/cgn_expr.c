@@ -88,8 +88,8 @@ static void aarch64LoadGlobalAddressIntoX0(const char *name) {
  */
 int aarch64LoadGlobalSymbol(int id, int op) {
     int r = aarch64AllocateRegister();
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
-    char *name = GlobalSymbolTable[id].name;
+    int primitiveType = SymbolTable[id].primitiveType;
+    char *name = SymbolTable[id].name;
 
     int tmpReg = -1; // optional temp for post-inc/dec
 
@@ -233,8 +233,8 @@ int aarch64LoadGlobalString(int id) {
  * @return Index of the register that was stored.
  */
 int aarch64StoreGlobalSymbol(int r, int id) {
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
-    char *name = GlobalSymbolTable[id].name;
+    int primitiveType = SymbolTable[id].primitiveType;
+    char *name = SymbolTable[id].name;
 
     aarch64LoadGlobalAddressIntoX0(name);
 
@@ -294,30 +294,30 @@ static int aarch64P2AlignFor(int alignmentBytes) {
  * @param id The ID of the global symbol in the symbol table.
  */
 void aarch64DeclareGlobalSymbol(int id) {
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
+    int primitiveType = SymbolTable[id].primitiveType;
 
     int elementSize = aarch64GetPrimitiveTypeSize(primitiveType);
     if (elementSize <= 0) {
         fprintf(stderr,
                 "Error: Invalid element size %d for symbol %s in "
                 "aarch64DeclareGlobalSymbol\n",
-                elementSize, GlobalSymbolTable[id].name);
+                elementSize, SymbolTable[id].name);
         exit(1);
     }
 
     int count = 1;
-    if (GlobalSymbolTable[id].structuralType == S_ARRAY) {
-        count = GlobalSymbolTable[id].size;
+    if (SymbolTable[id].structuralType == S_ARRAY) {
+        count = SymbolTable[id].size;
         if (count <= 0 || count > INT_MAX / elementSize) {
             fprintf(stderr, "Error: bad array count %d for symbol %s\n", count,
-                    GlobalSymbolTable[id].name);
+                    SymbolTable[id].name);
             exit(1);
         }
     }
 
     if (elementSize > LLONG_MAX / count) {
         fprintf(stderr, "Error: total size overflow for symbol %s\n",
-                GlobalSymbolTable[id].name);
+                SymbolTable[id].name);
         exit(1);
     }
 
@@ -331,12 +331,12 @@ void aarch64DeclareGlobalSymbol(int id) {
 
     // Prefer BSS for zero-initialized storage
     fprintf(Outfile, "\t.section\t.bss\n");
-    fprintf(Outfile, "\t.globl\t%s\n", GlobalSymbolTable[id].name);
+    fprintf(Outfile, "\t.globl\t%s\n", SymbolTable[id].name);
     if (p2 >= 0) {
         fprintf(Outfile, "\t.p2align\t%d\n", p2);
     }
 
-    fprintf(Outfile, "%s:\n", GlobalSymbolTable[id].name);
+    fprintf(Outfile, "%s:\n", SymbolTable[id].name);
 
     // Reserve zeroed bytes
     fprintf(Outfile, "\t.zero\t%lld\n", totalBytesRequired);
@@ -696,9 +696,9 @@ int aarch64AddressOfGlobalSymbol(int id) {
     //   adrp xN, name             ; compute page address
     //   add  xN, xN, :lo12:name   ; add page offset
     fprintf(Outfile, "\tadrp\t%s, %s\n", aarch64QwordRegisterList[r],
-            GlobalSymbolTable[id].name);
+            SymbolTable[id].name);
     fprintf(Outfile, "\tadd\t%s, %s, :lo12:%s\n", aarch64QwordRegisterList[r],
-            aarch64QwordRegisterList[r], GlobalSymbolTable[id].name);
+            aarch64QwordRegisterList[r], SymbolTable[id].name);
     return r;
 }
 

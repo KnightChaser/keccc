@@ -1,8 +1,12 @@
 // src/cgn/cg_ops.h
 #pragma once
 
+#include <stdbool.h>
+
 struct CodegenOps {
     // Register pool
+    void (*declareDataSegment)(void);
+    void (*declareTextSegment)(void);
     void (*resetRegisters)(void);
 
     // Preamble / postamble
@@ -22,6 +26,7 @@ struct CodegenOps {
     // Expressions / loads / stores
     int (*loadImmediateInt)(int value, int primitiveType);
     int (*loadGlobalSymbol)(int symId, int op);
+    int (*loadLocalSymbol)(int symId, int op);
     int (*loadGlobalString)(int symId);
     int (*storeGlobalSymbol)(int reg, int symId);
 
@@ -60,6 +65,10 @@ struct CodegenOps {
     int (*dereferencePointer)(int pointerReg, int primitiveType);
     int (*storeDereferencedPointer)(int valueReg, int pointerReg,
                                     int primitiveType);
+
+    // Offset
+    void (*resetLocalOffset)(void);
+    int (*getLocalOffset)(int type, bool isFunctionParameter);
 };
 
 // Selected backend-specific operation table

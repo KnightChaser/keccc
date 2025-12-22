@@ -5,6 +5,8 @@
 #include "decl.h"
 #include "defs.h"
 
+#include <assert.h>
+
 /**
  * NOTE:
  * Code generation in NASM x86-64 assembly
@@ -16,6 +18,65 @@
  * $ gcc -no-pie out.o -o out
  * $ ./out
  */
+
+/**
+ * currentSegment - Tracks the current assembly segment being generated.
+ */
+enum {
+    NO_SEGMENT = -1,
+    TEXT_SEGMENT,
+    DATA_SEGMENT,
+} currentSegment = NO_SEGMENT;
+
+// Position of next local variable relative to stack base pointer.
+// We store the offset as positive to make aligning the stack pointer easier
+static int localOffset;
+static int stackOffset;
+
+/**
+ * nasmDeclareDataSegment - Outputs the data segment declaration if not
+ * already in the data segment.
+ */
+void nasmDeclareTextSegment() {
+    if (currentSegment != TEXT_SEGMENT) {
+        fputs("\tsection\t.text\n", Outfile);
+        currentSegment = TEXT_SEGMENT;
+    }
+}
+
+/**
+ * nasmDeclareDataSegment - Outputs the data segment declaration if not
+ * already in the data segment.
+ */
+void nasmDeclareDataSegment() {
+    if (currentSegment != DATA_SEGMENT) {
+        fputs("\tsection\t.data\n", Outfile);
+        currentSegment = DATA_SEGMENT;
+    }
+}
+
+/**
+ * nasmResetLocalOffset - Resets the local variable offset tracker.
+ */
+void nasmResetLocalOffset(void) { localOffset = 0; }
+
+/**
+ * nasmGetLocalOffset - Returns the next available local variable offset.
+ *
+ * @param type The primitive type of the local variable.
+ * @param isFunctionParameter True if the variable is a function parameter.
+ *
+ * @return The offset from the base pointer (RBP) for the local variable.
+ */
+int nasmGetLocalOffset(int type, bool isFunctionParameter) {
+    localOffset += (nasmGetPrimitiveTypeSize(type) > 4)
+                       ? nasmGetPrimitiveTypeSize(type)
+                       : 4;
+
+    // NOTE: Stack grows downwards, so local variables are at negative offsets
+    assert(localOffset > 0);
+    return -localOffset;
+}
 
 /**
  * nasmPreamble - Print the assembly code preamble.
@@ -43,7 +104,7 @@ void nasmPreamble() {
 int nasmFunctionCall(int registerIndex, int functionSymbolId) {
     int outRegister = allocateRegister();
     fprintf(Outfile, "\tmov\trdi, %s\n", qwordRegisterList[registerIndex]);
-    fprintf(Outfile, "\tcall\t%s\n", GlobalSymbolTable[functionSymbolId].name);
+    fprintf(Outfile, "\tcall\t%s\n", SymbolTable[functionSymbolId].name);
     fprintf(Outfile, "\tmov\t%s, rax\n", qwordRegisterList[outRegister]);
     freeRegister(registerIndex);
 
@@ -56,12 +117,24 @@ int nasmFunctionCall(int registerIndex, int functionSymbolId) {
  * @param id The function's symbol table ID.
  */
 void nasmFunctionPreamble(int id) {
-    char *functionName = GlobalSymbolTable[id].name;
-    fprintf(Outfile, "\tsection\t.text\n");
-    fprintf(Outfile, "\tglobal\t%s\n", functionName);
-    fprintf(Outfile, "%s:\n", functionName);
-    fprintf(Outfile, "\tpush\trbp\n");
-    fprintf(Outfile, "\tmov\trbp, rsp\n");
+    char *functionName = SymbolTable[id].name;
+    nasmDeclareTextSegment();
+
+    stackOffset = (localOffset + 15) & ~15; // Align to 16 bytes
+
+    fprintf(Outfile,
+            "\tglobal\t%s\n"
+            "%s:\n"
+            "\tpush\trbp\n"
+            "\tmov\trbp, rsp\n"
+            "\tadd\trsp, %d\n",
+            functionName, functionName, -stackOffset);
+
+    // fprintf(Outfile, "\tsection\t.text\n");
+    // fprintf(Outfile, "\tglobal\t%s\n", functionName);
+    // fprintf(Outfile, "%s:\n", functionName);
+    // fprintf(Outfile, "\tpush\trbp\n");
+    // fprintf(Outfile, "\tmov\trbp, rsp\n");
 }
 
 /**
@@ -72,7 +145,7 @@ void nasmFunctionPreamble(int id) {
  * @param id The function's symbol table ID.
  */
 void nasmReturnFromFunction(int reg, int id) {
-    int primitiveType = GlobalSymbolTable[id].primitiveType;
+    int primitiveType = SymbolTable[id].primitiveType;
 
     switch (primitiveType) {
     case P_CHAR:
@@ -90,7 +163,7 @@ void nasmReturnFromFunction(int reg, int id) {
     }
 
     // After moving the return value to rax, jump to function end label
-    nasmJump(GlobalSymbolTable[id].endLabel);
+    nasmJump(SymbolTable[id].endLabel);
 }
 
 /**
@@ -99,9 +172,9 @@ void nasmReturnFromFunction(int reg, int id) {
  * @param id The function's symbol table ID.
  */
 void nasmFunctionPostamble(int id) {
-    nasmLabel(GlobalSymbolTable[id].endLabel);
-    // TODO: Return value from main
-    fputs("\tpop\trbp\n"
+    nasmLabel(SymbolTable[id].endLabel);
+    fprintf(Outfile, "\tadd\trsp, %d\n", stackOffset);
+    fputs("\tpop	rbp\n"
           "\tret\n",
           Outfile);
 }

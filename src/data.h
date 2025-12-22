@@ -29,8 +29,9 @@ extern_ int Line;
 extern_ int Putback;
 // Symbol ID of the current function being processed
 extern_ int CurrentFunctionSymbolID;
-// Position of the next free global symbol slot
+// Position of the next free global/local symbol slot
 extern_ int NextGlobalSymbolIndex;
+extern_ int NextLocalSymbolIndex;
 // Input file (source code)
 extern_ FILE *Infile;
 // Output file (generated code, currently Assembly)
@@ -40,5 +41,17 @@ extern_ struct token Token;
 
 // Last identifier scanned (e.g. "print")
 extern_ char Text[TEXTLEN + 1];
-// Global symbol table
-extern_ struct symbolTable GlobalSymbolTable[NSYMBOLS];
+// symbol table for both global and local symbols
+extern_ struct symbolTable SymbolTable[NSYMBOLS];
+
+/**
+ * NOTE:
+ * SymbolTable exists both for local and global symbols.
+ * Global symbols occupy the earlier slots, and grow upwards.
+ * Local symbols occupy the later slots, and grow downwards.
+ * To visualize:
+ * [0]xxxx......................................xxxxxxxxxxxx[NSYMBOLS-1]
+ *        ^                                    ^
+ *        |                                    |
+ *  NextGlobalSymbolIndex            NextLocalSymbolIndex
+ */

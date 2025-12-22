@@ -198,13 +198,22 @@ enum {
     S_ARRAY,
 };
 
+// Storage classes
+enum {
+    C_GLOBAL = 1, // Globally visible symbol
+    C_LOCAL,      // Locally visible symbol
+};
+
 // Symbol table structure
 struct symbolTable {
     char *name;         // Name of a symbol
     int primitiveType;  // Primitive type for the symbol (e.g., P_INT)
     int structuralType; // Structural type (e.g., S_VARIABLE)
-    int endLabel;       // For S_FUNCTION, the end label
+    int class;          // Storage class for the symbol
+    int endLabel;       // For functions, the end label
     int size;           // Size (number of elements for arrays, etc.)
+    int offset;         // For local variable, the negative offset
+                        // from the stack base pointer (RBP)
 };
 
 #endif

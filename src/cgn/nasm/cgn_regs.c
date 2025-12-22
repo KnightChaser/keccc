@@ -19,21 +19,22 @@
 // TODO:
 // Better name for this variable is required,
 // such as "Xth register is currently not used"
-static bool freeRegisters[4];
+#define NUMFREEREGISTERS 4
+static bool freeRegisters[NUMFREEREGISTERS] = {true, true, true, true};
 
-char *qwordRegisterList[4] = {
+char *qwordRegisterList[] = {
     "r8",  // x64 general-purpose register #1
     "r9",  // x64 general-purpose register #2
     "r10", // x64 general-purpose register #3
     "r11"  // x64 general-purpose register #4
 };
-char *dwordRegisterList[4] = {
+char *dwordRegisterList[] = {
     "r8d",  // lower 32 bits of r8
     "r9d",  // lower 32 bits of r9
     "r10d", // lower 32 bits of r10
     "r11d"  // lower 32 bits of r11
 };
-char *byteRegisterList[4] = {
+char *byteRegisterList[] = {
     "r8b",  // lower 8 bits of r8
     "r9b",  // lower 8 bits of r9
     "r10b", // lower 8 bits of r10
@@ -44,8 +45,7 @@ char *byteRegisterList[4] = {
  * nasmResetRegisterPool - Marks all registers as free for allocation.
  */
 void nasmResetRegisterPool(void) {
-    int registerCount = sizeof(freeRegisters) / sizeof(freeRegisters[0]);
-    for (int i = 0; i < registerCount; i++) {
+    for (int i = 0; i < NUMFREEREGISTERS; i++) {
         // Mark all registers as free
         freeRegisters[i] = true;
     }
@@ -58,8 +58,7 @@ void nasmResetRegisterPool(void) {
  * @return Index of the allocated register.
  */
 int allocateRegister(void) {
-    int registerCount = sizeof(freeRegisters) / sizeof(freeRegisters[0]);
-    for (int i = 0; i < registerCount; i++) {
+    for (int i = 0; i < NUMFREEREGISTERS; i++) {
         if (freeRegisters[i]) {
             freeRegisters[i] = false; // Mark as used
             return i;

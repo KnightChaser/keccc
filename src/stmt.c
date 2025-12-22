@@ -187,7 +187,7 @@ static struct ASTnode *returnStatement(void) {
     struct ASTnode *treeNode;
 
     // Can't return a value if function returns P_VOID
-    if (GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType == P_VOID) {
+    if (SymbolTable[CurrentFunctionSymbolID].primitiveType == P_VOID) {
         logFatal("Cannot return a value from a void function");
     }
 
@@ -200,7 +200,7 @@ static struct ASTnode *returnStatement(void) {
 
     // Ensure the two types are compatible
     treeNode = coerceASTTypeForOp(
-        treeNode, GlobalSymbolTable[CurrentFunctionSymbolID].primitiveType,
+        treeNode, SymbolTable[CurrentFunctionSymbolID].primitiveType,
         A_NOTHING);
     if (treeNode == NULL) {
         logFatal("Type error: incompatible type in return statement");
@@ -233,7 +233,7 @@ static struct ASTnode *singleStatement(void) {
         // Then parse the rest of the declaration.
         type = parsePrimitiveType();
         matchIdentifierToken();
-        variableDeclaration(type);
+        variableDeclaration(type, true);
 
         return NULL; // No AST node for declarations
     case T_IF:

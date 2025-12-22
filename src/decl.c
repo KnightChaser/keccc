@@ -53,8 +53,9 @@ int parsePrimitiveType(void) {
  *        ;
  *
  * @param type The primitive type of the variable.
+ * @bool isLocalVariable True if this is a local variable, false for global.
  */
-void variableDeclaration(int type) {
+void variableDeclaration(int type, bool isLocalVariable) {
     int id;
 
     if (Token.token == T_LBRACKET) {
@@ -70,9 +71,14 @@ void variableDeclaration(int type) {
             // attached.” It’s an array type of element type T and length N.
             // (Just leave for now as I follow the original design of the
             // lecture...)
-            id = addGlobalSymbol(Text, primitiveTypeToPointerType(type),
-                                 S_ARRAY, 0, Token.intvalue);
-            codegenDeclareGlobalSymbol(id);
+
+            if (isLocalVariable) {
+                addLocalSymbol(Text, primitiveTypeToPointerType(type), S_ARRAY,
+                               0, Token.intvalue);
+            } else {
+                addGlobalSymbol(Text, primitiveTypeToPointerType(type), S_ARRAY,
+                                0, Token.intvalue);
+            }
         }
 
         // Ensure we have a following ']'
@@ -80,10 +86,11 @@ void variableDeclaration(int type) {
         match(T_RBRACKET, "]");
     } else {
         // Add this as a known scalar variable
-        id = addGlobalSymbol(
-            Text, type, S_VARIABLE, 0,
-            1); // Even a scalar variable has its element size of 1
-        codegenDeclareGlobalSymbol(id);
+        if (isLocalVariable) {
+            id = addLocalSymbol(Text, type, S_VARIABLE, 0, 0);
+        } else {
+            id = addGlobalSymbol(Text, type, S_VARIABLE, 0, 0);
+        }
     }
 
     // Get the terminating semicolon
@@ -116,6 +123,9 @@ struct ASTnode *functionDeclaration(int type) {
         addGlobalSymbol(Text, type, S_FUNCTION, endLabel,
                         0); // Function doesn't have a size (number of elements)
     CurrentFunctionSymbolID = functionNameIndex;
+
+    // Reset position of new locals
+    codegenResetLocalOffset();
 
     // Scan the parenthesis
     matchLeftParenthesisToken();
@@ -177,7 +187,7 @@ void globalDeclaration(void) {
             codegenAST(treeNode, NOREG, NOREG);
         } else {
             // Assume
-            variableDeclaration(type);
+            variableDeclaration(type, false);
         }
 
         // Stop when we reach the end of the file

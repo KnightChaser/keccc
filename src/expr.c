@@ -15,8 +15,8 @@ static struct ASTnode *functionCall(void) {
     int id;
 
     // Identifier
-    if ((id = findGlobalSymbol(Text)) == -1 ||
-        GlobalSymbolTable[id].structuralType != S_FUNCTION) {
+    if ((id = findSymbol(Text)) == -1 ||
+        SymbolTable[id].structuralType != S_FUNCTION) {
         logFatals("Undeclared function: ", Text);
     }
 
@@ -29,7 +29,7 @@ static struct ASTnode *functionCall(void) {
     // Build the function call AST node.
     // - Store the function's return type as this node's type.
     // - Record the function's symbol ID
-    treeNode = makeASTUnary(A_FUNCTIONCALL, GlobalSymbolTable[id].primitiveType,
+    treeNode = makeASTUnary(A_FUNCTIONCALL, SymbolTable[id].primitiveType,
                             treeNode, id);
 
     // Right parenthesis (")")
@@ -52,12 +52,11 @@ static struct ASTnode *arrayAccess(void) {
     // NOTE:
     // Check that the identifier has been defined as an array,
     // then make a leaf node for it that points at the base.
-    if ((id = findGlobalSymbol(Text)) == -1 ||
-        GlobalSymbolTable[id].structuralType != S_ARRAY) {
+    if ((id = findSymbol(Text)) == -1 ||
+        SymbolTable[id].structuralType != S_ARRAY) {
         logFatals("Undeclared array: ", Text);
     }
-    leftNode =
-        makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
+    leftNode = makeASTLeaf(A_ADDRESSOF, SymbolTable[id].primitiveType, id);
 
     // '['
     scan(&Token);
@@ -80,8 +79,8 @@ static struct ASTnode *arrayAccess(void) {
     // Return an AST tree where the array's base has the offset
     // added to it, and dereference the element. Still an lvalue
     // at this point.
-    leftNode = makeASTNode(A_ADD, GlobalSymbolTable[id].primitiveType, leftNode,
-                           NULL, rightNode, 0);
+    leftNode = makeASTNode(A_ADD, SymbolTable[id].primitiveType, leftNode, NULL,
+                           rightNode, 0);
     leftNode = makeASTUnary(A_DEREFERENCE,
                             pointerToPrimitiveType(leftNode->primitiveType),
                             leftNode, 0);
@@ -114,7 +113,7 @@ static struct ASTnode *postfix(void) {
 
     // A variable
     id = findGlobalSymbol(Text);
-    if (id == -1 || GlobalSymbolTable[id].structuralType != S_VARIABLE) {
+    if (id == -1 || SymbolTable[id].structuralType != S_VARIABLE) {
         logFatals("Undeclared variable: ", Text);
     }
 
@@ -122,20 +121,18 @@ static struct ASTnode *postfix(void) {
     case T_INCREMENT:
         // Post increment: skip over the token
         scan(&Token);
-        n = makeASTLeaf(A_POSTINCREMENT, GlobalSymbolTable[id].primitiveType,
-                        id);
+        n = makeASTLeaf(A_POSTINCREMENT, SymbolTable[id].primitiveType, id);
         break;
 
     case T_DECREMENT:
         // Post decrement: skip over the token
         scan(&Token);
-        n = makeASTLeaf(A_POSTDECREMENT, GlobalSymbolTable[id].primitiveType,
-                        id);
+        n = makeASTLeaf(A_POSTDECREMENT, SymbolTable[id].primitiveType, id);
         break;
 
     default:
         // Just a variable inference
-        n = makeASTLeaf(A_IDENTIFIER, GlobalSymbolTable[id].primitiveType, id);
+        n = makeASTLeaf(A_IDENTIFIER, SymbolTable[id].primitiveType, id);
         break;
     }
 
@@ -401,9 +398,9 @@ struct ASTnode *prefix(void) {
         scan(&Token);
         tree = prefix();
 
-        // Prepend an A_ARITHMETICNEGATE operation to the tree and make the child an
-        // rvalue. Because character type (T_CHAR) is unsigned, also widen this
-        // to int so that it's signed
+        // Prepend an A_ARITHMETICNEGATE operation to the tree and make the
+        // child an rvalue. Because character type (T_CHAR) is unsigned, also
+        // widen this to int so that it's signed
         tree->isRvalue = true;
         tree = coerceASTTypeForOp(tree, P_INT, 0);
         tree = makeASTUnary(A_ARITHMETICNEGATE, P_INT, tree, 0);
