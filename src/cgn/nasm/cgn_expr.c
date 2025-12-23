@@ -871,6 +871,10 @@ int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType) {
  * nasmAddressOfSymbol - Generates code to get the address of a symbol.
  * - For globals: `lea reg, [rel name]`
  * - For locals:  `lea reg, [rbp+offset]`
+ * 
+ * @param id The ID of the symbol in the symbol table.
+ * 
+ * @return Index of the register containing the address of the symbol.
  */
 int nasmAddressOfSymbol(int id) {
     int r = allocateRegister();
