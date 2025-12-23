@@ -62,7 +62,7 @@ struct CodegenOps {
     int (*getPrimitiveTypeSize)(int primitiveType);
 
     // Pointers
-    int (*addressOfGlobalSymbol)(int symId);
+    int (*addressOfSymbol)(int symId);
     int (*dereferencePointer)(int pointerReg, int primitiveType);
     int (*storeDereferencedPointer)(int valueReg, int pointerReg,
                                     int primitiveType);

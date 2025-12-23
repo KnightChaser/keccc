@@ -49,7 +49,7 @@ const struct CodegenOps nasmOps = {
     .widenPrimitiveType = nasmWidenPrimitiveType,
     .getPrimitiveTypeSize = nasmGetPrimitiveTypeSize,
 
-    .addressOfGlobalSymbol = nasmAddressOfGlobalSymbol,
+    .addressOfSymbol = nasmAddressOfSymbol,
     .dereferencePointer = nasmDereferencePointer,
     .storeDereferencedPointer = nasmStoreDereferencedPointer,
 

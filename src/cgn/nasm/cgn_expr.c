@@ -868,21 +868,27 @@ int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType) {
 }
 
 /**
- * nasmAddressOfGlobalSymbol - Generates code to get the address of a global
- * symbol. Returns the address in a register.
- *
- * @param id The ID of the global symbol in the symbol table.
- *
- * @return Index of the register containing the address of the global
- * symbol.
+ * nasmAddressOfSymbol - Generates code to get the address of a symbol.
+ * - For globals: `lea reg, [rel name]`
+ * - For locals:  `lea reg, [rbp+offset]`
  */
-int nasmAddressOfGlobalSymbol(int id) {
+int nasmAddressOfSymbol(int id) {
     int r = allocateRegister();
 
+    if (SymbolTable[id].class == C_LOCAL) {
+        fprintf(Outfile, "\tlea\t%s, [rbp+%d]\n",
+                qwordRegisterList[r], // destination register
+                SymbolTable[id].offset // stack offset (usually negative)
+        );
+        return r;
+    }
+
+    // Global symbol
     fprintf(Outfile, "\tlea\t%s, [rel %s]\n",
             qwordRegisterList[r], // destination register
             SymbolTable[id].name  // source global symbol
     );
+
     return r;
 }
 

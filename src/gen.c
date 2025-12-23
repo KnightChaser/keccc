@@ -275,11 +275,12 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     case A_STRINGLITERAL:
         return CG->loadGlobalString(n->v.identifierIndex);
     case A_IDENTIFIER:
+        // NOTE:
         // Arrays are not scalar variables holding a pointer value.
         // In expressions, an array name evaluates to the address of its first
         // element ("array-to-pointer decay").
         if (SymbolTable[n->v.identifierIndex].structuralType == S_ARRAY) {
-            return CG->addressOfGlobalSymbol(n->v.identifierIndex);
+            return CG->addressOfSymbol(n->v.identifierIndex);
         }
 
         if (n->isRvalue || parentASTop == A_DEREFERENCE) {
@@ -293,20 +294,25 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
         }
     case A_ASSIGN:
         // NOTE: For assignment, the parser swaps subtrees so that
-        // n->left is the RHS expression (rvalue) and n->right is the LHS (lvalue).
+        // n->left is the RHS expression (rvalue) and n->right is the LHS
+        // (lvalue).
         switch (n->right->op) {
         case A_IDENTIFIER: {
             int lhsId = n->right->v.identifierIndex;
             if (SymbolTable[lhsId].class == C_LOCAL) {
+                // Local identifier assignment
                 if (!CG->storeLocalSymbol) {
                     logFatal("Target backend does not support local stores");
                 }
                 return CG->storeLocalSymbol(leftRegister, lhsId);
+            } else {
+                // Global identifier assignment
+                return CG->storeGlobalSymbol(leftRegister, lhsId);
             }
-            return CG->storeGlobalSymbol(leftRegister, lhsId);
         }
         case A_DEREFERENCE:
-            // rightRegister is the computed address of the dereferenced pointer.
+            // rightRegister is the computed address
+            // of the dereferenced pointer
             return CG->storeDereferencedPointer(leftRegister, rightRegister,
                                                 n->right->primitiveType);
         default:
@@ -323,7 +329,7 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
     case A_FUNCTIONCALL:
         return CG->functionCall(leftRegister, n->v.identifierIndex);
     case A_ADDRESSOF:
-        return CG->addressOfGlobalSymbol(n->v.identifierIndex);
+        return CG->addressOfSymbol(n->v.identifierIndex);
     case A_DEREFERENCE:
         if (n->isRvalue) {
             return CG->dereferencePointer(leftRegister, n->left->primitiveType);

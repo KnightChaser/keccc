@@ -47,7 +47,7 @@ const struct CodegenOps aarch64Ops = {
     .widenPrimitiveType = aarch64WidenPrimitiveType,
     .getPrimitiveTypeSize = aarch64GetPrimitiveTypeSize,
 
-    .addressOfGlobalSymbol = aarch64AddressOfGlobalSymbol,
+    .addressOfSymbol = aarch64AddressOfSymbol,
     .dereferencePointer = aarch64DereferencePointer,
     .storeDereferencedPointer = aarch64StoreDereferencedPointer,
 };

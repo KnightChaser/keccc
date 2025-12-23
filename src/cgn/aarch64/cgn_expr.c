@@ -682,15 +682,24 @@ int aarch64WidenPrimitiveType(int r, int oldPrimitiveType,
 }
 
 /**
- * aarch64AddressOfGlobalSymbol - Generates code to get the address of a global
- * symbol. Returns the address in a register.
- *
- * @param id The ID of the global symbol in the symbol table.
- *
- * @return Index of the register containing the address of the global symbol.
+ * aarch64AddressOfSymbol - Generates code to get the address of a symbol.
+ * - For globals: PC-relative adrp/add
+ * - For locals:  frame-pointer relative (x29 +/- imm)
  */
-int aarch64AddressOfGlobalSymbol(int id) {
+int aarch64AddressOfSymbol(int id) {
     int r = aarch64AllocateRegister();
+
+    if (SymbolTable[id].class == C_LOCAL) {
+        int offset = SymbolTable[id].offset;
+        if (offset >= 0) {
+            fprintf(Outfile, "\tadd\t%s, x29, #%d\n",
+                    aarch64QwordRegisterList[r], offset);
+        } else {
+            fprintf(Outfile, "\tsub\t%s, x29, #%d\n",
+                    aarch64QwordRegisterList[r], -offset);
+        }
+        return r;
+    }
 
     // PC-relative addressing:
     //   adrp xN, name             ; compute page address

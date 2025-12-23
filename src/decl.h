@@ -83,7 +83,7 @@ void nasmLabel(int label);
 void nasmJump(int label);
 int nasmWidenPrimitiveType(int r, int oldPrimitiveType, int newPrimitiveType);
 int nasmGetPrimitiveTypeSize(int primitiveType);
-int nasmAddressOfGlobalSymbol(int id);
+int nasmAddressOfSymbol(int id);
 int nasmDereferencePointer(int pointerReg, int primitiveType);
 int nasmStoreDereferencedPointer(int valueReg, int pointerReg,
                                  int primitiveType);
@@ -129,7 +129,7 @@ void aarch64Jump(int label);
 int aarch64WidenPrimitiveType(int r, int oldPrimitiveType,
                               int newPrimitiveType);
 int aarch64GetPrimitiveTypeSize(int primitiveType);
-int aarch64AddressOfGlobalSymbol(int id);
+int aarch64AddressOfSymbol(int id);
 int aarch64DereferencePointer(int pointerReg, int primitiveType);
 int aarch64StoreDereferencedPointer(int valueReg, int pointerReg,
                                     int primitiveType);
