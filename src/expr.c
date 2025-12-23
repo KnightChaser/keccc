@@ -111,8 +111,8 @@ static struct ASTnode *postfix(void) {
         return arrayAccess();
     }
 
-    // A variable
-    id = findGlobalSymbol(Text);
+    // A variable (can be local or global)
+    id = findSymbol(Text);
     if (id == -1 || SymbolTable[id].structuralType != S_VARIABLE) {
         logFatals("Undeclared variable: ", Text);
     }
