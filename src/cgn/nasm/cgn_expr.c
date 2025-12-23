@@ -252,7 +252,7 @@ int nasmLoadLocalSymbol(int id, int op) {
         );
         fprintf(Outfile, "\tmov\t%s, DWORD\t[rbp+%d]\n",
                 dwordRegisterList[registerIndex], // lower 32 bits
-            offset                            // source local symbol
+                offset                            // source local symbol
         );
         fprintf(Outfile, "\tmovsxd\t%s, %s\n",
                 qwordRegisterList[registerIndex], // dest
@@ -877,7 +877,7 @@ int nasmAddressOfSymbol(int id) {
 
     if (SymbolTable[id].class == C_LOCAL) {
         fprintf(Outfile, "\tlea\t%s, [rbp+%d]\n",
-                qwordRegisterList[r], // destination register
+                qwordRegisterList[r],  // destination register
                 SymbolTable[id].offset // stack offset (usually negative)
         );
         return r;
