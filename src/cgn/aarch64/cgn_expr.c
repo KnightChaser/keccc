@@ -78,6 +78,21 @@ static void aarch64LoadGlobalAddressIntoX0(const char *name) {
 }
 
 /**
+ * aarch64LoadLocalAddressIntoX0 - Generates code to load the address of a
+ * local (stack) symbol into register x0. (helper function)
+ *
+ * @param id The ID of the local symbol in the symbol table.
+ */
+static void aarch64LoadLocalAddressIntoX0(int id) {
+    int offset = SymbolTable[id].offset;
+    if (offset >= 0) {
+        fprintf(Outfile, "\tadd\tx0, x29, #%d\n", offset);
+    } else {
+        fprintf(Outfile, "\tsub\tx0, x29, #%d\n", -offset);
+    }
+}
+
+/**
  * aarch64LoadGlobalSymbol - Generates code to load a global symbol's value into
  * a register.
  *
@@ -206,6 +221,103 @@ int aarch64LoadGlobalSymbol(int id, int op) {
 }
 
 /**
+ * aarch64LoadLocalSymbol - Loads a local (stack) symbol into a register.
+ * Uses the same pre/post inc/dec semantics as the global-symbol path.
+ */
+int aarch64LoadLocalSymbol(int id, int op) {
+    int r = aarch64AllocateRegister();
+    int primitiveType = SymbolTable[id].primitiveType;
+
+    int tmpReg = -1;
+
+    aarch64LoadLocalAddressIntoX0(id);
+
+    switch (primitiveType) {
+    case P_CHAR:
+        if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
+            fprintf(Outfile, "\tldrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                    (op == A_PREINCREMENT) ? "add" : "sub",
+                    aarch64DwordRegisterList[r], aarch64DwordRegisterList[r]);
+            fprintf(Outfile, "\tstrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        }
+
+        fprintf(Outfile, "\tldrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+
+        if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
+            tmpReg = aarch64AllocateRegister();
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                    (op == A_POSTINCREMENT) ? "add" : "sub",
+                    aarch64DwordRegisterList[tmpReg],
+                    aarch64DwordRegisterList[r]);
+            fprintf(Outfile, "\tstrb\t%s, [x0]\n",
+                    aarch64DwordRegisterList[tmpReg]);
+            aarch64FreeRegister(tmpReg);
+        }
+        break;
+
+    case P_INT:
+        if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
+            fprintf(Outfile, "\tldrsw\t%s, [x0]\n",
+                    aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                    (op == A_PREINCREMENT) ? "add" : "sub",
+                    aarch64QwordRegisterList[r], aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        }
+
+        fprintf(Outfile, "\tldrsw\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+
+        if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
+            tmpReg = aarch64AllocateRegister();
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                    (op == A_POSTINCREMENT) ? "add" : "sub",
+                    aarch64QwordRegisterList[tmpReg],
+                    aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\tstr\t%s, [x0]\n",
+                    aarch64DwordRegisterList[tmpReg]);
+            aarch64FreeRegister(tmpReg);
+        }
+        break;
+
+    case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
+        if (op == A_PREINCREMENT || op == A_PREDECREMENT) {
+            fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                    (op == A_PREINCREMENT) ? "add" : "sub",
+                    aarch64QwordRegisterList[r], aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+        }
+
+        fprintf(Outfile, "\tldr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+
+        if (op == A_POSTINCREMENT || op == A_POSTDECREMENT) {
+            tmpReg = aarch64AllocateRegister();
+            fprintf(Outfile, "\t%s\t%s, %s, #1\n",
+                    (op == A_POSTINCREMENT) ? "add" : "sub",
+                    aarch64QwordRegisterList[tmpReg],
+                    aarch64QwordRegisterList[r]);
+            fprintf(Outfile, "\tstr\t%s, [x0]\n",
+                    aarch64QwordRegisterList[tmpReg]);
+            aarch64FreeRegister(tmpReg);
+        }
+        break;
+
+    default:
+        fprintf(
+            stderr,
+            "Error: Unsupported primitive type %d in aarch64LoadLocalSymbol\n",
+            primitiveType);
+        exit(1);
+    }
+
+    return r;
+}
+
+/**
  * aarch64LoadGlobalString - Generates code to load the address of a global
  * string into a register.
  *
@@ -264,6 +376,39 @@ int aarch64StoreGlobalSymbol(int r, int id) {
 }
 
 /**
+ * aarch64StoreLocalSymbol - Stores a register value into a local (stack)
+ * symbol.
+ */
+int aarch64StoreLocalSymbol(int r, int id) {
+    int primitiveType = SymbolTable[id].primitiveType;
+
+    aarch64LoadLocalAddressIntoX0(id);
+
+    switch (primitiveType) {
+    case P_CHAR:
+        fprintf(Outfile, "\tstrb\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        break;
+    case P_INT:
+        fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64DwordRegisterList[r]);
+        break;
+    case P_LONG:
+    case P_CHARPTR:
+    case P_INTPTR:
+    case P_LONGPTR:
+        fprintf(Outfile, "\tstr\t%s, [x0]\n", aarch64QwordRegisterList[r]);
+        break;
+    default:
+        fprintf(
+            stderr,
+            "Error: Unsupported primitive type %d in aarch64StoreLocalSymbol\n",
+            primitiveType);
+        exit(1);
+    }
+
+    return r;
+}
+
+/**
  * aarch64P2AlignFor - Returns the log2 of the alignment in bytes for .p2align.
  *
  * @param alignmentBytes The requested alignment in bytes.
@@ -294,6 +439,11 @@ static int aarch64P2AlignFor(int alignmentBytes) {
  * @param id The ID of the global symbol in the symbol table.
  */
 void aarch64DeclareGlobalSymbol(int id) {
+    // Functions are defined in the text section, not as storage in BSS.
+    if (SymbolTable[id].structuralType == S_FUNCTION) {
+        return;
+    }
+
     int primitiveType = SymbolTable[id].primitiveType;
 
     int elementSize = aarch64GetPrimitiveTypeSize(primitiveType);

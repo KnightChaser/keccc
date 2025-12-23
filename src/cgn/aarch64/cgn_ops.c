@@ -19,7 +19,9 @@ const struct CodegenOps aarch64Ops = {
 
     .loadImmediateInt = aarch64LoadImmediateInt,
     .loadGlobalSymbol = aarch64LoadGlobalSymbol,
+    .loadLocalSymbol = aarch64LoadLocalSymbol,
     .storeGlobalSymbol = aarch64StoreGlobalSymbol,
+    .storeLocalSymbol = aarch64StoreLocalSymbol,
     .loadGlobalString = aarch64LoadGlobalString,
 
     .addRegs = aarch64AddRegs,
@@ -50,4 +52,7 @@ const struct CodegenOps aarch64Ops = {
     .addressOfSymbol = aarch64AddressOfSymbol,
     .dereferencePointer = aarch64DereferencePointer,
     .storeDereferencedPointer = aarch64StoreDereferencedPointer,
+
+    .resetLocalOffset = aarch64ResetLocalOffset,
+    .getLocalOffset = aarch64GetLocalOffset,
 };

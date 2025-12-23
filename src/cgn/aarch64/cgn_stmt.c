@@ -11,6 +11,29 @@
 #include "decl.h"
 #include "defs.h"
 
+// Position of next local variable relative to frame pointer (x29).
+// We track local allocation size as a positive number of bytes.
+static int localOffset;
+static int stackOffset;
+
+void aarch64ResetLocalOffset(void) {
+    localOffset = 0;
+    stackOffset = 0;
+}
+
+int aarch64GetLocalOffset(int type, bool isFunctionParameter) {
+    (void)isFunctionParameter;
+
+    int size = aarch64GetPrimitiveTypeSize(type);
+    if (size <= 0) {
+        logFatald("Bad type size in aarch64GetLocalOffset: ", type);
+    }
+
+    // Keep at least 4-byte alignment for locals, like the NASM backend.
+    localOffset += (size > 4) ? size : 4;
+    return -localOffset;
+}
+
 /**
  * aarch64Preamble - Print the assembly code preamble.
  */
@@ -60,11 +83,19 @@ int aarch64FunctionCall(int r, int functionSymbolId) {
 void aarch64FunctionPreamble(int id) {
     char *functionName = SymbolTable[id].name;
 
+    // Allocate locals already recorded via aarch64GetLocalOffset().
+    // Keep 16-byte stack alignment.
+    stackOffset = (localOffset + 15) & ~15;
+
     fprintf(Outfile, "\t.text\n");
     fprintf(Outfile, "\t.global\t%s\n", functionName);
     fprintf(Outfile, "%s:\n", functionName);
     fprintf(Outfile, "\tstp\tx29, x30, [sp, -16]!\n");
     fprintf(Outfile, "\tmov\tx29, sp\n");
+
+    if (stackOffset > 0) {
+        fprintf(Outfile, "\tsub\tsp, sp, #%d\n", stackOffset);
+    }
 }
 
 /**
@@ -107,6 +138,8 @@ void aarch64FunctionPostamble(int id) {
     // (we’ll call aarch64Label(SymbolTable[id].endLabel) there)
     // and then we output epilogue:
     aarch64Label(SymbolTable[id].endLabel);
+    // Discard local stack space.
+    fprintf(Outfile, "\tmov\tsp, x29\n");
     fputs("\tldp\tx29, x30, [sp], 16\n"
           "\tret\n",
           Outfile);

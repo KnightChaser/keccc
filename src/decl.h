@@ -114,7 +114,7 @@ int aarch64LoadGlobalString(int id);
 int aarch64StoreGlobalSymbol(int registerIndex, int id);
 int aarch64StoreLocalSymbol(int registerIndex, int id);
 void aarch64DeclareGlobalSymbol(int id);
-void aarch64DeclareGlobalString(int registerIndex, char *stringValue);
+void aarch64DeclareGlobalString(int labelIndex, char *stringValue);
 int aarch64AddRegs(int dstReg, int srcReg);
 int aarch64SubRegs(int dstReg, int srcReg);
 int aarch64MulRegs(int dstReg, int srcReg);
@@ -141,7 +141,7 @@ int aarch64BitwiseAndRegs(int dstReg, int srcReg);
 int aarch64BitwiseOrRegs(int dstReg, int srcReg);
 int aarch64BitwiseXorRegs(int dstReg, int srcReg);
 void aarch64ResetLocalOffset(void);
-void aarch64GetLocalOffset(int type, bool isFunctionParameter);
+int aarch64GetLocalOffset(int type, bool isFunctionParameter);
 
 // NOTE: expr.c
 struct ASTnode *binexpr(int rbp);
