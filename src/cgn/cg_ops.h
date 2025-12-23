@@ -29,6 +29,7 @@ struct CodegenOps {
     int (*loadLocalSymbol)(int symId, int op);
     int (*loadGlobalString)(int symId);
     int (*storeGlobalSymbol)(int reg, int symId);
+    int (*storeLocalSymbol)(int reg, int symId);
 
     // Arithmetic
     int (*addRegs)(int r1, int r2);

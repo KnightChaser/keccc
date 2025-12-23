@@ -292,18 +292,26 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
             return NOREG; // Lvalue: return NOREG to indicate address needed
         }
     case A_ASSIGN:
+        // NOTE: For assignment, the parser swaps subtrees so that
+        // n->left is the RHS expression (rvalue) and n->right is the LHS (lvalue).
         switch (n->right->op) {
-        case A_IDENTIFIER:
-            if (SymbolTable[n->right->v.identifierIndex].class == C_LOCAL) {
-                return CG->loadLocalSymbol(n->right->v.identifierIndex, n->op);
-            } else {
-                return CG->loadGlobalSymbol(n->right->v.identifierIndex, n->op);
+        case A_IDENTIFIER: {
+            int lhsId = n->right->v.identifierIndex;
+            if (SymbolTable[lhsId].class == C_LOCAL) {
+                if (!CG->storeLocalSymbol) {
+                    logFatal("Target backend does not support local stores");
+                }
+                return CG->storeLocalSymbol(leftRegister, lhsId);
             }
+            return CG->storeGlobalSymbol(leftRegister, lhsId);
+        }
         case A_DEREFERENCE:
+            // rightRegister is the computed address of the dereferenced pointer.
             return CG->storeDereferencedPointer(leftRegister, rightRegister,
                                                 n->right->primitiveType);
         default:
-            logFatald("can't assign (A_ASSIGN) to this AST node type: ", n->op);
+            logFatald("can't assign (A_ASSIGN) to this AST node type: ",
+                      n->right->op);
         }
     case A_WIDENTYPE:
         // Widen the child node's primitive type to the parent node's type
@@ -341,15 +349,27 @@ int codegenAST(struct ASTnode *n, int label, int parentASTop) {
 
     case A_POSTINCREMENT:
         // Load the variable's value into a register then increment it
+        if (SymbolTable[n->v.identifierIndex].class == C_LOCAL) {
+            return CG->loadLocalSymbol(n->v.identifierIndex, n->op);
+        }
         return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
     case A_POSTDECREMENT:
         // Load the variable's value into a register then decrement it
+        if (SymbolTable[n->v.identifierIndex].class == C_LOCAL) {
+            return CG->loadLocalSymbol(n->v.identifierIndex, n->op);
+        }
         return CG->loadGlobalSymbol(n->v.identifierIndex, n->op);
     case A_PREINCREMENT:
         // Increment the variable's value then load it into a register
+        if (SymbolTable[n->left->v.identifierIndex].class == C_LOCAL) {
+            return CG->loadLocalSymbol(n->left->v.identifierIndex, n->op);
+        }
         return CG->loadGlobalSymbol(n->left->v.identifierIndex, n->op);
     case A_PREDECREMENT:
         // Decrement the variable's value then load it into a register
+        if (SymbolTable[n->left->v.identifierIndex].class == C_LOCAL) {
+            return CG->loadLocalSymbol(n->left->v.identifierIndex, n->op);
+        }
         return CG->loadGlobalSymbol(n->left->v.identifierIndex, n->op);
     case A_ARITHMETICNEGATE:
         // Arithmetic negation

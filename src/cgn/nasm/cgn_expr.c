@@ -207,30 +207,31 @@ int nasmLoadGlobalSymbol(int id, int op) {
  */
 int nasmLoadLocalSymbol(int id, int op) {
     int registerIndex = allocateRegister();
+    int offset = SymbolTable[id].offset;
 
     switch (SymbolTable[id].primitiveType) {
     case P_CHAR:
         if (op == A_PREINCREMENT) {
             // Increment first, then load the value
-            fprintf(Outfile, "\tinc\tbyte [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tbyte\t[rbp+%d]\n", offset);
         }
         if (op == A_PREDECREMENT) {
             // Decrement first, then load the value
-            fprintf(Outfile, "\tdec\tbyte [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tbyte\t[rbp+%d]\n", offset);
         }
 
-        fprintf(Outfile, "\tmovzx\t%s, byte [%s]\n",
+        fprintf(Outfile, "\tmovzx\t%s, byte\t[rbp+%d]\n",
                 qwordRegisterList[registerIndex], // destination register
-                SymbolTable[id].name              // source local symbol
+                offset                            // source local symbol
         );
 
         if (op == A_POSTINCREMENT) {
             // Load first, then increment
-            fprintf(Outfile, "\tinc\tbyte [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tbyte\t[rbp+%d]\n", offset);
         }
         if (op == A_POSTDECREMENT) {
             // Load first, then decrement
-            fprintf(Outfile, "\tdec\tbyte [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tbyte\t[rbp+%d]\n", offset);
         }
 
         break;
@@ -238,20 +239,20 @@ int nasmLoadLocalSymbol(int id, int op) {
     case P_INT:
         if (op == A_PREINCREMENT) {
             // Increment first, then load the value
-            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tDWORD\t[rbp+%d]\n", offset);
         }
         if (op == A_PREDECREMENT) {
             // Decrement first, then load the value
-            fprintf(Outfile, "\tdec\tDWORD [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tDWORD\t[rbp+%d]\n", offset);
         }
 
         fprintf(Outfile, "\txor\t%s, %s\n",       // Clear upper 32 bits
                 qwordRegisterList[registerIndex], // destination register
                 qwordRegisterList[registerIndex]  // source register
         );
-        fprintf(Outfile, "\tmov\t%s, DWORD [%s]\n",
+        fprintf(Outfile, "\tmov\t%s, DWORD\t[rbp+%d]\n",
                 dwordRegisterList[registerIndex], // lower 32 bits
-                SymbolTable[id].name              // source local symbol
+            offset                            // source local symbol
         );
         fprintf(Outfile, "\tmovsxd\t%s, %s\n",
                 qwordRegisterList[registerIndex], // dest
@@ -260,11 +261,11 @@ int nasmLoadLocalSymbol(int id, int op) {
 
         if (op == A_POSTINCREMENT) {
             // Load first, then increment
-            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tDWORD\t[rbp+%d]\n", offset);
         }
         if (op == A_POSTDECREMENT) {
             // Load first, then decrement
-            fprintf(Outfile, "\tdec\t [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tDWORD\t[rbp+%d]\n", offset);
         }
 
         break;
@@ -275,27 +276,29 @@ int nasmLoadLocalSymbol(int id, int op) {
     case P_LONGPTR:
         if (op == A_PREINCREMENT) {
             // Increase first, then load
-            fprintf(Outfile, "\tinc\tQWORD [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tQWORD\t[rbp+%d]\n", offset);
         }
         if (op == A_PREDECREMENT) {
             // Decrease first, then load
-            fprintf(Outfile, "\tout\tQWORD [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tQWORD\t[rbp+%d]\n", offset);
         }
 
         // Load
-        fprintf(Outfile, "\tmov\t%s, QWORD [%s]\n",
+        fprintf(Outfile, "\tmov\t%s, QWORD\t[rbp+%d]\n",
                 qwordRegisterList[registerIndex], // destination register
-                SymbolTable[id].name              // source local symbol
+                offset                            // source local symbol
         );
 
         if (op == A_POSTINCREMENT) {
             // Load first, then increment
-            fprintf(Outfile, "\tinc\tDWORD [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tinc\tQWORD\t[rbp+%d]\n", offset);
         }
         if (op == A_POSTDECREMENT) {
             // Load first, then decrement
-            fprintf(Outfile, "\tdec\t [%s]\n", SymbolTable[id].name);
+            fprintf(Outfile, "\tdec\tQWORD\t[rbp+%d]\n", offset);
         }
+
+        break;
 
     default:
         logFatald("Bad type in nasmLoadLocalSymbol: ",
